@@ -7,6 +7,8 @@ import {
   TouchableOpacity,
   TextInput,
   Platform,
+  Alert,
+  Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -22,7 +24,11 @@ import {
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
+import { useSelector } from 'react-redux';
+import { useCurrentUser } from '@/redux/features/Auth/authSlice';
 import { useThemeColors } from '@/hooks/useThemeColors';
+import { useTranslate } from '@/hooks/useTranslate';
+import { useSendEmergencyAlertMutation } from '@/redux/features/Emergency/Emergency';
 
 interface EmergencyContact {
   name: string;
@@ -33,7 +39,11 @@ interface EmergencyContact {
 
 export default function EmergencyScreen() {
   const colors = useThemeColors();
+  const t = useTranslate();
+  const currentUser = useSelector(useCurrentUser);
+  const [sendEmergencyAlert, { isLoading }] = useSendEmergencyAlertMutation();
   const [message, setMessage] = useState('');
+    const [location, setLocation] = useState(''); 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
 
@@ -49,26 +59,61 @@ export default function EmergencyScreen() {
     }
   };
 
-  const handleEmergencySubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!message.trim()) return;
-
+  const handleEmergencySubmit = async () => {
+   if (!message.trim() || !location.trim()) {
+      Alert.alert(t('submissionFailed', 'Submission Failed'), t('alertFieldsRequired', 'Please describe your emergency and provide your location.'));
+      return;
+    }
+    if (!currentUser?._id) {
+        Alert.alert(t('authError', 'Authentication Error'), t('authErrorSub', 'You must be logged in to send an alert.'));
+        return;
+    }
     setIsSubmitting(true);
     triggerHaptic();
     
     try {
-      console.log('Sending emergency alert:', message);
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      const payload = {
+        user: currentUser._id,
+        message: message,
+        location: location, // TODO: Replace with dynamic location using expo-location
+      };
+
+      // Call the mutation. .unwrap() will throw an error on failure.
+      await sendEmergencyAlert(payload).unwrap();
+
+      // Handle success
       setShowSuccess(true);
       setMessage('');
+      setLocation('')
       setTimeout(() => setShowSuccess(false), 5000); 
+    
     } catch (error) {
-      console.error('Error sending emergency notification:', error);
-      alert('Failed to send emergency alert. Please try again or use the contacts below.');
+       console.error('Error sending emergency notification:', error);
+      Alert.alert(
+        t('submissionFailed', 'Submission Failed'), 
+        t('submissionFailedSub', 'Failed to send emergency alert...')
+      );
     } finally {
       setIsSubmitting(false);
     }
   };
+  const handleContactPress = (contact: EmergencyContact) => {
+    triggerHaptic();
+    let url = '';
+    if (contact.type === 'whatsapp') {
+      url = `whatsapp://send?phone=${contact.number.replace(/[^0-9]/g, '')}`;
+    } else {
+      url = `tel:${contact.number}`;
+    }
+    Linking.canOpenURL(url).then(supported => {
+      if (supported) {
+        return Linking.openURL(url);
+      } else {
+        Alert.alert('Error', `Unable to open ${contact.type}.`);
+      }
+    });
+  };
+
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
@@ -81,8 +126,8 @@ export default function EmergencyScreen() {
           <ArrowLeft size={24} color="#FFFFFF" />
         </TouchableOpacity>
         <View style={styles.headerContent}>
-          <Text style={styles.headerTitle}>Emergency</Text>
-          <Text style={styles.headerSubtitle}>জরুরি সেবা</Text>
+          <Text style={styles.headerTitle}>{t('emergency', 'Emergency')}</Text>
+          <Text style={styles.headerSubtitle}>{t('emergencyService', 'জরুরি সেবা')}</Text>
         </View>
         <View style={styles.headerPlaceholder} />
       </LinearGradient>
@@ -95,8 +140,8 @@ export default function EmergencyScreen() {
         >
           <AlertTriangle size={24} color="#D97706" />
           <View style={styles.alertContent}>
-            <Text style={styles.alertTitle}>Emergency Assistance Available 24/7</Text>
-            <Text style={styles.alertText}>Tap any service below for immediate help</Text>
+            <Text style={styles.alertTitle}>{t('emergencyAssistance', 'Emergency Assistance Available 24/7')}</Text>
+            <Text style={styles.alertText}>{t('emergencyAssistanceSub', 'Tap any service below for immediate help')}</Text>
           </View>
         </LinearGradient>
       </View>
@@ -108,8 +153,8 @@ export default function EmergencyScreen() {
             <View style={styles.emergencyFormHeader}>
               <AlertTriangle size={28} color="#FFFFFF" />
               <View>
-                <Text style={styles.emergencyFormTitle}>Need Immediate Help?</Text>
-                <Text style={styles.emergencyFormSubtitle}>Describe your situation. We're here 24/7.</Text>
+                <Text style={styles.emergencyFormTitle}>{t('needImmediateHelp', 'Need Immediate Help?')}</Text>
+                <Text style={styles.emergencyFormSubtitle}>{t('needImmediateHelpSub', "Describe your situation. We're here 24/7.")}</Text>
               </View>
             </View>
 
@@ -118,10 +163,17 @@ export default function EmergencyScreen() {
                 style={styles.emergencyInput}
                 value={message}
                 onChangeText={setMessage}
-                placeholder="Briefly describe your emergency..."
+                placeholder={t('emergencyPlaceholder', 'Briefly describe your emergency...')}
                 multiline
                 numberOfLines={4}
                 textAlignVertical="top"
+                placeholderTextColor="#FCA5A5"
+              />
+              <TextInput
+                style={styles.emergencyInputSingleLine} // Using a new style for single-line input
+                value={location}
+                onChangeText={setLocation}
+                placeholder={t('locationPlaceholder', 'Your current location (e.g., City, Area)')}
                 placeholderTextColor="#FCA5A5"
               />
 
@@ -136,12 +188,12 @@ export default function EmergencyScreen() {
                 {isSubmitting ? (
                   <>
                     <Loader size={20} color="#EF4444" />
-                    <Text style={styles.emergencyButtonText}>Sending Alert...</Text>
+                    <Text style={styles.emergencyButtonText}>{t('sendingAlert', 'Sending Alert...')}</Text>
                   </>
                 ) : (
                   <>
                     <Send size={20} color="#EF4444" />
-                    <Text style={styles.emergencyButtonText}>Send Emergency Alert</Text>
+                   <Text style={styles.emergencyButtonText}>{t('sendEmergencyAlert', 'Send Emergency Alert')}</Text>
                   </>
                 )}
               </TouchableOpacity>
@@ -149,7 +201,7 @@ export default function EmergencyScreen() {
 
             {showSuccess && (
               <View style={styles.successMessage}>
-                <Text style={styles.successMessageText}>Alert sent successfully! We will contact you as soon as possible.</Text>
+                <Text style={styles.successMessageText}>{t('alertSentSuccess', 'Alert sent successfully! We will contact you as soon as possible.')}</Text>
               </View>
             )}
           </View>
@@ -157,7 +209,7 @@ export default function EmergencyScreen() {
 
         {/* Quick Contacts */}
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>Quick Contacts</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('quickContacts', 'Quick Contacts')}</Text>
           <View style={styles.contactsContainer}>
             {emergencyContacts.map((contact, index) => (
               <View key={index} style={[styles.contactCard, { backgroundColor: colors.card, shadowColor: colors.cardShadow }]}>
@@ -324,7 +376,8 @@ const styles = StyleSheet.create({
   emergencyFormHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
+    paddingHorizontal: 36,
+    paddingVertical:16,
     gap: 12,
   },
   emergencyFormTitle: {
@@ -488,5 +541,16 @@ const styles = StyleSheet.create({
   },
   bottomSpacing: {
     height: 100,
+  },
+  emergencyInputSingleLine: {
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    borderRadius: 12,
+    padding: 16,
+    color: '#FFFFFF',
+    fontSize: 16,
+    marginBottom: 16,
+    height: 56, // For single-line
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
   },
 });
