@@ -164,6 +164,7 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 20,
     width: '100%',
+    marginBottom:50,
   },
   tabBarItem: {
     paddingTop: 5,

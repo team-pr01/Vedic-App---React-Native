@@ -24,107 +24,13 @@ import {
   Filter,
   Play,
   Heart,
+  X, // Changed from Filter to X for clearing search
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { useGetAllYogaQuery } from '@/redux/features/Yoga/yogaApi';
 import { TYoga } from '@/types';
-
-
-
-// const YOGA_PROGRAMS: YogaProgram[] = [
-//   {
-//     id: '1',
-//     title: 'Morning Flow Yoga',
-//     description:
-//       'Start your day with energizing yoga poses for all levels. Perfect for beginners.',
-//     image:
-//       'https://images.pexels.com/photos/3822622/pexels-photo-3822622.jpeg?auto=compress&cs=tinysrgb&w=400',
-//     level: 'beginner',
-//     duration: '30 min',
-//     instructor: 'Sarah Johnson',
-//     category: 'Hatha Yoga',
-//     rating: 4.8,
-//     students: 1250,
-//     isFavorite: true,
-//   },
-//   {
-//     id: '2',
-//     title: 'Power Vinyasa Flow',
-//     description:
-//       'Dynamic and challenging flow sequence to build strength and flexibility.',
-//     image:
-//       'https://images.pexels.com/photos/3822864/pexels-photo-3822864.jpeg?auto=compress&cs=tinysrgb&w=400',
-//     level: 'advanced',
-//     duration: '60 min',
-//     instructor: 'Michael Chen',
-//     category: 'Vinyasa',
-//     rating: 4.9,
-//     students: 890,
-//     isFavorite: false,
-//   },
-//   {
-//     id: '3',
-//     title: 'Gentle Restorative',
-//     description:
-//       'Relaxing and restorative practice to calm the mind and release tension.',
-//     image:
-//       'https://images.pexels.com/photos/3822906/pexels-photo-3822906.jpeg?auto=compress&cs=tinysrgb&w=400',
-//     level: 'beginner',
-//     duration: '45 min',
-//     instructor: 'Emily Parker',
-//     category: 'Restorative',
-//     rating: 4.7,
-//     students: 2100,
-//     isFavorite: true,
-//   },
-//   {
-//     id: '4',
-//     title: 'Intermediate Flow',
-//     description:
-//       'Balance strength and flexibility with this engaging intermediate practice.',
-//     image:
-//       'https://images.pexels.com/photos/3822864/pexels-photo-3822864.jpeg?auto=compress&cs=tinysrgb&w=400',
-//     level: 'intermediate',
-//     duration: '45 min',
-//     instructor: 'David Wilson',
-//     category: 'Vinyasa',
-//     rating: 4.6,
-//     students: 750,
-//     isFavorite: false,
-//   },
-//   {
-//     id: '5',
-//     title: 'Advanced Ashtanga',
-//     description:
-//       'Traditional Ashtanga sequence for experienced yogis seeking challenge.',
-//     image:
-//       'https://images.pexels.com/photos/3822622/pexels-photo-3822622.jpeg?auto=compress&cs=tinysrgb&w=400',
-//     level: 'advanced',
-//     duration: '90 min',
-//     instructor: 'Anna Martinez',
-//     category: 'Ashtanga',
-//     rating: 4.9,
-//     students: 420,
-//     isFavorite: false,
-//   },
-//   {
-//     id: '6',
-//     title: 'Meditation & Mindful Movement',
-//     description:
-//       'Combine gentle yoga with meditation for inner peace and mindfulness.',
-//     image:
-//       'https://images.pexels.com/photos/3822906/pexels-photo-3822906.jpeg?auto=compress&cs=tinysrgb&w=400',
-//     level: 'beginner',
-//     duration: '40 min',
-//     instructor: 'Sarah Johnson',
-//     category: 'Mindful',
-//     rating: 4.8,
-//     students: 1680,
-//     isFavorite: true,
-//   },
-// ];
 
 const LEVELS = [
   { id: 'all', name: 'All Levels', color: '#718096' },
@@ -136,14 +42,9 @@ const LEVELS = [
 export default function YogaPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const colors = useThemeColors();
-  const { data, isLoading } = useGetAllYogaQuery({
-    // keyword: searchQuery,
-  });
-  console.log(data?.data)
+  const { data, isLoading } = useGetAllYogaQuery({});
   const [selectedLevel, setSelectedLevel] = useState('all');
-  const [filteredPrograms, setFilteredPrograms] = useState<TYoga[]>(
-   []
-  );
+  const [filteredPrograms, setFilteredPrograms] = useState<TYoga[]>([]);
   const [isListening, setIsListening] = useState(false);
   const [favorites, setFavorites] = useState(new Set(['1', '3', '6']));
   const recognitionRef = useRef<any>(null);
@@ -184,33 +85,28 @@ export default function YogaPage() {
     }
   }, []);
 
-  // Filter programs based on search and level
+  // Filter programs based on search, level, and incoming data
   useEffect(() => {
-    let filtered = data?.data ? [...data.data] : [];
-
+    let programsToFilter = data?.data ? [...data.data] : [];
 
     if (searchQuery) {
-      filtered = filtered.filter(
+      const lowercasedQuery = searchQuery.toLowerCase();
+      programsToFilter = programsToFilter.filter(
         (program) =>
-          program.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          program.description
-            .toLowerCase()
-            .includes(searchQuery.toLowerCase()) ||
-          program.instructor
-            .toLowerCase()
-            .includes(searchQuery.toLowerCase()) ||
-          program.category.toLowerCase().includes(searchQuery.toLowerCase())
+          program.name?.toLowerCase().includes(lowercasedQuery) ||
+          program.description?.toLowerCase().includes(lowercasedQuery)
+        // Removed instructor and category as they are not in your data model
       );
     }
 
-   if (selectedLevel !== 'all') {
-      filtered = filtered.filter(
-        (program) => program.difficulty.toLowerCase() === selectedLevel
+    if (selectedLevel !== 'all') {
+      programsToFilter = programsToFilter.filter(
+        (program) => program.difficulty?.toLowerCase() === selectedLevel
       );
     }
 
-    setFilteredPrograms(filtered);
-  }, [searchQuery, selectedLevel]);
+    setFilteredPrograms(programsToFilter);
+  }, [searchQuery, selectedLevel, data]); // Added `data` to the dependency array
 
   const handleVoiceSearch = () => {
     triggerHaptic();
@@ -241,9 +137,19 @@ export default function YogaPage() {
   };
 
   const getLevelColor = (level: string) => {
-    const levelData = LEVELS.find((l) => l.id === level);
+    const levelData = LEVELS.find((l) => l.id === level?.toLowerCase());
     return levelData ? levelData.color : '#718096';
   };
+  
+    if (isLoading) {
+    return (
+      <View style={[styles.container, styles.loaderContainer]}>
+        <ActivityIndicator size="large" color="#10B981" />
+        <Text style={{ color: colors.text, marginTop: 10 }}>Loading Programs...</Text>
+      </View>
+    );
+  }
+
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -283,14 +189,14 @@ export default function YogaPage() {
             <Search size={20} color="#718096" />
             <TextInput
               style={[styles.searchInput, { color: colors.text }]}
-              placeholder="Search yoga programs, instructors..."
+              placeholder="Search yoga programs..."
               value={searchQuery}
               onChangeText={setSearchQuery}
               placeholderTextColor={colors.secondaryText}
             />
             {searchQuery ? (
               <TouchableOpacity onPress={() => setSearchQuery('')}>
-                <Filter size={18} color="#718096" />
+                <X size={18} color="#718096" />
               </TouchableOpacity>
             ) : null}
             <TouchableOpacity
@@ -362,16 +268,12 @@ export default function YogaPage() {
             <Text
               style={[styles.resultsCount, { color: colors.secondaryText }]}
             >
-              {data?.data.length} program{data?.data.length !== 1 ? 's' : ''}
+              {filteredPrograms.length} program{filteredPrograms.length !== 1 ? 's' : ''}
             </Text>
           </View>
-          {isLoading ? (
-            <View style={styles.loaderContainer}>
-              <ActivityIndicator size="large" color="#FF6F00" />
-            </View>
-          ) : data?.data?.length > 0 ? (
+           {filteredPrograms.length > 0 ? (
             <View style={styles.programsGrid}>
-              {data?.data.map((program: TYoga) => (
+              {filteredPrograms.map((program: TYoga) => (
                 <TouchableOpacity
                   key={program._id}
                   style={[
@@ -387,8 +289,8 @@ export default function YogaPage() {
                   }}
                   activeOpacity={0.8}
                 >
-                  {/* ---------- Program Image ---------- */}
-                  <View style={styles.programImageContainer}>
+                  {/* ... Program card content ... */}
+                     <View style={styles.programImageContainer}>
                     <Image
                       source={{ uri: program.imageUrl }}
                       style={styles.programImage}
@@ -414,19 +316,13 @@ export default function YogaPage() {
                       </TouchableOpacity>
                     </LinearGradient>
                   </View>
-
-                  {/* ---------- Program Content ---------- */}
-                  <View style={styles.programContent}>
+                   <View style={styles.programContent}>
                     <View style={styles.programHeader}>
                       <Text
                         style={[styles.programTitle, { color: colors.text }]}
                       >
                         {program.name}
                       </Text>
-                      {/* <View style={styles.ratingContainer}> */}
-                      {/* <Star size={14} color="#F59E0B" fill="#F59E0B" /> */}
-                      {/* <Text style={[styles.ratingText, { color: colors.text }]}>{program.}</Text> */}
-                      {/* </View> */}
                     </View>
 
                     <Text
@@ -434,11 +330,11 @@ export default function YogaPage() {
                         styles.programDescription,
                         { color: colors.secondaryText },
                       ]}
+                      numberOfLines={2}
                     >
                       {program.description}
                     </Text>
 
-                    {/* ---------- Meta Info ---------- */}
                     <View style={styles.programMeta}>
                       <View style={styles.metaItem}>
                         <Clock size={14} color={colors.secondaryText} />
@@ -451,31 +347,23 @@ export default function YogaPage() {
                           {program.duration}
                         </Text>
                       </View>
-                      <View style={styles.metaItem}>
-                        <User size={14} color={colors.secondaryText} />
-                        {/* <Text style={[styles.metaText, { color: colors.secondaryText }]}>{program.students}</Text> */}
-                      </View>
                     </View>
 
-                    {/* ---------- Footer ---------- */}
                     <View style={styles.programFooter}>
                       <View style={styles.instructorInfo}>
-                        {/* <Text style={[styles.instructorName, { color: colors.text }]}>{program.}</Text> */}
-                        {/* <Text style={[styles.categoryText, { color: colors.secondaryText }]}>{program.category}</Text> */}
+                        {/* Instructor info can be added here if available in API */}
                       </View>
                       <View
                         style={[
                           styles.levelBadge,
                           {
-                            backgroundColor: getLevelColor(
-                              program.difficulty.toLowerCase()
-                            ),
+                            backgroundColor: getLevelColor(program.difficulty),
                           },
                         ]}
                       >
                         <Text style={styles.levelBadgeText}>
-                          {program.difficulty.charAt(0).toUpperCase() +
-                            program.difficulty.slice(1)}
+                          {program.difficulty?.charAt(0).toUpperCase() +
+                            program.difficulty?.slice(1)}
                         </Text>
                       </View>
                     </View>
@@ -483,18 +371,18 @@ export default function YogaPage() {
                 </TouchableOpacity>
               ))}
             </View>
-          ) : filteredPrograms.length === 0 ? (
+          ) : (
             <View style={styles.emptyState}>
               <Text style={[styles.emptyStateTitle, { color: colors.text }]}>
-                No programs found
+                No Programs Found
               </Text>
               <Text
                 style={[styles.emptyStateText, { color: colors.secondaryText }]}
               >
-                Try adjusting your search or filter criteria
+                Try adjusting your search or filter criteria.
               </Text>
             </View>
-          ) : null}
+          )}
         </View>
 
         <View style={styles.bottomSpacing} />
@@ -503,6 +391,7 @@ export default function YogaPage() {
   );
 }
 
+// Styles remain the same
 const styles = StyleSheet.create({
   container: {
     flex: 1,
