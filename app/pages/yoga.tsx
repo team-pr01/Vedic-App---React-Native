@@ -31,6 +31,9 @@ import { router } from 'expo-router';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { useGetAllYogaQuery } from '@/redux/features/Yoga/yogaApi';
 import { TYoga } from '@/types';
+import { useGetAllConsultancyServicesQuery } from '@/redux/features/Consultancy/consultancyApi';
+import Experts from '@/components/Experts';
+import YoutubePlayer from 'react-native-youtube-iframe';
 
 const LEVELS = [
   { id: 'all', name: 'All Levels', color: '#718096' },
@@ -40,6 +43,11 @@ const LEVELS = [
 ];
 
 export default function YogaPage() {
+  const { data: experts, isLoading: isExpertsLoading } =
+    useGetAllConsultancyServicesQuery({});
+  const filteredExperts =
+    experts?.data?.filter((expert: any) => expert.category === 'Yoga Expert') ||
+    [];
   const [searchQuery, setSearchQuery] = useState('');
   const colors = useThemeColors();
   const { data, isLoading } = useGetAllYogaQuery({});
@@ -48,6 +56,7 @@ export default function YogaPage() {
   const [isListening, setIsListening] = useState(false);
   const [favorites, setFavorites] = useState(new Set(['1', '3', '6']));
   const recognitionRef = useRef<any>(null);
+  const [playingCardIndex, setPlayingCardIndex] = useState<number | null>(null);
 
   const triggerHaptic = () => {
     if (Platform.OS !== 'web') {
@@ -125,31 +134,22 @@ export default function YogaPage() {
     }
   };
 
-  const toggleFavorite = (programId: string) => {
-    triggerHaptic();
-    const newFavorites = new Set(favorites);
-    if (newFavorites.has(programId)) {
-      newFavorites.delete(programId);
-    } else {
-      newFavorites.add(programId);
-    }
-    setFavorites(newFavorites);
-  };
 
   const getLevelColor = (level: string) => {
     const levelData = LEVELS.find((l) => l.id === level?.toLowerCase());
     return levelData ? levelData.color : '#718096';
   };
-  
-    if (isLoading) {
+
+  if (isLoading) {
     return (
       <View style={[styles.container, styles.loaderContainer]}>
         <ActivityIndicator size="large" color="#10B981" />
-        <Text style={{ color: colors.text, marginTop: 10 }}>Loading Programs...</Text>
+        <Text style={{ color: colors.text, marginTop: 10 }}>
+          Loading Programs...
+        </Text>
       </View>
     );
   }
-
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -235,11 +235,17 @@ export default function YogaPage() {
               <TouchableOpacity
                 key={level.id}
                 style={[
-                  [styles.levelChip, { backgroundColor: colors.background, borderColor: colors.border }],
+                  [
+                    styles.levelChip,
+                    {
+                      backgroundColor: colors.background,
+                      borderColor: colors.border,
+                    },
+                  ],
                   selectedLevel === level.id && [
                     styles.levelChipActive,
-                    { backgroundColor: level.color }
-                  ]
+                    { backgroundColor: level.color },
+                  ],
                 ]}
                 onPress={() => {
                   setSelectedLevel(level.id);
@@ -249,14 +255,14 @@ export default function YogaPage() {
                 <Text
                   style={[
                     [styles.levelChipText, { color: colors.secondaryText }],
-                    selectedLevel === level.id && styles.levelChipTextActive
+                    selectedLevel === level.id && styles.levelChipTextActive,
                   ]}
                 >
                   {level.name}
                 </Text>
               </TouchableOpacity>
             ))}
-          </ScrollView> 
+          </ScrollView>
         </View>
 
         {/* Programs Grid */}
@@ -268,107 +274,76 @@ export default function YogaPage() {
             <Text
               style={[styles.resultsCount, { color: colors.secondaryText }]}
             >
-              {filteredPrograms.length} program{filteredPrograms.length !== 1 ? 's' : ''}
+              {filteredPrograms.length} program
+              {filteredPrograms.length !== 1 ? 's' : ''}
             </Text>
           </View>
-           {filteredPrograms.length > 0 ? (
+          {filteredPrograms.length > 0 ? (
             <View style={styles.programsGrid}>
-              {filteredPrograms.map((program: TYoga) => (
-                <TouchableOpacity
-                  key={program._id}
-                  style={[
-                    styles.programCard,
-                    {
-                      backgroundColor: colors.card,
-                      shadowColor: colors.cardShadow,
-                    },
-                  ]}
-                  onPress={() => {
-                    triggerHaptic();
-                    console.log('Program selected:', program.name);
-                  }}
-                  activeOpacity={0.8}
-                >
-                  {/* ... Program card content ... */}
-                     <View style={styles.programImageContainer}>
-                    <Image
-                      source={{ uri: program.imageUrl }}
-                      style={styles.programImage}
-                    />
-                    <LinearGradient
-                      colors={['transparent', 'rgba(0,0,0,0.7)']}
-                      style={styles.programImageOverlay}
-                    >
-                      <TouchableOpacity
-                        style={styles.favoriteButton}
-                        onPress={() => toggleFavorite(program._id)}
-                      >
-                        <Heart
-                          size={20}
-                          color={
-                            favorites.has(program._id) ? '#EF4444' : '#FFFFFF'
-                          }
-                          fill={favorites.has(program._id) ? '#EF4444' : 'none'}
-                        />
-                      </TouchableOpacity>
-                      <TouchableOpacity style={styles.playButton}>
-                        <Play size={24} color="#FFFFFF" fill="#FFFFFF" />
-                      </TouchableOpacity>
-                    </LinearGradient>
-                  </View>
-                   <View style={styles.programContent}>
-                    <View style={styles.programHeader}>
-                      <Text
-                        style={[styles.programTitle, { color: colors.text }]}
-                      >
-                        {program.name}
-                      </Text>
-                    </View>
+              {filteredPrograms.map((program: TYoga,index:number) => (
+                <View
+          key={program._id || index}
+          style={[
+            styles.programCard,
+            { backgroundColor: colors.card, shadowColor: colors.cardShadow },
+          ]}
+        >
+          {/* --- Video Player Section --- */}
+          <View style={styles.programImageContainer}>
+            <YoutubePlayer
+              height={200}
+              play={playingCardIndex === index}
+              videoId="brg5LgDN114" // Fixed YouTube video
+              onChangeState={(state) => {
+                if (state === "ended") setPlayingCardIndex(null);
+              }}
+            />
 
-                    <Text
-                      style={[
-                        styles.programDescription,
-                        { color: colors.secondaryText },
-                      ]}
-                      numberOfLines={2}
-                    >
-                      {program.description}
-                    </Text>
+           
+          </View>
 
-                    <View style={styles.programMeta}>
-                      <View style={styles.metaItem}>
-                        <Clock size={14} color={colors.secondaryText} />
-                        <Text
-                          style={[
-                            styles.metaText,
-                            { color: colors.secondaryText },
-                          ]}
-                        >
-                          {program.duration}
-                        </Text>
-                      </View>
-                    </View>
+          {/* --- Content Section --- */}
+          <View style={styles.programContent}>
+            <View style={styles.programHeader}>
+              <Text style={[styles.programTitle, { color: colors.text }]}>
+                {program.name}
+              </Text>
+            </View>
 
-                    <View style={styles.programFooter}>
-                      <View style={styles.instructorInfo}>
-                        {/* Instructor info can be added here if available in API */}
-                      </View>
-                      <View
-                        style={[
-                          styles.levelBadge,
-                          {
-                            backgroundColor: getLevelColor(program.difficulty),
-                          },
-                        ]}
-                      >
-                        <Text style={styles.levelBadgeText}>
-                          {program.difficulty?.charAt(0).toUpperCase() +
-                            program.difficulty?.slice(1)}
-                        </Text>
-                      </View>
-                    </View>
-                  </View>
-                </TouchableOpacity>
+            <Text
+              style={[styles.programDescription, { color: colors.secondaryText }]}
+              numberOfLines={2}
+            >
+              {program.description}
+            </Text>
+
+            <View style={styles.programMeta}>
+              <View style={styles.metaItem}>
+                <Clock size={14} color={colors.secondaryText} />
+                <Text style={[styles.metaText, { color: colors.secondaryText }]}>
+                  {program.duration}
+                </Text>
+              </View>
+            </View>
+
+            <View style={styles.programFooter}>
+              <View style={styles.instructorInfo}>
+                {/* Add instructor info if API provides it */}
+              </View>
+              <View
+                style={[
+                  styles.levelBadge,
+                  { backgroundColor: getLevelColor(program.difficulty) },
+                ]}
+              >
+                <Text style={styles.levelBadgeText}>
+                  {program.difficulty?.charAt(0).toUpperCase() +
+                    program.difficulty?.slice(1)}
+                </Text>
+              </View>
+            </View>
+          </View>
+        </View>
               ))}
             </View>
           ) : (
@@ -385,7 +360,7 @@ export default function YogaPage() {
           )}
         </View>
 
-        <View style={styles.bottomSpacing} />
+        <Experts data={filteredExperts} title={'Yoga'} isLoading={isLoading} />
       </ScrollView>
     </View>
   );

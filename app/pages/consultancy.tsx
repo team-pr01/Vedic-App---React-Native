@@ -1178,7 +1178,8 @@ const styles = StyleSheet.create({
     color: '#2D3748',
     marginBottom: 8,
   },
-  emptyStateText: {
+  
+  StateText: {
     fontSize: 14,
     color: '#718096',
     textAlign: 'center',

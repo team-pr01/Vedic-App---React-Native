@@ -12,17 +12,17 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { 
-  Search, 
-  Mic, 
-  CircleStop as StopCircle, 
-  Brain, 
-  Clock, 
-  Star, 
-  ChevronRight, 
-  X, 
-  Loader, 
-  Heart, 
+import {
+  Search,
+  Mic,
+  CircleStop as StopCircle,
+  Brain,
+  Clock,
+  Star,
+  ChevronRight,
+  X,
+  Loader,
+  Heart,
   ArrowLeft,
   Filter,
   Play,
@@ -41,11 +41,13 @@ import {
   Calendar,
   User,
   MapPin,
-  Phone
+  Phone,
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
 import { Video, ResizeMode, AVPlaybackStatus } from 'expo-av';
+import { useGetAllConsultancyServicesQuery } from '@/redux/features/Consultancy/consultancyApi';
+import Experts from '@/components/Experts';
 
 interface VastuTip {
   title: string;
@@ -90,10 +92,12 @@ const triggerHaptic = () => {
 };
 
 // Mock AI Vastu Service
-const generateVastuAnalysis = async (prompt: string): Promise<VastuAnalysis> => {
+const generateVastuAnalysis = async (
+  prompt: string
+): Promise<VastuAnalysis> => {
   // Enhanced AI Vastu Analysis with better logic
-  await new Promise(resolve => setTimeout(resolve, 1500));
-  
+  await new Promise((resolve) => setTimeout(resolve, 1500));
+
   // Analyze prompt for better vastu analysis
   const lowerPrompt = prompt.toLowerCase();
   let roomType = 'Living Room';
@@ -101,85 +105,107 @@ const generateVastuAnalysis = async (prompt: string): Promise<VastuAnalysis> => 
   let analysis = '';
   let recommendations: string[] = [];
   let score = 8.5;
-  
+
   // Smart analysis based on room type mentioned in prompt
   if (lowerPrompt.includes('bedroom') || lowerPrompt.includes('sleeping')) {
     roomType = 'Bedroom';
     direction = 'South-West';
-    analysis = 'Your bedroom placement follows traditional Vastu principles. The South-West direction is ideal for the master bedroom as it promotes stability and peaceful sleep.';
+    analysis =
+      'Your bedroom placement follows traditional Vastu principles. The South-West direction is ideal for the master bedroom as it promotes stability and peaceful sleep.';
     recommendations = [
       'Sleep with your head pointing South or East for better rest',
       'Avoid placing mirrors directly opposite the bed',
       'Use calming colors like light blue or green for walls',
-      'Keep the room clutter-free for positive energy flow'
+      'Keep the room clutter-free for positive energy flow',
     ];
     score = 9.0;
-  } else if (lowerPrompt.includes('kitchen') || lowerPrompt.includes('cooking')) {
+  } else if (
+    lowerPrompt.includes('kitchen') ||
+    lowerPrompt.includes('cooking')
+  ) {
     roomType = 'Kitchen';
     direction = 'South-East';
-    analysis = 'Your kitchen is well-positioned in the South-East direction (Agni corner), which is highly auspicious for cooking activities according to Vastu principles.';
+    analysis =
+      'Your kitchen is well-positioned in the South-East direction (Agni corner), which is highly auspicious for cooking activities according to Vastu principles.';
     recommendations = [
       'Cook facing East for positive energy while preparing food',
       'Place water source (sink) in the North-East of kitchen',
       'Avoid placing stove and sink directly opposite each other',
-      'Use bright lighting and ensure good ventilation'
+      'Use bright lighting and ensure good ventilation',
     ];
     score = 9.2;
-  } else if (lowerPrompt.includes('office') || lowerPrompt.includes('study') || lowerPrompt.includes('work')) {
+  } else if (
+    lowerPrompt.includes('office') ||
+    lowerPrompt.includes('study') ||
+    lowerPrompt.includes('work')
+  ) {
     roomType = 'Home Office';
     direction = 'North or East';
-    analysis = 'Your home office setup has good potential for productivity. The North or East direction promotes concentration and success in professional endeavors.';
+    analysis =
+      'Your home office setup has good potential for productivity. The North or East direction promotes concentration and success in professional endeavors.';
     recommendations = [
       'Sit facing North or East while working for better focus',
       'Place a small plant in the North-East corner for prosperity',
       'Ensure your back is against a solid wall for support',
-      'Use natural lighting whenever possible'
+      'Use natural lighting whenever possible',
     ];
     score = 8.7;
-  } else if (lowerPrompt.includes('bathroom') || lowerPrompt.includes('toilet')) {
+  } else if (
+    lowerPrompt.includes('bathroom') ||
+    lowerPrompt.includes('toilet')
+  ) {
     roomType = 'Bathroom';
     direction = 'North-West';
-    analysis = 'Your bathroom placement in the North-West direction follows Vastu guidelines. This location helps maintain the positive energy flow in your home.';
+    analysis =
+      'Your bathroom placement in the North-West direction follows Vastu guidelines. This location helps maintain the positive energy flow in your home.';
     recommendations = [
       'Keep the bathroom door closed when not in use',
       'Ensure good ventilation to prevent negative energy buildup',
       'Use light colors for tiles and walls',
-      'Place a small window for natural light if possible'
+      'Place a small window for natural light if possible',
     ];
     score = 8.3;
-  } else if (lowerPrompt.includes('entrance') || lowerPrompt.includes('door') || lowerPrompt.includes('main')) {
+  } else if (
+    lowerPrompt.includes('entrance') ||
+    lowerPrompt.includes('door') ||
+    lowerPrompt.includes('main')
+  ) {
     roomType = 'Main Entrance';
     direction = 'North-East';
-    analysis = 'Your main entrance direction is very auspicious. The North-East entrance brings prosperity and positive energy into your home.';
+    analysis =
+      'Your main entrance direction is very auspicious. The North-East entrance brings prosperity and positive energy into your home.';
     recommendations = [
       'Keep the entrance area well-lit and clean at all times',
       'Avoid any obstructions like poles or trees directly in front',
       'Use bright and welcoming colors for the entrance door',
-      'Place a beautiful nameplate and some plants near the entrance'
+      'Place a beautiful nameplate and some plants near the entrance',
     ];
     score = 9.5;
   } else {
     // Default living room analysis
-    analysis = 'Your living room has good natural light and proper ventilation. The placement follows traditional Vastu principles with some minor adjustments needed.';
+    analysis =
+      'Your living room has good natural light and proper ventilation. The placement follows traditional Vastu principles with some minor adjustments needed.';
     recommendations = [
       'Place the main seating facing East or North for positive energy flow',
       'Add a small plant in the North-East corner to enhance prosperity',
       'Ensure the center of the room remains clutter-free',
-      'Use light colors for walls to maintain positive vibrations'
+      'Use light colors for walls to maintain positive vibrations',
     ];
   }
-  
+
   return {
     id: `analysis-${Date.now()}`,
     roomType,
     direction,
     analysis,
     recommendations,
-    score
+    score,
   };
 };
 
 export default function VastuPage() {
+  const { data, isLoading } = useGetAllConsultancyServicesQuery({});
+  const filteredExperts=data?.data?.filter((expert :any) => expert.category === 'Vastu Expert') || [];
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [isListening, setIsListening] = useState(false);
@@ -189,9 +215,14 @@ export default function VastuPage() {
   const [vastuPrompt, setVastuPrompt] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [selectedAnalysis, setSelectedAnalysis] = useState<VastuAnalysis | null>(null);
-  const [selectedExpert, setSelectedExpert] = useState<VastuExpert | null>(null);
-   const [videoStates, setVideoStates] = useState<Map<number, {isPlaying: boolean}>>(new Map());
+  const [selectedAnalysis, setSelectedAnalysis] =
+    useState<VastuAnalysis | null>(null);
+  const [selectedExpert, setSelectedExpert] = useState<VastuExpert | null>(
+    null
+  );
+  const [videoStates, setVideoStates] = useState<
+    Map<number, { isPlaying: boolean }>
+  >(new Map());
   const recognitionRef = useRef<any>(null);
   const videoRefs = useRef<Map<number, Video | null>>(new Map());
   const initialVastuTips: VastuTip[] = [
@@ -203,8 +234,8 @@ export default function VastuPage() {
         'North-East entrance is considered most auspicious for overall prosperity.',
         'Avoid obstructions like poles or large trees directly in front of the main door.',
         'The entrance door should always open inward, clockwise.',
-        'Keep the entrance area well-lit and clean.'
-      ]
+        'Keep the entrance area well-lit and clean.',
+      ],
     },
     {
       title: 'Bedroom',
@@ -214,8 +245,8 @@ export default function VastuPage() {
         'Master bedroom should ideally be in the South-West direction.',
         'Sleep with your head pointing South or East for peaceful sleep.',
         'Avoid placing mirrors directly opposite the bed.',
-        'Use calming colors for bedroom walls.'
-      ]
+        'Use calming colors for bedroom walls.',
+      ],
     },
     {
       title: 'Kitchen',
@@ -225,8 +256,8 @@ export default function VastuPage() {
         'The South-East corner is ideal for the kitchen (Agni corner).',
         'Cooking stove should be placed such that the cook faces East.',
         'Water source (sink, tap) should be in the North-East of the kitchen.',
-        'Avoid placing the stove and sink directly opposite each other.'
-      ]
+        'Avoid placing the stove and sink directly opposite each other.',
+      ],
     },
     {
       title: 'Bathroom & Toilet',
@@ -236,8 +267,8 @@ export default function VastuPage() {
         'North-West is the preferred direction for bathrooms and toilets.',
         'Toilet seat should ideally face South or North.',
         'Ensure good ventilation and keep the bathroom door closed when not in use.',
-        'Avoid constructing toilets in the North-East or South-West corners.'
-      ]
+        'Avoid constructing toilets in the North-East or South-West corners.',
+      ],
     },
     {
       title: 'Temple Room (Pooja Room)',
@@ -247,8 +278,8 @@ export default function VastuPage() {
         'The North-East (Ishan Kona) is the most sacred direction for a pooja room.',
         'Idols should face West or East.',
         'Keep the pooja room clean, clutter-free, and well-lit.',
-        'Avoid placing the pooja room under a staircase or next to a bathroom.'
-      ]
+        'Avoid placing the pooja room under a staircase or next to a bathroom.',
+      ],
     },
     {
       title: 'Garden & Plants',
@@ -258,9 +289,9 @@ export default function VastuPage() {
         'Plant trees in the South and West directions for shade and protection.',
         'Avoid large trees in the North-East as they block positive energy.',
         'Tulsi plant in the North-East brings prosperity and positive energy.',
-        'Keep the garden well-maintained and free from dead plants.'
-      ]
-    }
+        'Keep the garden well-maintained and free from dead plants.',
+      ],
+    },
   ];
 
   const initialVastuExperts: VastuExpert[] = [
@@ -271,8 +302,9 @@ export default function VastuPage() {
       experience: '20 years',
       rating: 4.9,
       price: '₹2000',
-      image: 'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=400',
-      nextAvailable: 'Available Now'
+      image:
+        'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=400',
+      nextAvailable: 'Available Now',
     },
     {
       id: 2,
@@ -281,8 +313,9 @@ export default function VastuPage() {
       experience: '15 years',
       rating: 4.8,
       price: '₹1500',
-      image: 'https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=400',
-      nextAvailable: 'Tomorrow, 10 AM'
+      image:
+        'https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=400',
+      nextAvailable: 'Tomorrow, 10 AM',
     },
     {
       id: 3,
@@ -291,9 +324,10 @@ export default function VastuPage() {
       experience: '25 years',
       rating: 4.9,
       price: '₹2500',
-      image: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=400',
-      nextAvailable: 'Today, 3 PM'
-    }
+      image:
+        'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=400',
+      nextAvailable: 'Today, 3 PM',
+    },
   ];
 
   const vastuVideosData: VastuVideo[] = [
@@ -301,36 +335,44 @@ export default function VastuPage() {
       id: 1,
       title: 'Introduction to Vastu Shastra Principles',
       duration: '15:30',
-      thumbnail: 'https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg?auto=compress&cs=tinysrgb&w=400',
-      videoUrl: 'https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/360/Big_Buck_Bunny_360_10s_1MB.mp4',
-      views: '1.2M'
+      thumbnail:
+        'https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg?auto=compress&cs=tinysrgb&w=400',
+      videoUrl:
+        'https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/360/Big_Buck_Bunny_360_10s_1MB.mp4',
+      views: '1.2M',
     },
     {
       id: 2,
       title: 'Vastu Guidelines for a Prosperous Home Office',
       duration: '12:45',
-      thumbnail: 'https://images.pexels.com/photos/1571463/pexels-photo-1571463.jpeg?auto=compress&cs=tinysrgb&w=400',
-      videoUrl: 'https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/360/Big_Buck_Bunny_360_10s_1MB.mp4',
-      views: '850K'
+      thumbnail:
+        'https://images.pexels.com/photos/1571463/pexels-photo-1571463.jpeg?auto=compress&cs=tinysrgb&w=400',
+      videoUrl:
+        'https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/360/Big_Buck_Bunny_360_10s_1MB.mp4',
+      views: '850K',
     },
     {
       id: 3,
       title: 'Kitchen Vastu: Direction and Placement Tips',
       duration: '10:20',
-      thumbnail: 'https://images.pexels.com/photos/1571468/pexels-photo-1571468.jpeg?auto=compress&cs=tinysrgb&w=400',
-      videoUrl: 'https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/360/Big_Buck_Bunny_360_10s_1MB.mp4',
-      views: '650K'
-    }
+      thumbnail:
+        'https://images.pexels.com/photos/1571468/pexels-photo-1571468.jpeg?auto=compress&cs=tinysrgb&w=400',
+      videoUrl:
+        'https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/360/Big_Buck_Bunny_360_10s_1MB.mp4',
+      views: '650K',
+    },
   ];
 
-  const [filteredTips, setFilteredTips] = useState<VastuTip[]>(initialVastuTips);
-  const [filteredExperts, setFilteredExperts] = useState<VastuExpert[]>(initialVastuExperts);
+  const [filteredTips, setFilteredTips] =
+    useState<VastuTip[]>(initialVastuTips);
   const [analyses, setAnalyses] = useState<VastuAnalysis[]>([]);
 
   // Initialize speech recognition
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      const SpeechRecognition =
+        (window as any).SpeechRecognition ||
+        (window as any).webkitSpeechRecognition;
       if (SpeechRecognition) {
         const recognition = new SpeechRecognition();
         recognition.continuous = false;
@@ -357,27 +399,28 @@ export default function VastuPage() {
 
   // Initialize video states
   useEffect(() => {
-    const initialStates = new Map<number, {isPlaying: boolean}>();
-    vastuVideosData.forEach(video => initialStates.set(video.id, {isPlaying: false}));
+    const initialStates = new Map<number, { isPlaying: boolean }>();
+    vastuVideosData.forEach((video) =>
+      initialStates.set(video.id, { isPlaying: false })
+    );
     setVideoStates(initialStates);
   }, []);
 
   // Filter content based on search and category
   useEffect(() => {
     const query = searchQuery.toLowerCase();
-    
+
     setFilteredTips(
-      initialVastuTips.filter(tip => 
-        (selectedCategory === 'all' || tip.category === selectedCategory) &&
-        (!query || tip.title.toLowerCase().includes(query) || tip.tips.some(t => t.toLowerCase().includes(query)))
+      initialVastuTips.filter(
+        (tip) =>
+          (selectedCategory === 'all' || tip.category === selectedCategory) &&
+          (!query ||
+            tip.title.toLowerCase().includes(query) ||
+            tip.tips.some((t) => t.toLowerCase().includes(query)))
       )
     );
 
-    setFilteredExperts(
-      initialVastuExperts.filter(expert =>
-        !query || expert.name.toLowerCase().includes(query) || expert.speciality.toLowerCase().includes(query)
-      )
-    );
+   
   }, [searchQuery, selectedCategory]);
 
   const handleVoiceSearch = () => {
@@ -401,16 +444,16 @@ export default function VastuPage() {
 
   const handleGenerateAnalysis = async () => {
     if (!vastuPrompt.trim()) return;
-    
+
     setIsAnalyzing(true);
     setError(null);
     triggerHaptic();
-    
+
     try {
       const analysis = await generateVastuAnalysis(vastuPrompt);
       setVastuPrompt('');
       setShowAIModal(false);
-      setAnalyses(prev => [analysis, ...prev]);
+      setAnalyses((prev) => [analysis, ...prev]);
       setSelectedAnalysis(analysis);
       setShowAnalysisModal(true);
     } catch (err: any) {
@@ -425,9 +468,9 @@ export default function VastuPage() {
     triggerHaptic();
     const currentVideoRef = videoRefs.current.get(videoId);
     if (!currentVideoRef) return;
-  
+
     const isCurrentlyPlaying = videoStates.get(videoId)?.isPlaying || false;
-  
+
     // Pause other videos if we are about to play this one
     if (!isCurrentlyPlaying) {
       for (const [id, ref] of videoRefs.current.entries()) {
@@ -436,8 +479,8 @@ export default function VastuPage() {
         }
       }
     }
-    
-     if (isCurrentlyPlaying) {
+
+    if (isCurrentlyPlaying) {
       await currentVideoRef.pauseAsync();
     } else {
       await currentVideoRef.playAsync();
@@ -449,19 +492,40 @@ export default function VastuPage() {
     setSelectedExpert(expert);
     setShowExpertModal(true);
   };
-    const handlePlaybackStatusUpdate = (videoId: number, status: AVPlaybackStatus) => {
+  const handlePlaybackStatusUpdate = (
+    videoId: number,
+    status: AVPlaybackStatus
+  ) => {
     if (status.isLoaded) {
-      setVideoStates(prev => new Map(prev).set(videoId, { isPlaying: status.isPlaying }));
+      setVideoStates((prev) =>
+        new Map(prev).set(videoId, { isPlaying: status.isPlaying })
+      );
     }
   };
 
   const categories = [
     { id: 'all', name: 'All', icon: <Compass size={20} color="#805AD5" /> },
-    { id: 'entrance', name: 'Entrance', icon: <DoorOpen size={20} color="#805AD5" /> },
+    {
+      id: 'entrance',
+      name: 'Entrance',
+      icon: <DoorOpen size={20} color="#805AD5" />,
+    },
     { id: 'bedroom', name: 'Bedroom', icon: <Bed size={20} color="#805AD5" /> },
-    { id: 'kitchen', name: 'Kitchen', icon: <Kitchen size={20} color="#805AD5" /> },
-    { id: 'bathroom', name: 'Bathroom', icon: <Bath size={20} color="#805AD5" /> },
-    { id: 'temple', name: 'Temple', icon: <Temple size={20} color="#805AD5" /> },
+    {
+      id: 'kitchen',
+      name: 'Kitchen',
+      icon: <Kitchen size={20} color="#805AD5" />,
+    },
+    {
+      id: 'bathroom',
+      name: 'Bathroom',
+      icon: <Bath size={20} color="#805AD5" />,
+    },
+    {
+      id: 'temple',
+      name: 'Temple',
+      icon: <Temple size={20} color="#805AD5" />,
+    },
     { id: 'garden', name: 'Garden', icon: <Plant size={20} color="#805AD5" /> },
   ];
 
@@ -470,7 +534,10 @@ export default function VastuPage() {
       {/* Header */}
       <SafeAreaView edges={['top']} style={styles.headerContainer}>
         <LinearGradient colors={['#805AD5', '#6B46C1']} style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.headerButton}>
+          <TouchableOpacity
+            onPress={() => router.back()}
+            style={styles.headerButton}
+          >
             <ArrowLeft size={24} color="#FFFFFF" />
           </TouchableOpacity>
           <View style={styles.headerContent}>
@@ -482,7 +549,6 @@ export default function VastuPage() {
       </SafeAreaView>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        
         <View style={styles.searchSection}>
           <View style={styles.searchContainer}>
             <View style={styles.searchBar}>
@@ -496,7 +562,10 @@ export default function VastuPage() {
               />
               <TouchableOpacity
                 onPress={handleVoiceSearch}
-                style={[styles.voiceButton, isListening && styles.voiceButtonActive]}
+                style={[
+                  styles.voiceButton,
+                  isListening && styles.voiceButtonActive,
+                ]}
               >
                 {isListening ? (
                   <StopCircle size={18} color="#EF4444" />
@@ -524,7 +593,6 @@ export default function VastuPage() {
             </View>
           )}
         </View>
-
         <View style={styles.categoriesContainer}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             {categories.map((category) => (
@@ -536,39 +604,46 @@ export default function VastuPage() {
                 }}
                 style={[
                   styles.categoryChip,
-                  selectedCategory === category.id && styles.categoryChipActive
+                  selectedCategory === category.id && styles.categoryChipActive,
                 ]}
               >
                 {React.cloneElement(category.icon, {
-                  color: selectedCategory === category.id ? '#FFFFFF' : '#805AD5'
+                  color:
+                    selectedCategory === category.id ? '#FFFFFF' : '#805AD5',
                 })}
-                <Text style={[
-                  styles.categoryText,
-                  selectedCategory === category.id && styles.categoryTextActive
-                ]}>
+                <Text
+                  style={[
+                    styles.categoryText,
+                    selectedCategory === category.id &&
+                      styles.categoryTextActive,
+                  ]}
+                >
                   {category.name}
                 </Text>
               </TouchableOpacity>
             ))}
           </ScrollView>
         </View>
-
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Vastu Videos</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             {vastuVideosData.map((videoData) => (
               <View key={videoData.id} style={styles.videoCard}>
                 <View style={styles.videoContainer}>
-                   <Video
-                    ref={el => { videoRefs.current.set(videoData.id, el); }}
+                  <Video
+                    ref={(el) => {
+                      videoRefs.current.set(videoData.id, el);
+                    }}
                     style={styles.video}
                     source={{ uri: videoData.videoUrl }}
                     posterSource={{ uri: videoData.thumbnail }}
                     usePoster
                     resizeMode={ResizeMode.COVER}
-                    onPlaybackStatusUpdate={(status) => handlePlaybackStatusUpdate(videoData.id, status)}
+                    onPlaybackStatusUpdate={(status) =>
+                      handlePlaybackStatusUpdate(videoData.id, status)
+                    }
                   />
-                    <TouchableOpacity
+                  <TouchableOpacity
                     onPress={() => handleVideoPlayToggle(videoData.id)}
                     style={styles.playButton}
                   >
@@ -580,17 +655,21 @@ export default function VastuPage() {
                   </TouchableOpacity>
                 </View>
                 <View style={styles.videoInfo}>
-                 <Text style={styles.videoTitle}>{videoData.title}</Text>
+                  <Text style={styles.videoTitle}>{videoData.title}</Text>
                   <View style={styles.videoMeta}>
-                    <Text style={styles.videoDuration}>{videoData.duration}</Text>
-                    <Text style={styles.videoViews}>{videoData.views} views</Text>
+                    <Text style={styles.videoDuration}>
+                      {videoData.duration}
+                    </Text>
+                    <Text style={styles.videoViews}>
+                      {videoData.views} views
+                    </Text>
                   </View>
                 </View>
               </View>
             ))}
           </ScrollView>
         </View>
-]
+        ]
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Popular Vastu Tips</Text>
           {filteredTips.length > 0 ? (
@@ -604,50 +683,22 @@ export default function VastuPage() {
                   </View>
                   <View style={styles.tipContent}>
                     {tip.tips.map((t, i) => (
-                      <Text key={i} style={styles.tipText}>• {t}</Text>
+                      <Text key={i} style={styles.tipText}>
+                        • {t}
+                      </Text>
                     ))}
                   </View>
                 </View>
               ))}
             </View>
           ) : (
-            <Text style={styles.emptyText}>No Vastu tips found for your search.</Text>
-          )}
-        </View>]
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Vastu Experts</Text>
-          {filteredExperts.length > 0 ? (
-            <View style={styles.expertsContainer}>
-              {filteredExperts.map((expert) => (
-                <TouchableOpacity
-                  key={expert.id}
-                  style={styles.expertCard}
-                  onPress={() => handleExpertBooking(expert)}
-                  activeOpacity={0.8}
-                >
-                  <Image source={{ uri: expert.image }} style={styles.expertImage} />
-                  <View style={styles.expertInfo}>
-                    <Text style={styles.expertName}>{expert.name}</Text>
-                    <Text style={styles.expertSpeciality}>{expert.speciality}</Text>
-                    <Text style={styles.expertExperience}>{expert.experience}</Text>
-                    <View style={styles.expertMeta}>
-                      <View style={styles.ratingContainer}>
-                        <Star size={16} color="#F59E0B" fill="#F59E0B" />
-                        <Text style={styles.ratingText}>{expert.rating}</Text>
-                      </View>
-                      <Text style={styles.expertPrice}>{expert.price}</Text>
-                    </View>
-                    <Text style={styles.expertAvailability}>{expert.nextAvailable}</Text>
-                  </View>
-                </TouchableOpacity>
-              ))}
-            </View>
-          ) : (
-            <Text style={styles.emptyText}>No Vastu experts found for your search.</Text>
+            <Text style={styles.emptyText}>
+              No Vastu tips found for your search.
+            </Text>
           )}
         </View>
-
-        <View style={styles.bottomSpacing} />
+        ]
+        <Experts data={filteredExperts} title={"Vastu"} isLoading={isLoading} />
       </ScrollView>
 
       {/* AI Analysis Modal */}
@@ -672,7 +723,8 @@ export default function VastuPage() {
 
               <View style={styles.aiModalContent}>
                 <Text style={styles.promptLabel}>
-                  Describe your space for Vastu analysis (room type, direction, layout):
+                  Describe your space for Vastu analysis (room type, direction,
+                  layout):
                 </Text>
                 <TextInput
                   style={styles.promptInput}
@@ -696,16 +748,21 @@ export default function VastuPage() {
                   disabled={isAnalyzing || !vastuPrompt.trim()}
                   style={[
                     styles.generateButton,
-                    (isAnalyzing || !vastuPrompt.trim()) && styles.generateButtonDisabled
+                    (isAnalyzing || !vastuPrompt.trim()) &&
+                      styles.generateButtonDisabled,
                   ]}
                 >
                   {isAnalyzing ? (
                     <>
                       <Loader size={20} color="#FFFFFF" />
-                      <Text style={styles.generateButtonText}>Analyzing...</Text>
+                      <Text style={styles.generateButtonText}>
+                        Analyzing...
+                      </Text>
                     </>
                   ) : (
-                    <Text style={styles.generateButtonText}>Generate Analysis</Text>
+                    <Text style={styles.generateButtonText}>
+                      Generate Analysis
+                    </Text>
                   )}
                 </TouchableOpacity>
               </View>
@@ -730,29 +787,41 @@ export default function VastuPage() {
                   <X size={24} color="#718096" />
                 </TouchableOpacity>
               </View>
-              
+
               <ScrollView style={styles.modalContent}>
                 <View style={styles.analysisContent}>
                   <View style={styles.scoreContainer}>
                     <Text style={styles.scoreLabel}>Vastu Score</Text>
-                    <Text style={styles.scoreValue}>{selectedAnalysis.score}/10</Text>
+                    <Text style={styles.scoreValue}>
+                      {selectedAnalysis.score}/10
+                    </Text>
                   </View>
 
                   <View style={styles.analysisSection}>
-                    <Text style={styles.analysisSectionTitle}>Room Analysis</Text>
-                    <Text style={styles.analysisText}>{selectedAnalysis.analysis}</Text>
+                    <Text style={styles.analysisSectionTitle}>
+                      Room Analysis
+                    </Text>
+                    <Text style={styles.analysisText}>
+                      {selectedAnalysis.analysis}
+                    </Text>
                   </View>
 
                   <View style={styles.analysisSection}>
-                    <Text style={styles.analysisSectionTitle}>Recommendations</Text>
+                    <Text style={styles.analysisSectionTitle}>
+                      Recommendations
+                    </Text>
                     {selectedAnalysis.recommendations.map((rec, index) => (
-                      <Text key={index} style={styles.recommendationText}>• {rec}</Text>
+                      <Text key={index} style={styles.recommendationText}>
+                        • {rec}
+                      </Text>
                     ))}
                   </View>
 
                   <TouchableOpacity style={styles.saveAnalysisButton}>
                     <Heart size={20} color="#805AD5" />
-                    <Text style={styles.saveAnalysisButtonText}>Save Analysis</Text>
+                    <Text style={styles.saveAnalysisButtonText}>
+                      Save Analysis
+                    </Text>
                   </TouchableOpacity>
                 </View>
               </ScrollView>
@@ -777,19 +846,30 @@ export default function VastuPage() {
                   <X size={24} color="#718096" />
                 </TouchableOpacity>
               </View>
-              
+
               <View style={styles.expertModalContent}>
                 <View style={styles.expertDetails}>
-                  <Image source={{ uri: selectedExpert.image }} style={styles.expertModalImage} />
+                  <Image
+                    source={{ uri: selectedExpert.image }}
+                    style={styles.expertModalImage}
+                  />
                   <View style={styles.expertModalInfo}>
-                    <Text style={styles.expertModalName}>{selectedExpert.name}</Text>
-                    <Text style={styles.expertModalSpeciality}>{selectedExpert.speciality}</Text>
+                    <Text style={styles.expertModalName}>
+                      {selectedExpert.name}
+                    </Text>
+                    <Text style={styles.expertModalSpeciality}>
+                      {selectedExpert.speciality}
+                    </Text>
                     <View style={styles.expertModalMeta}>
                       <View style={styles.ratingContainer}>
                         <Star size={16} color="#F59E0B" fill="#F59E0B" />
-                        <Text style={styles.ratingText}>{selectedExpert.rating}</Text>
+                        <Text style={styles.ratingText}>
+                          {selectedExpert.rating}
+                        </Text>
                       </View>
-                      <Text style={styles.expertModalPrice}>{selectedExpert.price}</Text>
+                      <Text style={styles.expertModalPrice}>
+                        {selectedExpert.price}
+                      </Text>
                     </View>
                   </View>
                 </View>
@@ -797,7 +877,9 @@ export default function VastuPage() {
                 <View style={styles.bookingInfo}>
                   <View style={styles.bookingItem}>
                     <Calendar size={20} color="#805AD5" />
-                    <Text style={styles.bookingText}>Next Available: {selectedExpert.nextAvailable}</Text>
+                    <Text style={styles.bookingText}>
+                      Next Available: {selectedExpert.nextAvailable}
+                    </Text>
                   </View>
                   <View style={styles.bookingItem}>
                     <Clock size={20} color="#805AD5" />
@@ -805,7 +887,9 @@ export default function VastuPage() {
                   </View>
                   <View style={styles.bookingItem}>
                     <Phone size={20} color="#805AD5" />
-                    <Text style={styles.bookingText}>Video/Phone Consultation</Text>
+                    <Text style={styles.bookingText}>
+                      Video/Phone Consultation
+                    </Text>
                   </View>
                 </View>
 
@@ -817,7 +901,9 @@ export default function VastuPage() {
                     setShowExpertModal(false);
                   }}
                 >
-                  <Text style={styles.bookButtonText}>Book Now - {selectedExpert.price}</Text>
+                  <Text style={styles.bookButtonText}>
+                    Book Now - {selectedExpert.price}
+                  </Text>
                 </TouchableOpacity>
               </View>
             </View>

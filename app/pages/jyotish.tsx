@@ -35,6 +35,8 @@ import {
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
+import Experts from '@/components/Experts';
+import { useGetAllConsultancyServicesQuery } from '@/redux/features/Consultancy/consultancyApi';
 
 interface JyotishReading {
   id: string;
@@ -217,7 +219,9 @@ const generateJyotishReading = async (prompt: string, type: string): Promise<Jyo
   };
 };
 
-export default function JyotishPage() {
+export default function JyotishPage() { 
+  const { data, isLoading } = useGetAllConsultancyServicesQuery({});
+  const filteredExperts=data?.data?.filter((expert :any) => expert.category === 'Jyotish Expert') || [];
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [isListening, setIsListening] = useState(false);
@@ -560,41 +564,9 @@ export default function JyotishPage() {
         </View>
 
         {/* Jyotish Experts */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Jyotish Experts</Text>
-          <View style={styles.expertsContainer}>
-            {jyotishExperts.map((expert) => (
-              <TouchableOpacity
-                key={expert.id}
-                style={styles.expertCard}
-                onPress={() => handleExpertBooking(expert)}
-                activeOpacity={0.8}
-              >
-                <Image source={{ uri: expert.image }} style={styles.expertImage} />
-                <View style={styles.expertInfo}>
-                  <Text style={styles.expertName}>{expert.name}</Text>
-                  <Text style={styles.expertSpeciality}>{expert.speciality}</Text>
-                  <Text style={styles.expertExperience}>{expert.experience} experience</Text>
-                  
-                  <View style={styles.expertMeta}>
-                    <View style={styles.ratingContainer}>
-                      <Star size={16} color="#F59E0B" fill="#F59E0B" />
-                      <Text style={styles.ratingText}>{expert.rating}</Text>
-                    </View>
-                    <Text style={styles.expertPrice}>৳{expert.price}</Text>
-                  </View>
-                  
-                  <View style={styles.availabilityContainer}>
-                    <Clock size={14} color="#10B981" />
-                    <Text style={styles.availabilityText}>{expert.nextAvailable}</Text>
-                  </View>
-                </View>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
+       
 
-        <View style={styles.bottomSpacing} />
+        <Experts data={filteredExperts} title={"Jyotish"} isLoading={isLoading}/>
       </ScrollView>
 
       {/* AI Reading Modal */}
