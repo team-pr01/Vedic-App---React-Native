@@ -32,6 +32,9 @@ import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { useGetAlCoursesQuery } from '@/redux/features/Course/courseApi';
+import { useGetAllReelsQuery } from '@/redux/features/Reels/reelsApi';
+import YoutubePlayer from 'react-native-youtube-iframe';
+import { getYouTubeVideoId } from '@/utils/getYouTubeVideoId';
 
 interface Course {
   title: string;
@@ -110,6 +113,19 @@ export type TCourse = {
   url: string;
   duration: string;
   category: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+};
+
+export type TReels = {
+  _id: string;
+  title: string;
+  description: string;
+  videoUrl: string;
+  videoSource: string;
+  category: string;
+  tags: string[];
+  createdBy: string;
   createdAt?: Date;
   updatedAt?: Date;
 };
@@ -416,7 +432,8 @@ const QuizModal: React.FC<{
 
 export default function LearnScreen() {
   //   Get all Courses
-  const { data, isLoading } = useGetAlCoursesQuery({});
+  const { data, isLoading: isCourseLoading } = useGetAlCoursesQuery({});
+  const { data: reels, isLoading: isReelsLoading } = useGetAllReelsQuery({});
   const colors = useThemeColors();
   const [activeTab, setActiveTab] = useState<
     'courses' | 'videos' | 'ai' | 'quiz'
@@ -466,17 +483,6 @@ export default function LearnScreen() {
     console.log(`Quiz completed with score: ${score}/${totalQuestions}`);
   };
 
-  const handleContinueLearning = (course: Course) => {
-    triggerHaptic();
-    console.log(
-      'Navigating to course:',
-      course.title,
-      'Last lesson:',
-      course.lastLesson
-    );
-    alert(`Continue learning: ${course.title}`);
-  };
-
   const handleVideoPlay = (video: RealVideo) => {
     triggerHaptic();
     setSelectedVideo(video);
@@ -517,13 +523,14 @@ export default function LearnScreen() {
       setIsSendingMessage(false);
     }, 1500);
   };
+  const [playingCardIndex, setPlayingCardIndex] = useState<number | null>(null);
 
   const renderTabContent = () => {
     switch (activeTab) {
       case 'courses':
         return (
           <View style={styles.tabContent}>
-            {data?.data.map((course:TCourse, index:number) => (
+            {data?.data.map((course: TCourse, index: number) => (
               <View
                 key={index}
                 style={[
@@ -581,7 +588,7 @@ export default function LearnScreen() {
       case 'videos':
         return (
           <View style={styles.tabContent}>
-            {realVideos.map((video, index) => (
+            {reels?.data.map((video: TReels, index: number) => (
               <TouchableOpacity
                 key={index}
                 style={[
@@ -591,21 +598,17 @@ export default function LearnScreen() {
                     shadowColor: colors.cardShadow,
                   },
                 ]}
-                onPress={() => handleVideoPlay(video)}
               >
-                <View style={styles.videoThumbnailContainer}>
-                  <Image
-                    source={{ uri: video.thumbnail }}
-                    style={styles.videoThumbnail}
+                {/* --- Video Player Section --- */}
+                <View style={styles.programImageContainer}>
+                  <YoutubePlayer
+                    height={200}
+                    play={playingCardIndex === index}
+                    videoId={getYouTubeVideoId(video?.videoUrl) || ''}
+                    onChangeState={(state: any) => {
+                      if (state === 'ended') setPlayingCardIndex(null);
+                    }}
                   />
-                  <View style={styles.playOverlay}>
-                    <Play size={24} color="#FFFFFF" fill="#FFFFFF" />
-                  </View>
-                  <View style={styles.videoDuration}>
-                    <Text style={styles.videoDurationText}>
-                      {video.duration}
-                    </Text>
-                  </View>
                 </View>
 
                 <View style={styles.videoInfo}>
@@ -619,15 +622,7 @@ export default function LearnScreen() {
                         { color: colors.secondaryText },
                       ]}
                     >
-                      {video.instructor}
-                    </Text>
-                    <Text
-                      style={[
-                        styles.videoViews,
-                        { color: colors.secondaryText },
-                      ]}
-                    >
-                      {video.views} views
+                      {video.category}
                     </Text>
                   </View>
                 </View>
@@ -1037,6 +1032,10 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F7FAFC',
   },
+  programImageContainer: {
+    position: 'relative',
+    height: 180,
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1223,6 +1222,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#2D3748',
     marginBottom: 8,
+    marginTop: 8,
   },
   videoMeta: {
     flexDirection: 'row',
