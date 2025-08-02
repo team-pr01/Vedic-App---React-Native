@@ -6,32 +6,30 @@ import {
   ScrollView,
   TouchableOpacity,
   TextInput,
-  Image,
   Modal,
   Platform,
+  Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { 
-  Search, 
-  Mic, 
-  CircleStop as StopCircle, 
-  Brain, 
-  Clock, 
-  Star, 
-  ChevronRight, 
-  X, 
-  Loader, 
-  Heart, 
+import {
+  Search,
+  Mic,
+  CircleStop as StopCircle,
+  Brain,
+  Clock,
+  ChevronRight,
+  X,
+  Loader,
   ArrowLeft,
-  ShoppingBag,
-  Chrome as Home,
-  BookOpen,
-  Newspaper,
-  TriangleAlert as AlertTriangle
+  Box,
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
+import YoutubePlayer from 'react-native-youtube-iframe';
+import { getYouTubeVideoId } from '@/utils/getYouTubeVideoId';
+import { useGetAllRecipiesQuery } from '@/redux/features/Recipe/recipeApi';
+import { useGetAllCategoriesQuery } from '@/redux/features/Categories/categoriesApi';
 
 interface Recipe {
   id: string;
@@ -54,8 +52,8 @@ const triggerHaptic = () => {
 // Mock AI Recipe Service
 const generateRecipe = async (prompt: string): Promise<Recipe> => {
   // Enhanced AI Recipe Generation with better logic
-  await new Promise(resolve => setTimeout(resolve, 1500));
-  
+  await new Promise((resolve) => setTimeout(resolve, 1500));
+
   // Analyze prompt for better recipe generation
   const lowerPrompt = prompt.toLowerCase();
   let recipeName = 'AI Generated Recipe';
@@ -64,7 +62,7 @@ const generateRecipe = async (prompt: string): Promise<Recipe> => {
   let cuisine = 'Vedic';
   let difficulty = 'Easy';
   let cookingTime = '25 mins';
-  
+
   // Smart recipe generation based on prompt
   if (lowerPrompt.includes('breakfast') || lowerPrompt.includes('morning')) {
     recipeName = 'AI Generated Morning Sattvic Bowl';
@@ -75,17 +73,20 @@ const generateRecipe = async (prompt: string): Promise<Recipe> => {
       'Honey (1 tbsp)',
       'Milk or plant milk (1/2 cup)',
       'Cardamom powder (pinch)',
-      'Ghee (1 tsp)'
+      'Ghee (1 tsp)',
     ];
     instructions = [
       'Soak oats in milk for 10 minutes.',
       'Heat ghee in a pan and lightly roast the oats.',
       'Add chopped fruits and nuts.',
       'Sprinkle cardamom powder and drizzle honey.',
-      'Serve warm as a nourishing breakfast.'
+      'Serve warm as a nourishing breakfast.',
     ];
     cookingTime = '15 mins';
-  } else if (lowerPrompt.includes('dinner') || lowerPrompt.includes('evening')) {
+  } else if (
+    lowerPrompt.includes('dinner') ||
+    lowerPrompt.includes('evening')
+  ) {
     recipeName = 'AI Generated Evening Sattvic Meal';
     ingredients = [
       'Basmati rice (1 cup)',
@@ -95,7 +96,7 @@ const generateRecipe = async (prompt: string): Promise<Recipe> => {
       'Cumin seeds (1 tsp)',
       'Turmeric (1/2 tsp)',
       'Fresh coriander (2 tbsp)',
-      'Salt to taste'
+      'Salt to taste',
     ];
     instructions = [
       'Wash rice and dal thoroughly.',
@@ -103,7 +104,7 @@ const generateRecipe = async (prompt: string): Promise<Recipe> => {
       'Add vegetables and sauté until tender.',
       'Add rice, dal, turmeric, and water.',
       'Cook until everything is well done.',
-      'Garnish with fresh coriander and serve.'
+      'Garnish with fresh coriander and serve.',
     ];
     cookingTime = '35 mins';
     difficulty = 'Medium';
@@ -116,7 +117,7 @@ const generateRecipe = async (prompt: string): Promise<Recipe> => {
       'Cardamom powder (1/2 tsp)',
       'Almonds and pistachios (2 tbsp)',
       'Ghee (1 tbsp)',
-      'Saffron (few strands)'
+      'Saffron (few strands)',
     ];
     instructions = [
       'Boil milk in a heavy-bottomed pan.',
@@ -124,7 +125,7 @@ const generateRecipe = async (prompt: string): Promise<Recipe> => {
       'Stir occasionally until rice is soft.',
       'Add jaggery and cardamom powder.',
       'Garnish with nuts and saffron.',
-      'Serve warm or chilled.'
+      'Serve warm or chilled.',
     ];
     cookingTime = '45 mins';
     difficulty = 'Medium';
@@ -139,7 +140,7 @@ const generateRecipe = async (prompt: string): Promise<Recipe> => {
       'Cumin seeds (1 tsp)',
       'Fresh herbs (mint, cilantro)',
       'Lemon juice (1 tbsp)',
-      'Salt to taste'
+      'Salt to taste',
     ];
     instructions = [
       'Rinse quinoa thoroughly and cook with 2 cups water until fluffy.',
@@ -148,32 +149,45 @@ const generateRecipe = async (prompt: string): Promise<Recipe> => {
       'Add turmeric and salt, mix well.',
       'Combine cooked quinoa with vegetables.',
       'Garnish with fresh herbs and lemon juice.',
-      'Serve warm as a complete sattvic meal.'
+      'Serve warm as a complete sattvic meal.',
     ];
   }
-  
+
   return {
     id: `ai-recipe-${Date.now()}`,
     name: recipeName,
     category: 'sattvic',
     ingredients,
     instructions,
-    imageUrl: 'https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=400',
+    imageUrl:
+      'https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=400',
     cookingTime,
     difficulty,
-    cuisine
+    cuisine,
   };
 };
 
 export default function FoodPage() {
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('');
+  const { data, isLoading } = useGetAllRecipiesQuery({
+    category: selectedCategory,
+    keyword: searchQuery,
+  });
+  const { data: categoryData } = useGetAllCategoriesQuery({});
+  const filteredCategory = categoryData?.data?.filter(
+    (category: any) => category.areaName === 'recipe'
+  );
+
+  const allCategories = filteredCategory?.map(
+    (category: any) => category.category
+  );
   const [showAIModal, setShowAIModal] = useState(false);
   const [showRecipeModal, setShowRecipeModal] = useState(false);
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
   const [recipePrompt, setRecipePrompt] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [selectedCategory, setSelectedCategory] = useState('all');
   const [isListening, setIsListening] = useState(false);
   const recognitionRef = useRef<any>(null);
 
@@ -182,54 +196,79 @@ export default function FoodPage() {
       id: 'sattvic-khichdi',
       name: 'Sattvic Khichdi',
       category: 'sattvic',
-      ingredients: ['Moong Dal (1/2 cup)', 'Rice (1/2 cup)', 'Ghee (1 tbsp)', 'Cumin Seeds (1 tsp)', 'Turmeric (1/2 tsp)', 'Water (3 cups)', 'Salt to taste'],
+      ingredients: [
+        'Moong Dal (1/2 cup)',
+        'Rice (1/2 cup)',
+        'Ghee (1 tbsp)',
+        'Cumin Seeds (1 tsp)',
+        'Turmeric (1/2 tsp)',
+        'Water (3 cups)',
+        'Salt to taste',
+      ],
       instructions: [
         'Wash rice and dal thoroughly.',
         'Heat ghee in a pressure cooker.',
         'Add cumin seeds and let them crackle.',
         'Add rice, dal, turmeric, and salt.',
         'Add water and pressure cook for 3-4 whistles.',
-        'Let pressure release naturally. Serve hot with a dollop of ghee.'
+        'Let pressure release naturally. Serve hot with a dollop of ghee.',
       ],
-      imageUrl: 'https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=400',
+      imageUrl:
+        'https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=400',
       cookingTime: '30 mins',
       difficulty: 'Easy',
-      cuisine: 'Vedic'
+      cuisine: 'Vedic',
     },
     {
       id: 'prasad-halwa',
       name: 'Prasad Halwa',
       category: 'prasad',
-      ingredients: ['Semolina (1 cup)', 'Ghee (1/2 cup)', 'Sugar (1 cup)', 'Water (2 cups)', 'Cardamom powder (1/2 tsp)', 'Mixed Nuts (2 tbsp, chopped)'],
+      ingredients: [
+        'Semolina (1 cup)',
+        'Ghee (1/2 cup)',
+        'Sugar (1 cup)',
+        'Water (2 cups)',
+        'Cardamom powder (1/2 tsp)',
+        'Mixed Nuts (2 tbsp, chopped)',
+      ],
       instructions: [
         'Heat ghee in a pan and roast semolina on low heat until golden brown and aromatic.',
         'In a separate saucepan, bring water and sugar to a boil to make sugar syrup.',
         'Gradually add the hot sugar syrup to the roasted semolina, stirring continuously to avoid lumps.',
         'Add cardamom powder and cook until the halwa thickens and leaves the sides of the pan.',
-        'Garnish with chopped nuts and serve warm as prasad.'
+        'Garnish with chopped nuts and serve warm as prasad.',
       ],
-      imageUrl: 'https://images.pexels.com/photos/1099680/pexels-photo-1099680.jpeg?auto=compress&cs=tinysrgb&w=400',
+      imageUrl:
+        'https://images.pexels.com/photos/1099680/pexels-photo-1099680.jpeg?auto=compress&cs=tinysrgb&w=400',
       cookingTime: '25 mins',
       difficulty: 'Medium',
-      cuisine: 'Temple'
+      cuisine: 'Temple',
     },
     {
       id: 'ayurvedic-tea',
       name: 'Ayurvedic Herbal Tea',
       category: 'ayurvedic',
-      ingredients: ['Water (2 cups)', 'Fresh Ginger (1 inch, grated)', 'Tulsi (Holy Basil) leaves (5-6)', 'Cardamom pods (2, crushed)', 'Cinnamon stick (1 inch)', 'Honey or Jaggery to taste (optional)'],
+      ingredients: [
+        'Water (2 cups)',
+        'Fresh Ginger (1 inch, grated)',
+        'Tulsi (Holy Basil) leaves (5-6)',
+        'Cardamom pods (2, crushed)',
+        'Cinnamon stick (1 inch)',
+        'Honey or Jaggery to taste (optional)',
+      ],
       instructions: [
         'Bring water to a boil in a saucepan.',
         'Add grated ginger, tulsi leaves, crushed cardamom, and cinnamon stick.',
         'Simmer on low heat for 5-7 minutes to let the flavors infuse.',
         'Strain the tea into cups.',
-        'Add honey or jaggery if desired. Serve hot.'
+        'Add honey or jaggery if desired. Serve hot.',
       ],
-      imageUrl: 'https://images.pexels.com/photos/1638280/pexels-photo-1638280.jpeg?auto=compress&cs=tinysrgb&w=400',
+      imageUrl:
+        'https://images.pexels.com/photos/1638280/pexels-photo-1638280.jpeg?auto=compress&cs=tinysrgb&w=400',
       cookingTime: '10 mins',
       difficulty: 'Easy',
-      cuisine: 'Ayurvedic'
-    }
+      cuisine: 'Ayurvedic',
+    },
   ];
 
   const [recipes, setRecipes] = useState<Recipe[]>(initialRecipes);
@@ -237,7 +276,9 @@ export default function FoodPage() {
   // Initialize speech recognition
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      const SpeechRecognition =
+        (window as any).SpeechRecognition ||
+        (window as any).webkitSpeechRecognition;
       if (SpeechRecognition) {
         const recognition = new SpeechRecognition();
         recognition.continuous = false;
@@ -283,16 +324,16 @@ export default function FoodPage() {
 
   const handleGenerateRecipe = async () => {
     if (!recipePrompt.trim()) return;
-    
+
     setIsGenerating(true);
     setError(null);
     triggerHaptic();
-    
+
     try {
       const recipe = await generateRecipe(recipePrompt);
       setRecipePrompt('');
       setShowAIModal(false);
-      setRecipes(prev => [recipe, ...prev.filter(r => r.id !== recipe.id)]);
+      setRecipes((prev) => [recipe, ...prev.filter((r) => r.id !== recipe.id)]);
       setSelectedRecipe(recipe);
       setShowRecipeModal(true);
     } catch (err: any) {
@@ -303,31 +344,23 @@ export default function FoodPage() {
     }
   };
 
-  const categories = [
-    { id: 'all', name: 'All', icon: '🍽️' },
-    { id: 'sattvic', name: 'Sattvic', icon: '🌱' },
-    { id: 'prasad', name: 'Prasad', icon: '🍲' },
-    { id: 'ayurvedic', name: 'Ayurvedic', icon: '🌿' },
-    { id: 'fasting', name: 'Fasting', icon: '🍚' }
-  ];
-
-  const filteredRecipes = recipes.filter(recipe => 
-    (selectedCategory === 'all' || recipe.category.toLowerCase() === selectedCategory) &&
-    (!searchQuery || recipe.name.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
-
   const handleViewRecipe = (recipe: Recipe) => {
     triggerHaptic();
     setSelectedRecipe(recipe);
     setShowRecipeModal(true);
   };
 
+  const [playingCardIndex, setPlayingCardIndex] = useState<number | null>(null);
+
   return (
     <View style={styles.container}>
       {/* Header */}
       <SafeAreaView edges={['top']} style={styles.headerContainer}>
         <LinearGradient colors={['#38A169', '#2F855A']} style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.headerButton}>
+          <TouchableOpacity
+            onPress={() => router.back()}
+            style={styles.headerButton}
+          >
             <ArrowLeft size={24} color="#FFFFFF" />
           </TouchableOpacity>
           <View style={styles.headerContent}>
@@ -353,7 +386,10 @@ export default function FoodPage() {
               />
               <TouchableOpacity
                 onPress={handleVoiceSearch}
-                style={[styles.voiceButton, isListening && styles.voiceButtonActive]}
+                style={[
+                  styles.voiceButton,
+                  isListening && styles.voiceButtonActive,
+                ]}
               >
                 {isListening ? (
                   <StopCircle size={18} color="#EF4444" />
@@ -385,24 +421,44 @@ export default function FoodPage() {
         {/* Categories */}
         <View style={styles.categoriesContainer}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            {categories.map((category) => (
+            <TouchableOpacity
+              onPress={() => {
+                triggerHaptic();
+                setSelectedCategory('');
+              }}
+              style={[
+                styles.categoryChip,
+                selectedCategory === '' && styles.categoryChipActive,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.categoryText,
+                  selectedCategory === '' && styles.categoryTextActive,
+                ]}
+              >
+                All
+              </Text>
+            </TouchableOpacity>
+            {allCategories?.map((category: string) => (
               <TouchableOpacity
-                key={category.id}
+                key={category}
                 onPress={() => {
                   triggerHaptic();
-                  setSelectedCategory(category.id);
+                  setSelectedCategory(category);
                 }}
                 style={[
                   styles.categoryChip,
-                  selectedCategory === category.id && styles.categoryChipActive
+                  selectedCategory === category && styles.categoryChipActive,
                 ]}
               >
-                <Text style={styles.categoryIcon}>{category.icon}</Text>
-                <Text style={[
-                  styles.categoryText,
-                  selectedCategory === category.id && styles.categoryTextActive
-                ]}>
-                  {category.name}
+                <Text
+                  style={[
+                    styles.categoryText,
+                    selectedCategory === category && styles.categoryTextActive,
+                  ]}
+                >
+                  {category}
                 </Text>
               </TouchableOpacity>
             ))}
@@ -411,36 +467,53 @@ export default function FoodPage() {
 
         {/* Recipes Grid */}
         <View style={styles.recipesContainer}>
-          {filteredRecipes.length === 0 ? (
+          {data?.data?.length === 0 ? (
             <View style={styles.emptyState}>
               <Text style={styles.emptyStateTitle}>No recipes found</Text>
               <Text style={styles.emptyStateText}>
-                Try a different search or category, or use the AI Recipe generator!
+                Try a different search or category, or use the AI Recipe
+                generator!
               </Text>
             </View>
           ) : (
-            filteredRecipes.map((recipe) => (
+            data?.data?.map((recipe: any, index: number) => (
               <TouchableOpacity
-                key={recipe.id}
+                key={recipe._id}
                 style={styles.recipeCard}
                 onPress={() => handleViewRecipe(recipe)}
                 activeOpacity={0.8}
               >
-                <Image source={{ uri: recipe.imageUrl }} style={styles.recipeImage} />
+                {/* --- Video Player Section --- */}
+                <View style={styles.programImageContainer}>
+                  <YoutubePlayer
+                    height={200}
+                    play={playingCardIndex === index}
+                    videoId={getYouTubeVideoId(recipe?.videoUrl) || ''}
+                    onChangeState={(state: any) => {
+                      if (state === 'ended') setPlayingCardIndex(null);
+                    }}
+                  />
+                </View>
                 <View style={styles.recipeContent}>
                   <Text style={styles.recipeTitle}>{recipe.name}</Text>
                   <View style={styles.recipeMeta}>
                     <View style={styles.metaItem}>
                       <Clock size={16} color="#718096" />
-                      <Text style={styles.metaText}>{recipe.cookingTime}</Text>
+                      <Text style={styles.metaText}>{recipe.duration}</Text>
                     </View>
                     <View style={styles.metaItem}>
-                      <Star size={16} color="#F59E0B" />
-                      <Text style={styles.metaText}>{recipe.difficulty}</Text>
+                      <Box size={16} color="#F59E0B" />
+                      <Text style={styles.metaText}>{recipe.category}</Text>
                     </View>
                   </View>
                   <TouchableOpacity
-                    onPress={() => handleViewRecipe(recipe)}
+                    onPress={() => {
+                      if (recipe?.videoUrl) {
+                        Linking.openURL(recipe?.videoUrl);
+                      } else {
+                        console.warn('No video URL found for this recipe.');
+                      }
+                    }}
                     style={styles.viewButton}
                   >
                     <Text style={styles.viewButtonText}>View Recipe</Text>
@@ -454,58 +527,6 @@ export default function FoodPage() {
 
         <View style={styles.bottomSpacing} />
       </ScrollView>
-
-      {/* Recipe Modal */}
-      {showRecipeModal && selectedRecipe && (
-        <Modal
-          visible={showRecipeModal}
-          transparent
-          animationType="slide"
-          onRequestClose={() => setShowRecipeModal(false)}
-        >
-          <View style={styles.modalOverlay}>
-            <View style={styles.recipeModal}>
-              <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>{selectedRecipe.name}</Text>
-                <TouchableOpacity onPress={() => setShowRecipeModal(false)}>
-                  <X size={24} color="#718096" />
-                </TouchableOpacity>
-              </View>
-              
-              <ScrollView style={styles.modalContent}>
-                <Image source={{ uri: selectedRecipe.imageUrl }} style={styles.modalImage} />
-                
-                <View style={styles.recipeDetails}>
-                  <View style={styles.recipeInfo}>
-                    <Text style={styles.infoLabel}>Cuisine: <Text style={styles.infoValue}>{selectedRecipe.cuisine}</Text></Text>
-                    <Text style={styles.infoLabel}>Cooking Time: <Text style={styles.infoValue}>{selectedRecipe.cookingTime}</Text></Text>
-                    <Text style={styles.infoLabel}>Difficulty: <Text style={styles.infoValue}>{selectedRecipe.difficulty}</Text></Text>
-                  </View>
-
-                  <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Ingredients:</Text>
-                    {selectedRecipe.ingredients.map((ingredient, index) => (
-                      <Text key={index} style={styles.listItem}>• {ingredient}</Text>
-                    ))}
-                  </View>
-
-                  <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Instructions:</Text>
-                    {selectedRecipe.instructions.map((instruction, index) => (
-                      <Text key={index} style={styles.listItem}>{index + 1}. {instruction}</Text>
-                    ))}
-                  </View>
-
-                  <TouchableOpacity style={styles.saveButton}>
-                    <Heart size={20} color="#EF4444" />
-                    <Text style={styles.saveButtonText}>Save Recipe</Text>
-                  </TouchableOpacity>
-                </View>
-              </ScrollView>
-            </View>
-          </View>
-        </Modal>
-      )}
 
       {/* AI Modal */}
       {showAIModal && (
@@ -529,7 +550,8 @@ export default function FoodPage() {
 
               <View style={styles.aiModalContent}>
                 <Text style={styles.promptLabel}>
-                  Describe the recipe you want (e.g., ingredients, cuisine, type):
+                  Describe the recipe you want (e.g., ingredients, cuisine,
+                  type):
                 </Text>
                 <TextInput
                   style={styles.promptInput}
@@ -553,16 +575,21 @@ export default function FoodPage() {
                   disabled={isGenerating || !recipePrompt.trim()}
                   style={[
                     styles.generateButton,
-                    (isGenerating || !recipePrompt.trim()) && styles.generateButtonDisabled
+                    (isGenerating || !recipePrompt.trim()) &&
+                      styles.generateButtonDisabled,
                   ]}
                 >
                   {isGenerating ? (
                     <>
                       <Loader size={20} color="#FFFFFF" />
-                      <Text style={styles.generateButtonText}>Generating...</Text>
+                      <Text style={styles.generateButtonText}>
+                        Generating...
+                      </Text>
                     </>
                   ) : (
-                    <Text style={styles.generateButtonText}>Generate Recipe</Text>
+                    <Text style={styles.generateButtonText}>
+                      Generate Recipe
+                    </Text>
                   )}
                 </TouchableOpacity>
               </View>
@@ -575,6 +602,9 @@ export default function FoodPage() {
 }
 
 const styles = StyleSheet.create({
+  programImageContainer: {
+    height: 180,
+  },
   container: {
     flex: 1,
     backgroundColor: '#F7FAFC',
@@ -744,6 +774,7 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   recipeTitle: {
+    marginTop: 10,
     fontSize: 18,
     fontWeight: 'bold',
     color: '#2D3748',
