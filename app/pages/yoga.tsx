@@ -6,7 +6,6 @@ import {
   ScrollView,
   TouchableOpacity,
   TextInput,
-  Platform,
   ActivityIndicator,
 } from 'react-native';
 import { Search } from 'lucide-react-native';
@@ -61,7 +60,7 @@ export default function YogaPage() {
     setFilteredPrograms(programsToFilter);
   }, [searchQuery, selectedLevel, data]);
 
-  if (isLoading) {
+  if (isLoading || isExpertsLoading) {
     return (
       <View style={[styles.container, styles.loaderContainer]}>
         <ActivityIndicator size="large" color="#10B981" />

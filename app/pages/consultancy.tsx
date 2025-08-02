@@ -11,8 +11,6 @@ import {
   Platform,
   ActivityIndicator,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
 import {
   Search,
   Mic,
@@ -23,35 +21,20 @@ import {
   ChevronRight,
   X,
   Loader,
-  Heart,
-  ArrowLeft,
-  Filter,
   MessageSquare,
-  Calendar,
   Phone,
   Video,
   CreditCard,
   CircleCheck as CheckCircle,
   TriangleAlert as AlertTriangle,
-  User,
-  MapPin,
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
 import { useGetAllConsultancyServicesQuery } from '@/redux/features/Consultancy/consultancyApi';
 import { TConsultancyService } from '@/types';
 import { useGetAllCategoriesQuery } from '@/redux/features/Categories/categoriesApi';
-
-interface ConsultationRequest {
-  id: string;
-  doctorId: number;
-  patientName: string;
-  issue: string;
-  preferredTime: string;
-  consultationType: 'video' | 'phone' | 'chat';
-  urgency: 'low' | 'medium' | 'high';
-  aiRecommendations: string[];
-}
+import ConsultancyHeader from '@/components/ConsultancyPage/ConsultancyHeader';
+import NoData from '@/components/Reusable/NoData/NoData';
 
 const triggerHaptic = () => {
   if (Platform.OS !== 'web') {
@@ -150,28 +133,6 @@ const generateConsultationRecommendations = async (
   return recommendations;
 };
 
-// Mock Payment Service
-const processPayment = async (
-  amount: string,
-  method: string
-): Promise<boolean> => {
-  await new Promise((resolve) => setTimeout(resolve, 2000));
-  return Math.random() > 0.1; // 90% success rate
-};
-
-// Bkash and Nagad SVG Icons
-const BkashIcon = ({ size = 24, color = '#E91E63' }) => (
-  <View style={{ width: size, height: size }}>
-    <Text style={{ fontSize: size * 0.8, color, fontWeight: 'bold' }}>bK</Text>
-  </View>
-);
-
-const NagadIcon = ({ size = 24, color = '#F58220' }) => (
-  <View style={{ width: size, height: size }}>
-    <Text style={{ fontSize: size * 0.8, color, fontWeight: 'bold' }}>N</Text>
-  </View>
-);
-
 export default function ConsultancyPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
@@ -187,7 +148,7 @@ export default function ConsultancyPage() {
   const allCategories = filteredCategory?.map(
     (category: any) => category.category
   );
-  
+
   const categoryNames = categoryData?.data?.map((item: any) => item?.category);
   const [isListening, setIsListening] = useState(false);
   const [showAIModal, setShowAIModal] = useState(false);
@@ -213,10 +174,6 @@ export default function ConsultancyPage() {
   const [paymentError, setPaymentError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const recognitionRef = useRef<any>(null);
-
-  const [filteredDoctors, setFilteredDoctors] = useState<TConsultancyService[]>(
-    []
-  );
 
   // Initialize speech recognition
   useEffect(() => {
@@ -247,23 +204,6 @@ export default function ConsultancyPage() {
       }
     }
   }, []);
-
-  // Filter doctors based on search and category
-  useEffect(() => {
-    const query = searchQuery.toLowerCase();
-
-    setFilteredDoctors(
-      data?.data.filter(
-        (doctor: TConsultancyService) =>
-          (selectedCategory === 'all' ||
-            doctor.category.toLowerCase() === selectedCategory.toLowerCase()) &&
-          (!query ||
-            doctor.name.toLowerCase().includes(query) ||
-            doctor.specialty.toLowerCase().includes(query) ||
-            doctor.category.toLowerCase().includes(query))
-      )
-    );
-  }, [searchQuery, selectedCategory]);
 
   const handleVoiceSearch = () => {
     triggerHaptic();
@@ -306,112 +246,16 @@ export default function ConsultancyPage() {
     }
   };
 
-  const handleBookConsultation = (doctor: TConsultancyService) => {
-    triggerHaptic();
-    setSelectedDoctor(doctor);
-    setShowBookingModal(true);
-    setError(null);
-    setAiRecommendations([]);
-    setConsultationIssue('');
-    setPatientName('');
-    setPreferredTime('');
-  };
-
-  const handleProceedToPayment = () => {
-    if (
-      !patientName.trim() ||
-      !consultationIssue.trim() ||
-      !preferredTime.trim()
-    ) {
-      setError('Please fill in all required fields.');
-      return;
-    }
-
-    triggerHaptic();
-    setShowBookingModal(false);
-    setShowPaymentModal(true);
-    setPaymentError(null);
-    setSelectedPaymentMethod(null);
-  };
-
-  const handlePayment = async () => {
-    if (!selectedPaymentMethod || !selectedDoctor) return;
-
-    setIsProcessingPayment(true);
-    setPaymentError(null);
-    triggerHaptic();
-
-    try {
-      const success = await processPayment(
-        selectedDoctor.fees,
-        selectedPaymentMethod
-      );
-      if (success) {
-        setShowPaymentModal(false);
-        setShowSuccessModal(true);
-      } else {
-        throw new Error('Payment failed. Please try again.');
-      }
-    } catch (err: any) {
-      console.error('Payment error:', err);
-      setPaymentError(err.message || 'Payment failed. Please try again.');
-    } finally {
-      setIsProcessingPayment(false);
-    }
-  };
-
-  const consultationTypeOptions = [
-    {
-      id: 'video',
-      name: 'Video Call',
-      icon: <Video size={20} color="#3B82F6" />,
-    },
-    {
-      id: 'phone',
-      name: 'Phone Call',
-      icon: <Phone size={20} color="#10B981" />,
-    },
-    {
-      id: 'chat',
-      name: 'Chat',
-      icon: <MessageSquare size={20} color="#8B5CF6" />,
-    },
-  ];
-
   const urgencyOptions = [
     { id: 'low', name: 'Low', color: '#10B981' },
     { id: 'medium', name: 'Medium', color: '#F59E0B' },
     { id: 'high', name: 'High', color: '#EF4444' },
   ];
 
-  const paymentMethods = [
-    {
-      id: 'card',
-      name: 'Credit/Debit Card',
-      icon: <CreditCard size={20} color="#4F46E5" />,
-    },
-    { id: 'bkash', name: 'bKash', icon: <BkashIcon size={20} /> },
-    { id: 'nagad', name: 'Nagad', icon: <NagadIcon size={20} /> },
-  ];
-
   return (
     <View style={styles.container}>
       {/* Header */}
-      <SafeAreaView edges={['top']} style={styles.headerContainer}>
-        <LinearGradient colors={['#DD6B20', '#C05621']} style={styles.header}>
-          <TouchableOpacity
-            onPress={() => router.back()}
-            style={styles.headerButton}
-          >
-            <ArrowLeft size={24} color="#FFFFFF" />
-          </TouchableOpacity>
-          <View style={styles.headerContent}>
-            <Text style={styles.headerTitle}>Consultancy Services</Text>
-            <Text style={styles.headerSubtitle}>পরামর্শ সেবা</Text>
-          </View>
-          <View style={styles.headerPlaceholder} />
-        </LinearGradient>
-      </SafeAreaView>
+      <ConsultancyHeader />
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Search and AI Section */}
@@ -524,7 +368,6 @@ export default function ConsultancyPage() {
                 <TouchableOpacity
                   key={doctor._id}
                   style={styles.doctorCard}
-                  onPress={() => handleBookConsultation(doctor)}
                   activeOpacity={0.8}
                 >
                   <Image
@@ -569,14 +412,9 @@ export default function ConsultancyPage() {
               ))}
             </View>
           ) : (
-            <View style={styles.emptyState}>
-              <Text style={styles.emptyStateTitle}>No experts found</Text>
-              <Text style={styles.emptyStateText}>
-                Try adjusting your search or category filters.
-              </Text>
-            </View>
+            <NoData message="No experts found" />
           )}
-        </View> 
+        </View>
 
         <View style={styles.bottomSpacing} />
       </ScrollView>
@@ -738,7 +576,7 @@ export default function ConsultancyPage() {
                   />
                 </View>
 
-                <View style={styles.formSection}>
+                {/* <View style={styles.formSection}>
                   <Text style={styles.formLabel}>Consultation Type</Text>
                   <View style={styles.optionsContainer}>
                     {consultationTypeOptions.map((option) => (
@@ -767,7 +605,7 @@ export default function ConsultancyPage() {
                       </TouchableOpacity>
                     ))}
                   </View>
-                </View>
+                </View> */}
 
                 <View style={styles.formSection}>
                   <Text style={styles.formLabel}>Urgency Level</Text>
@@ -808,7 +646,7 @@ export default function ConsultancyPage() {
                 )}
 
                 <TouchableOpacity
-                  onPress={handleProceedToPayment}
+                  // onPress={handleProceedToPayment}
                   style={styles.proceedButton}
                 >
                   <Text style={styles.proceedButtonText}>
@@ -849,7 +687,7 @@ export default function ConsultancyPage() {
                   </Text>
                 </View>
 
-                <View style={styles.paymentMethodsSection}>
+                {/* <View style={styles.paymentMethodsSection}>
                   <Text style={styles.paymentMethodsTitle}>
                     Select Payment Method
                   </Text>
@@ -875,7 +713,7 @@ export default function ConsultancyPage() {
                       )}
                     </TouchableOpacity>
                   ))}
-                </View>
+                </View> */}
 
                 {paymentError && (
                   <View style={styles.errorContainer}>
@@ -885,7 +723,7 @@ export default function ConsultancyPage() {
                 )}
 
                 <TouchableOpacity
-                  onPress={handlePayment}
+                  // onPress={handlePayment}
                   disabled={!selectedPaymentMethod || isProcessingPayment}
                   style={[
                     styles.payButton,
@@ -949,35 +787,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F7FAFC',
-  },
-  headerContainer: {
-    backgroundColor: '#DD6B20',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-  },
-  headerButton: {
-    padding: 4,
-  },
-  headerContent: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-  },
-  headerSubtitle: {
-    fontSize: 14,
-    color: '#FED7AA',
-    marginTop: 2,
-  },
-  headerPlaceholder: {
-    width: 32,
   },
   content: {
     flex: 1,
@@ -1178,7 +987,7 @@ const styles = StyleSheet.create({
     color: '#2D3748',
     marginBottom: 8,
   },
-  
+
   StateText: {
     fontSize: 14,
     color: '#718096',
