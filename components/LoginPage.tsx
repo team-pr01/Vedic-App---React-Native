@@ -9,21 +9,31 @@ import {
   Alert,
 } from 'react-native';
 import { useTranslate } from '@/hooks/useTranslate';
-import { Mail, Lock, ArrowLeft, Loader, CircleAlert as AlertCircle, Eye, EyeOff } from 'lucide-react-native';
+import {
+  Mail,
+  Lock,
+  ArrowLeft,
+  Loader,
+  CircleAlert as AlertCircle,
+  Eye,
+  EyeOff,
+} from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { useDispatch } from 'react-redux';
 import { setUser } from '@/redux/features/Auth/authSlice';
 import { useLoginMutation } from '@/redux/features/Auth/authApi';
-
 
 interface LoginPageProps {
   onSwitchToSignup: () => void;
   onBackToMain: () => void;
 }
 
-export default function LoginPage({ onSwitchToSignup, onBackToMain }: LoginPageProps) {
+export default function LoginPage({
+  onSwitchToSignup,
+  onBackToMain,
+}: LoginPageProps) {
   const t = useTranslate();
-    const [email, setEmail] = useState('prerna@gmail.com');
+  const [email, setEmail] = useState('prerna@gmail.com');
   const [password, setPassword] = useState('11111111');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -49,18 +59,17 @@ export default function LoginPage({ onSwitchToSignup, onBackToMain }: LoginPageP
       return;
     }
 
-    setIsSubmitting(true); 
+    setIsSubmitting(true);
     setError(null);
     triggerHaptic();
 
-  
-   try {
+    try {
       const res = await login({ email, password }).unwrap();
       const { accessToken, user } = res.data;
 
       dispatch(setUser({ token: accessToken, user }));
 
-      Alert.alert("Login Success", `Welcome ${user.name}`);
+      Alert.alert('Login Success', `Welcome ${user.name}`);
     } catch (err: any) {
       console.error('Login Error:', err);
       setError(err.message || 'Login failed. Please try again.');
@@ -73,7 +82,7 @@ export default function LoginPage({ onSwitchToSignup, onBackToMain }: LoginPageP
   //   triggerHaptic();
   //   setError(null);
   //   setIsSubmitting(true);
-    
+
   //   try {
   //     await loginWithGoogle();
   //   } catch (err: any) {
@@ -113,11 +122,15 @@ export default function LoginPage({ onSwitchToSignup, onBackToMain }: LoginPageP
     <View style={styles.container}>
       <TouchableOpacity onPress={onBackToMain} style={styles.backButton}>
         <ArrowLeft size={20} color="#FF6F00" />
-        <Text style={styles.backButtonText}>{t('backToOptions', 'Back to options')}</Text>
+        <Text style={styles.backButtonText}>
+          {t('backToOptions', 'Back to options')}
+        </Text>
       </TouchableOpacity>
 
       <Text style={styles.title}>{t('welcomeBack', 'Welcome Back')}</Text>
-      <Text style={styles.subtitle}>{t('signInToContinue', 'Sign in to continue your spiritual journey')}</Text>
+      <Text style={styles.subtitle}>
+        {t('signInToContinue', 'Sign in to continue your spiritual journey')}
+      </Text>
 
       {error && (
         <View style={styles.errorContainer}>
@@ -172,29 +185,35 @@ export default function LoginPage({ onSwitchToSignup, onBackToMain }: LoginPageP
           style={styles.forgotPasswordButton}
           onPress={() => setShowForgotPassword(true)}
         >
-          <Text style={styles.forgotPasswordText}>{t('forgotPassword', 'Forgot Password?')}</Text>
+          <Text style={styles.forgotPasswordText}>
+            {t('forgotPassword', 'Forgot Password?')}
+          </Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={[
             styles.loginButton,
-            (isSubmitting || isLoading) && styles.loginButtonDisabled
+            (isSubmitting || isLoading) && styles.loginButtonDisabled,
           ]}
           onPress={handleLogin}
           disabled={isSubmitting || isLoading}
         >
-          {(isSubmitting || isLoading) ? (
+          {isSubmitting || isLoading ? (
             <Loader size={20} color="#FFFFFF" />
           ) : null}
           <Text style={styles.loginButtonText}>
-            {isSubmitting ? t('signingIn', 'Signing In...') : t('signIn', 'Sign In')}
+            {isSubmitting
+              ? t('signingIn', 'Signing In...')
+              : t('signIn', 'Sign In')}
           </Text>
         </TouchableOpacity>
       </View>
 
       <View style={styles.divider}>
         <View style={styles.dividerLine} />
-        <Text style={styles.dividerText}>{t('orContinueWith', 'Or continue with')}</Text>
+        <Text style={styles.dividerText}>
+          {t('orContinueWith', 'Or continue with')}
+        </Text>
         <View style={styles.dividerLine} />
       </View>
 
@@ -212,9 +231,13 @@ export default function LoginPage({ onSwitchToSignup, onBackToMain }: LoginPageP
       </TouchableOpacity> */}
 
       <View style={styles.signupPrompt}>
-        <Text style={styles.signupPromptText}>{t('dontHaveAccount', "Don't have an account? ")} </Text>
+        <Text style={styles.signupPromptText}>
+          {t('dontHaveAccount', "Don't have an account? ")}{' '}
+        </Text>
         <TouchableOpacity onPress={onSwitchToSignup}>
-          <Text style={styles.signupLink}>{t('signUpHere', 'Sign up here')}</Text>
+          <Text style={styles.signupLink}>
+            {t('signUpHere', 'Sign up here')}
+          </Text>
         </TouchableOpacity>
       </View>
 
@@ -222,22 +245,31 @@ export default function LoginPage({ onSwitchToSignup, onBackToMain }: LoginPageP
       {showForgotPassword && (
         <View style={styles.modalOverlay}>
           <View style={styles.modal}>
-            <Text style={styles.modalTitle}>{t('resetPasswordTitle', 'Reset Password')}</Text>
+            <Text style={styles.modalTitle}>
+              {t('resetPasswordTitle', 'Reset Password')}
+            </Text>
             <Text style={styles.modalText}>
-             {t('resetPasswordInstructions', "Enter your email address and we'll send you instructions to reset your password.")}
+              {t(
+                'resetPasswordInstructions',
+                "Enter your email address and we'll send you instructions to reset your password."
+              )}
             </Text>
             <View style={styles.modalButtons}>
               <TouchableOpacity
                 style={styles.modalCancelButton}
                 onPress={() => setShowForgotPassword(false)}
               >
-                <Text style={styles.modalCancelText}>{t('cancel', 'Cancel')}</Text>
+                <Text style={styles.modalCancelText}>
+                  {t('cancel', 'Cancel')}
+                </Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.modalConfirmButton}
                 // onPress={handleForgotPassword}
               >
-                <Text style={styles.modalConfirmText}>{t('sendResetEmail', 'Send Reset Email')}</Text>
+                <Text style={styles.modalConfirmText}>
+                  {t('sendResetEmail', 'Send Reset Email')}
+                </Text>
               </TouchableOpacity>
             </View>
           </View>

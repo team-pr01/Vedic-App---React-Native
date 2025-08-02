@@ -5,22 +5,23 @@ import { useFonts } from 'expo-font';
 import { useEffect } from 'react';
 import { Provider, useSelector } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
-import { persistor, store, RootState } from '@/redux/store'; // Make sure RootState is exported from your store file
+import { persistor, store, RootState } from '@/redux/store';
 
 // Font imports
 import {
   Inter_400Regular,
   Inter_500Medium,
   Inter_600SemiBold,
-  Inter_700Bold
+  Inter_700Bold,
 } from '@expo-google-fonts/inter';
 
 SplashScreen.preventAutoHideAsync();
 
 function RootLayoutNav() {
-  
   const token = useSelector((state: RootState) => state.auth.token);
-  const isAuthLoading = useSelector((state: RootState) => state._persist.rehydrated); // Check if redux-persist is done
+  const isAuthLoading = useSelector(
+    (state: RootState) => state._persist.rehydrated
+  ); // Check if redux-persist is done
 
   const [fontsLoaded, fontError] = useFonts({
     'Inter-Regular': Inter_400Regular,
@@ -45,7 +46,6 @@ function RootLayoutNav() {
 
     // Hide the splash screen once we have navigated
     SplashScreen.hideAsync();
-
   }, [token, fontsLoaded, fontError, isAuthLoading]);
 
   if (!fontsLoaded && !fontError) {
@@ -55,10 +55,10 @@ function RootLayoutNav() {
   // Define the routes that the gatekeeper can navigate to.
   // The logic in useEffect will handle which one is shown.
   return (
-            <Stack screenOptions={{ headerShown: false }}>
-              <Stack.Screen name="(tabs)" />
-              <Stack.Screen name="auth" />
-            </Stack>
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="(tabs)" />
+      <Stack.Screen name="auth" />
+    </Stack>
   );
 }
 

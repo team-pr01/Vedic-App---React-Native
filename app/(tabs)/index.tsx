@@ -1,18 +1,36 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  ScrollView, 
-  TouchableOpacity, 
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
   Image,
   Dimensions,
   Platform,
-  TextInput
+  TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Star, Search, BookOpen, Heart, Bell, Menu, Mic, Filter, Utensils, Building, Sparkles, Chrome as HomeIcon, TreePine, Calendar, Clock, School, Church as Temple } from 'lucide-react-native';
+import {
+  Star,
+  Search,
+  BookOpen,
+  Heart,
+  Bell,
+  Menu,
+  Mic,
+  Filter,
+  Utensils,
+  Building,
+  Sparkles,
+  Chrome as HomeIcon,
+  TreePine,
+  Calendar,
+  Clock,
+  School,
+  Church as Temple,
+} from 'lucide-react-native';
 import { ShoppingBag } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
@@ -23,127 +41,131 @@ import SearchBar from '../../components/SearchBar';
 import DonationModal from '../../components/DonationModal';
 import NotificationModal from '../../components/NotificationModal';
 import ShopConfirmationModal from '../../components/ShopConfirmationModal';
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch, useSelector } from 'react-redux';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { logout, useCurrentUser } from '@/redux/features/Auth/authSlice';
 import { useThemeColors } from '@/hooks/useThemeColors';
+import { RootState } from '@/redux/store';
 
 const { width } = Dimensions.get('window');
 
 const heroImages = [
   {
-    url: "https://images.pexels.com/photos/3280130/pexels-photo-3280130.jpeg?auto=compress&cs=tinysrgb&w=800",
-    title: "Sacred Wisdom",
-    subtitle: "পবিত্র জ্ঞান",
-    description: "Discover ancient teachings"
+    url: 'https://images.pexels.com/photos/3280130/pexels-photo-3280130.jpeg?auto=compress&cs=tinysrgb&w=800',
+    title: 'Sacred Wisdom',
+    subtitle: 'পবিত্র জ্ঞান',
+    description: 'Discover ancient teachings',
   },
   {
-    url: "https://images.pexels.com/photos/1181772/pexels-photo-1181772.jpeg?auto=compress&cs=tinysrgb&w=800",
-    title: "Inner Peace",
-    subtitle: "অন্তর্নিহিত শান্তি",
-    description: "Find your spiritual path"
+    url: 'https://images.pexels.com/photos/1181772/pexels-photo-1181772.jpeg?auto=compress&cs=tinysrgb&w=800',
+    title: 'Inner Peace',
+    subtitle: 'অন্তর্নিহিত শান্তি',
+    description: 'Find your spiritual path',
   },
   {
-    url: "https://images.pexels.com/photos/1051838/pexels-photo-1051838.jpeg?auto=compress&cs=tinysrgb&w=800",
-    title: "Divine Connection",
-    subtitle: "ঐশ্বরিক সংযোগ",
-    description: "Connect with the eternal"
-  }
+    url: 'https://images.pexels.com/photos/1051838/pexels-photo-1051838.jpeg?auto=compress&cs=tinysrgb&w=800',
+    title: 'Divine Connection',
+    subtitle: 'ঐশ্বরিক সংযোগ',
+    description: 'Connect with the eternal',
+  },
 ];
 
 const services = [
-  { 
-    id: 'yoga', 
-    name: 'Yoga', 
-    icon: TreePine, 
-    color: '#E53E3E', 
+  {
+    id: 'yoga',
+    name: 'Yoga',
+    icon: TreePine,
+    color: '#E53E3E',
     gradient: ['#E53E3E', '#C53030'],
-    route: '/pages/yoga'
+    route: '/pages/yoga',
   },
-  { 
-    id: 'sanatan', 
-    name: 'Sanatan Sthal', 
-    icon: Temple, 
-    color: '#3182CE', 
+  {
+    id: 'sanatan',
+    name: 'Sanatan Sthal',
+    icon: Temple,
+    color: '#3182CE',
     gradient: ['#3182CE', '#2C5282'],
-    route: '/pages/sanatan-sthal'
+    route: '/pages/sanatan-sthal',
   },
-  { 
-    id: 'food', 
-    name: 'Food', 
-    icon: Utensils, 
-    color: '#38A169', 
+  {
+    id: 'food',
+    name: 'Food',
+    icon: Utensils,
+    color: '#38A169',
     gradient: ['#38A169', '#2F855A'],
-    route: '/pages/food'
+    route: '/pages/food',
   },
-  { 
-    id: 'shop', 
-    name: 'Shop', 
-    icon: ShoppingBag, 
-    color: '#8B5CF6', 
+  {
+    id: 'shop',
+    name: 'Shop',
+    icon: ShoppingBag,
+    color: '#8B5CF6',
     gradient: ['#8B5CF6', '#7C3AED'],
-    route: null // Special handling for shop
+    route: null, // Special handling for shop
   },
-  { 
-    id: 'vastu', 
-    name: 'Vastu', 
-    icon: Star, 
-    color: '#805AD5', 
+  {
+    id: 'vastu',
+    name: 'Vastu',
+    icon: Star,
+    color: '#805AD5',
     gradient: ['#805AD5', '#6B46C1'],
-    route: '/pages/vastu'
+    route: '/pages/vastu',
   },
-  { 
-    id: 'jyotish', 
-    name: 'Jyotish', 
-    icon: Star, 
-    color: '#D53F8C', 
+  {
+    id: 'jyotish',
+    name: 'Jyotish',
+    icon: Star,
+    color: '#D53F8C',
     gradient: ['#D53F8C', '#B83280'],
-    route: '/pages/jyotish'
+    route: '/pages/jyotish',
   },
-  { 
-    id: 'consultancy', 
-    name: 'Consultancy', 
-    icon: Sparkles, 
-    color: '#DD6B20', 
+  {
+    id: 'consultancy',
+    name: 'Consultancy',
+    icon: Sparkles,
+    color: '#DD6B20',
     gradient: ['#DD6B20', '#C05621'],
-    route: '/pages/consultancy'
-  }
+    route: '/pages/consultancy',
+  },
 ];
 
 const projects = [
   {
     id: 1,
-    title: "Community Kitchen Initiative",
-    subtitle: "সম্প্রদায়িক রান্নাঘর উদ্যোগ",
-    description: "Providing nutritious meals to those in need.",
-    image: "https://images.pexels.com/photos/6646918/pexels-photo-6646918.jpeg?auto=compress&cs=tinysrgb&w=400",
+    title: 'Community Kitchen Initiative',
+    subtitle: 'সম্প্রদায়িক রান্নাঘর উদ্যোগ',
+    description: 'Providing nutritious meals to those in need.',
+    image:
+      'https://images.pexels.com/photos/6646918/pexels-photo-6646918.jpeg?auto=compress&cs=tinysrgb&w=400',
     collectedAmount: 250000,
     budget: 500000,
     supporters: 1250,
-    deadlineDays: 30
+    deadlineDays: 30,
   },
   {
     id: 2,
-    title: "Vedic Library Center",
-    subtitle: "বৈদিক গ্রন্থাগার কেন্দ্র",
-    description: "A serene space for exploration of ancient wisdom.",
-    image: "https://images.pexels.com/photos/481516/pexels-photo-481516.jpeg?auto=compress&cs=tinysrgb&w=400",
+    title: 'Vedic Library Center',
+    subtitle: 'বৈদিক গ্রন্থাগার কেন্দ্র',
+    description: 'A serene space for exploration of ancient wisdom.',
+    image:
+      'https://images.pexels.com/photos/481516/pexels-photo-481516.jpeg?auto=compress&cs=tinysrgb&w=400',
     collectedAmount: 175000,
     budget: 300000,
     supporters: 890,
-    deadlineDays: 45
+    deadlineDays: 45,
   },
   {
     id: 3,
-    title: "Temple Restoration",
-    subtitle: "মন্দির পুনরুদ্ধার",
-    description: "Preserving our sacred heritage for future generations.",
-    image: "https://images.pexels.com/photos/3280130/pexels-photo-3280130.jpeg?auto=compress&cs=tinysrgb&w=400",
+    title: 'Temple Restoration',
+    subtitle: 'মন্দির পুনরুদ্ধার',
+    description: 'Preserving our sacred heritage for future generations.',
+    image:
+      'https://images.pexels.com/photos/3280130/pexels-photo-3280130.jpeg?auto=compress&cs=tinysrgb&w=400',
     collectedAmount: 420000,
     budget: 800000,
     supporters: 2100,
-    deadlineDays: 60
-  }
+    deadlineDays: 60,
+  },
 ];
 
 export default function HomeScreen() {
@@ -154,20 +176,22 @@ export default function HomeScreen() {
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showUserProfileModal, setShowUserProfileModal] = useState(false);
   const [showDonationModal, setShowDonationModal] = useState(false);
-  const [selectedProject, setSelectedProject] = useState<typeof projects[0] | null>(null);
+  const [selectedProject, setSelectedProject] = useState<
+    (typeof projects)[0] | null
+  >(null);
   const [showNotificationModal, setShowNotificationModal] = useState(false);
   const [hasUnreadNotifications, setHasUnreadNotifications] = useState(true);
   const [showShopModal, setShowShopModal] = useState(false);
   const [searchFilters, setSearchFilters] = useState<string[]>([]);
   const dispatch = useDispatch();
- 
- const handleLogout = async () => {
-  await AsyncStorage.clear();
-  dispatch(logout());  
-  setShowSettingsModal(false)
-  console.log("logout called")
-  router.push("/");
-};
+
+  const handleLogout = async () => {
+    await AsyncStorage.clear();
+    dispatch(logout());
+    setShowSettingsModal(false);
+    console.log('logout called');
+    router.push('/');
+  };
 
   const user = useSelector(useCurrentUser);
   const triggerHaptic = () => {
@@ -192,12 +216,32 @@ export default function HomeScreen() {
 
   const formatBengaliDate = () => {
     const bengaliMonths = [
-      'বৈশাখ', 'জ্যৈষ্ঠ', 'আষাঢ়', 'শ্রাবণ', 'ভাদ্র', 'আশ্বিন',
-      'কার্তিক', 'অগ্রহায়ণ', 'পৌষ', 'মাঘ', 'ফাল্গুন', 'চৈত্র'
+      'বৈশাখ',
+      'জ্যৈষ্ঠ',
+      'আষাঢ়',
+      'শ্রাবণ',
+      'ভাদ্র',
+      'আশ্বিন',
+      'কার্তিক',
+      'অগ্রহায়ণ',
+      'পৌষ',
+      'মাঘ',
+      'ফাল্গুন',
+      'চৈত্র',
     ];
-    const bengaliDays = ['রবি', 'সোম', 'মঙ্গল', 'বুধ', 'বৃহস্পতি', 'শুক্র', 'শনি'];
-    
-    return `তিথি: ${bengaliDays[currentTime.getDay()]} ১৫, ${bengaliMonths[currentTime.getMonth()]} পক্ষ... | মাস: ${bengaliMonths[currentTime.getMonth()]}...`;
+    const bengaliDays = [
+      'রবি',
+      'সোম',
+      'মঙ্গল',
+      'বুধ',
+      'বৃহস্পতি',
+      'শুক্র',
+      'শনি',
+    ];
+
+    return `তিথি: ${bengaliDays[currentTime.getDay()]} ১৫, ${
+      bengaliMonths[currentTime.getMonth()]
+    } পক্ষ... | মাস: ${bengaliMonths[currentTime.getMonth()]}...`;
   };
 
   const handleServicePress = (serviceId: string, route?: string) => {
@@ -216,7 +260,7 @@ export default function HomeScreen() {
     console.log(`Sacred text pressed: ${textId}`);
   };
 
-  const handleProjectDonate = (project: typeof projects[0]) => {
+  const handleProjectDonate = (project: (typeof projects)[0]) => {
     triggerHaptic();
     setSelectedProject(project);
     setShowDonationModal(true);
@@ -246,12 +290,12 @@ export default function HomeScreen() {
   const handleSearch = (query: string) => {
     setSearchQuery(query);
     console.log('Searching for:', query);
-    
+
     // Filter content based on search query and active filters
     if (query.trim() || searchFilters.length > 0) {
       console.log('Search query:', query);
       console.log('Active filters:', searchFilters);
-      
+
       // Here you can implement actual search logic
       // For example, filter services, texts, projects based on query and filters
     }
@@ -260,7 +304,7 @@ export default function HomeScreen() {
   const handleApplyFilters = (filters: string[]) => {
     setSearchFilters(filters);
     console.log('Applied filters:', filters);
-    
+
     // Re-run search with new filters
     handleSearch(searchQuery);
   };
@@ -276,7 +320,7 @@ export default function HomeScreen() {
     { id: 'vastu', name: 'Vastu' },
     { id: 'jyotish', name: 'Jyotish' },
     { id: 'consultancy', name: 'Consultancy' },
-    { id: 'projects', name: 'Projects' }
+    { id: 'projects', name: 'Projects' },
   ];
 
   const handleFilterClick = () => {
@@ -284,34 +328,75 @@ export default function HomeScreen() {
     console.log('Filter button clicked');
   };
 
+  // const [panchangData, setPanchangData] = useState<any>(null);
+  // const token = useSelector((state: RootState) => state.auth.token);
+  // console.log(token, 'userData');
 
+  // useEffect(() => {
+  //   const fetchPanchang = async () => {
+  //     try {
+  //       const headers = new Headers();
+  //       headers.set('Authorization', `Bearer ${token}`);
+
+  //       const response = await fetch(
+  //         'https://api.prokerala.com/v2/astrology/panchang?ayanamsa=1&date=2025-08-02&coordinates=23.8103,90.4125',
+  //         {
+  //           method: 'GET',
+  //           headers,
+  //         }
+  //       );
+  //       const data = await response.json();
+  //       setPanchangData(data);
+  //     } catch (error) {
+  //       console.error('Error fetching Panchang:', error);
+  //     }
+  //   };
+
+  //   fetchPanchang();
+  // }, []);
+
+  // console.log(panchangData, 'panchangData');
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: colors.background }]}
+    >
       {/* Header */}
-      <LinearGradient
-        colors={colors.tabBarBackground}
-        style={styles.header}
-      >
+      <LinearGradient colors={colors.tabBarBackground} style={styles.header}>
         <TouchableOpacity onPress={handleMenuPress} style={styles.menuButton}>
           <Menu size={24} color={colors.text} />
         </TouchableOpacity>
-        
+
         <View style={styles.dateContainer}>
-          <View style={[styles.dateWrapper, { backgroundColor: `${colors.primary}20`, borderColor: `${colors.primary}40` }]}>
+          <View
+            style={[
+              styles.dateWrapper,
+              {
+                backgroundColor: `${colors.primary}20`,
+                borderColor: `${colors.primary}40`,
+              },
+            ]}
+          >
             <Calendar size={14} color={colors.primary} />
-            <Text style={[styles.dateText, { color: colors.primary }]}>{formatBengaliDate()}</Text>
+            <Text style={[styles.dateText, { color: colors.primary }]}>
+              {formatBengaliDate()}
+            </Text>
           </View>
         </View>
-        
+
         <View style={styles.headerActions}>
-          <TouchableOpacity style={styles.headerButton} onPress={handleNotificationPress}>
+          {/* <TouchableOpacity style={styles.headerButton} onPress={handleNotificationPress}>
             <Bell size={20} color={colors.text} />
             {hasUnreadNotifications && <View style={[styles.notificationBadge, { backgroundColor: colors.error }]} />}
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.profileButton} onPress={handleProfilePress}>
-            <Image 
-              source={{ uri: "https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=100" }}
+          </TouchableOpacity> */}
+          <TouchableOpacity
+            style={styles.profileButton}
+            onPress={handleProfilePress}
+          >
+            <Image
+              source={{
+                uri: 'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=100',
+              }}
               style={styles.profileImage}
             />
           </TouchableOpacity>
@@ -321,12 +406,14 @@ export default function HomeScreen() {
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Hero Section */}
         <View style={styles.heroContainer}>
-          <ScrollView 
-            horizontal 
-            pagingEnabled 
+          <ScrollView
+            horizontal
+            pagingEnabled
             showsHorizontalScrollIndicator={false}
             onMomentumScrollEnd={(event) => {
-              const index = Math.round(event.nativeEvent.contentOffset.x / width);
+              const index = Math.round(
+                event.nativeEvent.contentOffset.x / width
+              );
               setCurrentHeroIndex(index);
             }}
           >
@@ -340,13 +427,15 @@ export default function HomeScreen() {
                   <View style={styles.heroContent}>
                     <Text style={styles.heroTitle}>{hero.title}</Text>
                     <Text style={styles.heroSubtitle}>{hero.subtitle}</Text>
-                    <Text style={styles.heroDescription}>{hero.description}</Text>
+                    <Text style={styles.heroDescription}>
+                      {hero.description}
+                    </Text>
                   </View>
                 </LinearGradient>
               </View>
             ))}
           </ScrollView>
-          
+
           {/* Hero Indicators */}
           <View style={styles.heroIndicators}>
             {heroImages.map((_, index) => (
@@ -354,7 +443,10 @@ export default function HomeScreen() {
                 key={index}
                 style={[
                   styles.indicator,
-                  index === currentHeroIndex && [styles.activeIndicator, { backgroundColor: colors.info }]
+                  index === currentHeroIndex && [
+                    styles.activeIndicator,
+                    { backgroundColor: colors.info },
+                  ],
                 ]}
                 onPress={() => {
                   setCurrentHeroIndex(index);
@@ -367,7 +459,7 @@ export default function HomeScreen() {
 
         {/* Search Bar */}
         <SearchBar
-          placeholderText="বৈদিক জ্ঞান, মন্দির, সংবাদ অনুসন্ধান করুন..." 
+          placeholderText="বৈদিক জ্ঞান, মন্দির, সংবাদ অনুসন্ধান করুন..."
           onSearch={handleSearch}
           onFilterClick={handleFilterClick}
           initialQuery={searchQuery}
@@ -379,10 +471,14 @@ export default function HomeScreen() {
 
         {/* Service Icons */}
         <View style={styles.servicesContainer}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.servicesContent}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.servicesContent}
+          >
             {services.map((service, index) => (
-              <TouchableOpacity 
-                key={service.id} 
+              <TouchableOpacity
+                key={service.id}
                 style={styles.serviceItem}
                 onPress={() => handleServicePress(service.id, service.route)}
               >
@@ -392,7 +488,9 @@ export default function HomeScreen() {
                 >
                   <service.icon size={24} color="#FFFFFF" />
                 </LinearGradient>
-                <Text style={[styles.serviceName, { color: colors.text }]}>{service.name}</Text>
+                <Text style={[styles.serviceName, { color: colors.text }]}>
+                  {service.name}
+                </Text>
               </TouchableOpacity>
             ))}
           </ScrollView>
@@ -404,40 +502,67 @@ export default function HomeScreen() {
         {/* Our Project Section */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionTitle, { color: colors.primary }]}>{`Our Project"  ${user?.name}`}</Text>
-            <Text style={[styles.sectionSubtitle, { color: colors.secondaryText }]}>আমাদের প্রকল্প</Text>
+            <Text
+              style={[styles.sectionTitle, { color: colors.primary }]}
+            >{`Our Project"  ${user?.name}`}</Text>
+            <Text
+              style={[styles.sectionSubtitle, { color: colors.secondaryText }]}
+            >
+              আমাদের প্রকল্প
+            </Text>
           </View>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.projectsContent}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.projectsContent}
+          >
             {projects.map((project) => (
               <View key={project.id} style={styles.projectCard}>
-                <Image source={{ uri: project.image }} style={styles.projectImage} />
+                <Image
+                  source={{ uri: project.image }}
+                  style={styles.projectImage}
+                />
                 <LinearGradient
                   colors={['transparent', 'rgba(0,0,0,0.8)']}
                   style={styles.projectOverlay}
                 >
                   <View style={styles.projectContent}>
                     <Text style={styles.projectTitle}>{project.title}</Text>
-                    <Text style={styles.projectSubtitle}>{project.subtitle}</Text>
-                    <Text style={styles.projectDescription}>{project.description}  </Text>
-                    
+                    <Text style={styles.projectSubtitle}>
+                      {project.subtitle}
+                    </Text>
+                    <Text style={styles.projectDescription}>
+                      {project.description}{' '}
+                    </Text>
+
                     <View style={styles.projectProgress}>
                       <View style={styles.progressInfo}>
-                        <Text style={styles.progressText}>Raised: ৳{project.collectedAmount.toLocaleString()}</Text>
-                        <Text style={styles.progressGoal}>Goal: ৳{project.budget.toLocaleString()}</Text>
+                        <Text style={styles.progressText}>
+                          Raised: ৳{project.collectedAmount.toLocaleString()}
+                        </Text>
+                        <Text style={styles.progressGoal}>
+                          Goal: ৳{project.budget.toLocaleString()}
+                        </Text>
                       </View>
                       <View style={styles.progressBar}>
-                        <View 
+                        <View
                           style={[
-                            styles.progressFill, 
-                            { width: `${(project.collectedAmount / project.budget) * 100}%` }
-                          ]} 
+                            styles.progressFill,
+                            {
+                              width: `${
+                                (project.collectedAmount / project.budget) * 100
+                              }%`,
+                            },
+                          ]}
                         />
                       </View>
-                      <Text style={styles.supportersText}>{project.supporters} supporters</Text>
+                      <Text style={styles.supportersText}>
+                        {project.supporters} supporters
+                      </Text>
                     </View>
-                    
-                    <TouchableOpacity 
-                      style={styles.donateButton} 
+
+                    <TouchableOpacity
+                      style={styles.donateButton}
                       onPress={() => handleProjectDonate(project)}
                     >
                       <Heart size={16} color="#FFFFFF" fill="#FFFFFF" />
@@ -454,16 +579,16 @@ export default function HomeScreen() {
       </ScrollView>
 
       {/* Settings Modal */}
-      <SettingsModal 
-        visible={showSettingsModal} 
-        onClose={() => setShowSettingsModal(false)} 
+      <SettingsModal
+        visible={showSettingsModal}
+        onClose={() => setShowSettingsModal(false)}
         onLogout={handleLogout}
       />
 
       {/* User Profile Modal */}
-      <UserProfileModal 
-        visible={showUserProfileModal} 
-        onClose={() => setShowUserProfileModal(false)} 
+      <UserProfileModal
+        visible={showUserProfileModal}
+        onClose={() => setShowUserProfileModal(false)}
         onNavigateToSettings={handleNavigateToSettings}
       />
 
