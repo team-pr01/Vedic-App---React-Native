@@ -17,6 +17,7 @@ import Experts from '@/components/Experts';
 
 import YogaHeader from '@/components/YogaPage/YogaHeader';
 import AllYogaPrograms from '@/components/YogaPage/AllYogaPrograms';
+import LoadingComponent from '@/components/LoadingComponent/LoadingComponent';
 
 export const LEVELS = [
   { id: 'all', name: 'All Levels', color: '#718096' },
@@ -59,17 +60,6 @@ export default function YogaPage() {
 
     setFilteredPrograms(programsToFilter);
   }, [searchQuery, selectedLevel, data]);
-
-  if (isLoading || isExpertsLoading) {
-    return (
-      <View style={[styles.container, styles.loaderContainer]}>
-        <ActivityIndicator size="large" color="#10B981" />
-        <Text style={{ color: colors.text, marginTop: 10 }}>
-          Loading Programs...
-        </Text>
-      </View>
-    );
-  }
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -140,9 +130,21 @@ export default function YogaPage() {
         </View>
 
         {/* Programs Grid */}
-        <AllYogaPrograms data={filteredPrograms} />
+        {isLoading ? (
+          <LoadingComponent loading="Programs" color={colors.success} />
+        ) : (
+          <AllYogaPrograms data={filteredPrograms} />
+        )}
 
-        <Experts data={filteredExperts} title={'Yoga'} isLoading={isLoading} />
+        {isExpertsLoading ? (
+          <LoadingComponent loading="Experts" color={colors.success} />
+        ) : (
+          <Experts
+            data={filteredExperts}
+            title={'Yoga'}
+            isLoading={isLoading}
+          />
+        )}
       </ScrollView>
     </View>
   );

@@ -9,20 +9,21 @@ import {
   Image,
   Modal,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { 
-  Search, 
-  Mic, 
-  CircleStop as StopCircle, 
-  Brain, 
-  Clock, 
-  Star, 
-  ChevronRight, 
-  X, 
-  Loader, 
-  Heart, 
+import {
+  Search,
+  Mic,
+  CircleStop as StopCircle,
+  Brain,
+  Clock,
+  Star,
+  ChevronRight,
+  X,
+  Loader,
+  Heart,
   ArrowLeft,
   Filter,
   Calendar,
@@ -31,12 +32,14 @@ import {
   Compass,
   User,
   MapPin,
-  Phone
+  Phone,
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
 import Experts from '@/components/Experts';
 import { useGetAllConsultancyServicesQuery } from '@/redux/features/Consultancy/consultancyApi';
+import { useThemeColors } from '@/hooks/useThemeColors';
+import LoadingComponent from '@/components/LoadingComponent/LoadingComponent';
 
 interface JyotishReading {
   id: string;
@@ -76,120 +79,129 @@ const triggerHaptic = () => {
 };
 
 // Mock AI Jyotish Service
-const generateJyotishReading = async (prompt: string, type: string): Promise<JyotishReading> => {
+const generateJyotishReading = async (
+  prompt: string,
+  type: string
+): Promise<JyotishReading> => {
   // Enhanced AI Jyotish Reading with better logic
-  await new Promise(resolve => setTimeout(resolve, 1500));
-  
+  await new Promise((resolve) => setTimeout(resolve, 1500));
+
   // Analyze prompt and type for better reading generation
   const lowerPrompt = prompt.toLowerCase();
   let title = 'AI Generated Jyotish Reading';
-  let description = 'Based on your details, here is your personalized Jyotish reading.';
+  let description =
+    'Based on your details, here is your personalized Jyotish reading.';
   let predictions: string[] = [];
   let recommendations: string[] = [];
   let score = 8.2;
-  
+
   // Generate reading based on type
   switch (type) {
     case 'birth-chart':
       title = 'Birth Chart Analysis';
-      description = 'Based on your birth details, here is your comprehensive birth chart analysis.';
+      description =
+        'Based on your birth details, here is your comprehensive birth chart analysis.';
       predictions = [
         'You are entering a favorable period for career growth and financial stability.',
-        'Jupiter\'s position indicates opportunities in education or spiritual pursuits.',
+        "Jupiter's position indicates opportunities in education or spiritual pursuits.",
         'Mars in your 10th house suggests leadership roles and recognition.',
         'Venus brings harmony in relationships and creative endeavors.',
-        'Saturn\'s influence encourages discipline and long-term planning.'
+        "Saturn's influence encourages discipline and long-term planning.",
       ];
       recommendations = [
-        'Wear a yellow sapphire on Thursday for Jupiter\'s blessings',
+        "Wear a yellow sapphire on Thursday for Jupiter's blessings",
         'Chant "Om Gam Ganapataye Namaha" 108 times daily',
         'Donate to educational institutions on Thursdays',
         'Practice meditation during sunrise for mental clarity',
-        'Avoid major decisions on Saturdays'
+        'Avoid major decisions on Saturdays',
       ];
       score = 8.8;
       break;
-      
+
     case 'palm-reading':
       title = 'Palm Reading Analysis';
-      description = 'Based on your palm description, here are the insights from palmistry.';
+      description =
+        'Based on your palm description, here are the insights from palmistry.';
       predictions = [
         'Your life line indicates good health and longevity.',
         'The heart line shows emotional stability and loving relationships.',
         'Your head line suggests intelligence and analytical thinking.',
         'The fate line indicates career success through hard work.',
-        'Mount of Venus shows artistic talents and creativity.'
+        'Mount of Venus shows artistic talents and creativity.',
       ];
       recommendations = [
         'Strengthen your intuition through regular meditation',
         'Use your analytical skills in decision-making',
         'Express your creativity through art or music',
         'Maintain good health through yoga and proper diet',
-        'Trust your instincts in relationships'
+        'Trust your instincts in relationships',
       ];
       score = 8.5;
       break;
-      
+
     case 'numerology':
       title = 'Numerology Report';
-      description = 'Based on your birth date and name, here is your numerological analysis.';
+      description =
+        'Based on your birth date and name, here is your numerological analysis.';
       predictions = [
         'Your life path number indicates leadership qualities.',
         'Your destiny number suggests success in communication fields.',
         'Your soul number reveals deep spiritual inclinations.',
         'Your personality number shows charismatic and friendly nature.',
-        'Your birth date brings luck on specific days of the month.'
+        'Your birth date brings luck on specific days of the month.',
       ];
       recommendations = [
         'Use your lucky numbers in important decisions',
         'Wear colors that resonate with your numerological vibrations',
         'Plan important events on your favorable dates',
         'Develop your communication and leadership skills',
-        'Practice gratitude to enhance positive vibrations'
+        'Practice gratitude to enhance positive vibrations',
       ];
       score = 8.3;
       break;
-      
+
     case 'compatibility':
       title = 'Love Compatibility Analysis';
-      description = 'Based on both partners\' details, here is your relationship compatibility reading.';
+      description =
+        "Based on both partners' details, here is your relationship compatibility reading.";
       predictions = [
         'Your zodiac signs show strong emotional compatibility.',
         'Venus positions indicate mutual attraction and love.',
         'Mars compatibility suggests good physical and mental harmony.',
         'Jupiter aspects bring growth and prosperity to the relationship.',
-        'Overall planetary alignment favors a long-lasting bond.'
+        'Overall planetary alignment favors a long-lasting bond.',
       ];
       recommendations = [
         'Communicate openly about your feelings and expectations',
         'Plan romantic activities during favorable planetary periods',
-        'Respect each other\'s individual space and growth',
+        "Respect each other's individual space and growth",
         'Practice couple meditation for deeper connection',
-        'Celebrate festivals and traditions together'
+        'Celebrate festivals and traditions together',
       ];
       score = 9.1;
       break;
-      
+
     case 'career':
       title = 'Career Guidance Reading';
-      description = 'Based on your planetary positions, here is your career guidance.';
+      description =
+        'Based on your planetary positions, here is your career guidance.';
       predictions = [
         'Your 10th house indicates success in leadership positions.',
-        'Mercury\'s position favors communication and technology fields.',
-        'Sun\'s placement suggests government or authority-related work.',
+        "Mercury's position favors communication and technology fields.",
+        "Sun's placement suggests government or authority-related work.",
         'Your current planetary period supports career changes.',
-        'Financial growth is indicated in the coming months.'
+        'Financial growth is indicated in the coming months.',
       ];
       recommendations = [
         'Focus on developing leadership and management skills',
         'Consider opportunities in education or consulting',
         'Network with influential people in your field',
         'Start new projects on auspicious days',
-        'Maintain ethical practices for long-term success'
+        'Maintain ethical practices for long-term success',
       ];
       score = 8.6;
       break;
-      
+
     default:
       // Default horoscope reading
       predictions = [
@@ -197,17 +209,17 @@ const generateJyotishReading = async (prompt: string, type: string): Promise<Jyo
         'Planetary alignments support your current endeavors.',
         'Good time for making important life decisions.',
         'Relationships and partnerships will flourish.',
-        'Health and vitality are well-supported by cosmic energies.'
+        'Health and vitality are well-supported by cosmic energies.',
       ];
       recommendations = [
         'Practice daily meditation for mental clarity',
         'Wear gemstones that support your birth chart',
         'Perform charitable acts to enhance positive karma',
         'Follow a healthy lifestyle and diet',
-        'Stay connected with spiritual practices'
+        'Stay connected with spiritual practices',
       ];
   }
-  
+
   return {
     id: `reading-${Date.now()}`,
     type,
@@ -215,13 +227,15 @@ const generateJyotishReading = async (prompt: string, type: string): Promise<Jyo
     description,
     predictions,
     recommendations,
-    score
+    score,
   };
 };
 
-export default function JyotishPage() { 
+export default function JyotishPage() {
   const { data, isLoading } = useGetAllConsultancyServicesQuery({});
-  const filteredExperts=data?.data?.filter((expert :any) => expert.category === 'Jyotish Expert') || [];
+  const filteredExperts =
+    data?.data?.filter((expert: any) => expert.category === 'Jyotish Expert') ||
+    [];
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [isListening, setIsListening] = useState(false);
@@ -232,9 +246,14 @@ export default function JyotishPage() {
   const [selectedReadingType, setSelectedReadingType] = useState('birth-chart');
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [selectedReading, setSelectedReading] = useState<JyotishReading | null>(null);
-  const [selectedExpert, setSelectedExpert] = useState<JyotishExpert | null>(null);
+  const [selectedReading, setSelectedReading] = useState<JyotishReading | null>(
+    null
+  );
+  const [selectedExpert, setSelectedExpert] = useState<JyotishExpert | null>(
+    null
+  );
   const recognitionRef = useRef<any>(null);
+  const colors = useThemeColors();
 
   const jyotishExperts: JyotishExpert[] = [
     {
@@ -244,8 +263,9 @@ export default function JyotishPage() {
       experience: '25 years',
       rating: 4.9,
       price: '2500',
-      image: 'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=400',
-      nextAvailable: 'Today, 4:00 PM'
+      image:
+        'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=400',
+      nextAvailable: 'Today, 4:00 PM',
     },
     {
       id: 2,
@@ -254,8 +274,9 @@ export default function JyotishPage() {
       experience: '18 years',
       rating: 4.8,
       price: '2000',
-      image: 'https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=400',
-      nextAvailable: 'Tomorrow, 11:00 AM'
+      image:
+        'https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=400',
+      nextAvailable: 'Tomorrow, 11:00 AM',
     },
     {
       id: 3,
@@ -264,65 +285,110 @@ export default function JyotishPage() {
       experience: '30 years',
       rating: 4.9,
       price: '3000',
-      image: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=400',
-      nextAvailable: 'Today, 7:00 PM'
-    }
+      image:
+        'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=400',
+      nextAvailable: 'Today, 7:00 PM',
+    },
   ];
 
   const dailyHoroscope: DailyHoroscope[] = [
     {
       sign: 'Aries (মেষ)',
-      prediction: 'A favorable day ahead. New opportunities may arise in your career. Focus on your goals.',
-      lucky: { color: 'Red', number: '9', direction: 'North' }
+      prediction:
+        'A favorable day ahead. New opportunities may arise in your career. Focus on your goals.',
+      lucky: { color: 'Red', number: '9', direction: 'North' },
     },
     {
       sign: 'Taurus (বৃষভ)',
-      prediction: 'Family life will be peaceful and harmonious. Good time for financial planning.',
-      lucky: { color: 'Green', number: '6', direction: 'South-East' }
+      prediction:
+        'Family life will be peaceful and harmonious. Good time for financial planning.',
+      lucky: { color: 'Green', number: '6', direction: 'South-East' },
     },
     {
       sign: 'Gemini (মিথুন)',
-      prediction: 'Be cautious with communication to avoid misunderstandings. Short travels are indicated.',
-      lucky: { color: 'Yellow', number: '5', direction: 'East' }
+      prediction:
+        'Be cautious with communication to avoid misunderstandings. Short travels are indicated.',
+      lucky: { color: 'Yellow', number: '5', direction: 'East' },
     },
     {
       sign: 'Cancer (কর্কট)',
-      prediction: 'Emotional stability and family support will be strong. Focus on home and relationships.',
-      lucky: { color: 'White', number: '2', direction: 'North-West' }
+      prediction:
+        'Emotional stability and family support will be strong. Focus on home and relationships.',
+      lucky: { color: 'White', number: '2', direction: 'North-West' },
     },
     {
       sign: 'Leo (সিংহ)',
-      prediction: 'Leadership qualities will shine today. Creative projects will bring success.',
-      lucky: { color: 'Orange', number: '1', direction: 'East' }
+      prediction:
+        'Leadership qualities will shine today. Creative projects will bring success.',
+      lucky: { color: 'Orange', number: '1', direction: 'East' },
     },
     {
       sign: 'Virgo (কন্যা)',
-      prediction: 'Attention to detail will pay off. Health and work matters need careful consideration.',
-      lucky: { color: 'Navy Blue', number: '3', direction: 'South' }
-    }
+      prediction:
+        'Attention to detail will pay off. Health and work matters need careful consideration.',
+      lucky: { color: 'Navy Blue', number: '3', direction: 'South' },
+    },
   ];
 
   const readingTypes = [
-    { id: 'birth-chart', name: 'Birth Chart Analysis', icon: <Star size={20} color="#D53F8C" /> },
-    { id: 'palm-reading', name: 'Palm Reading', icon: <User size={20} color="#D53F8C" /> },
-    { id: 'numerology', name: 'Numerology Report', icon: <Calendar size={20} color="#D53F8C" /> },
-    { id: 'horoscope', name: 'Daily Horoscope', icon: <Sun size={20} color="#D53F8C" /> },
-    { id: 'compatibility', name: 'Love Compatibility', icon: <Heart size={20} color="#D53F8C" /> },
-    { id: 'career', name: 'Career Guidance', icon: <Compass size={20} color="#D53F8C" /> }
+    {
+      id: 'birth-chart',
+      name: 'Birth Chart Analysis',
+      icon: <Star size={20} color="#D53F8C" />,
+    },
+    {
+      id: 'palm-reading',
+      name: 'Palm Reading',
+      icon: <User size={20} color="#D53F8C" />,
+    },
+    {
+      id: 'numerology',
+      name: 'Numerology Report',
+      icon: <Calendar size={20} color="#D53F8C" />,
+    },
+    {
+      id: 'horoscope',
+      name: 'Daily Horoscope',
+      icon: <Sun size={20} color="#D53F8C" />,
+    },
+    {
+      id: 'compatibility',
+      name: 'Love Compatibility',
+      icon: <Heart size={20} color="#D53F8C" />,
+    },
+    {
+      id: 'career',
+      name: 'Career Guidance',
+      icon: <Compass size={20} color="#D53F8C" />,
+    },
   ];
 
   const categories = [
     { id: 'all', name: 'All', icon: <Compass size={20} color="#D53F8C" /> },
     { id: 'kundli', name: 'Kundli', icon: <Star size={20} color="#D53F8C" /> },
-    { id: 'horoscope', name: 'Horoscope', icon: <Sun size={20} color="#D53F8C" /> },
-    { id: 'muhurta', name: 'Muhurta', icon: <Clock size={20} color="#D53F8C" /> },
-    { id: 'panchang', name: 'Panchang', icon: <Calendar size={20} color="#D53F8C" /> },
+    {
+      id: 'horoscope',
+      name: 'Horoscope',
+      icon: <Sun size={20} color="#D53F8C" />,
+    },
+    {
+      id: 'muhurta',
+      name: 'Muhurta',
+      icon: <Clock size={20} color="#D53F8C" />,
+    },
+    {
+      id: 'panchang',
+      name: 'Panchang',
+      icon: <Calendar size={20} color="#D53F8C" />,
+    },
   ];
 
   // Initialize speech recognition
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      const SpeechRecognition =
+        (window as any).SpeechRecognition ||
+        (window as any).webkitSpeechRecognition;
       if (SpeechRecognition) {
         const recognition = new SpeechRecognition();
         recognition.continuous = false;
@@ -368,13 +434,16 @@ export default function JyotishPage() {
 
   const handleGenerateReading = async () => {
     if (!jyotishPrompt.trim()) return;
-    
+
     setIsGenerating(true);
     setError(null);
     triggerHaptic();
-    
+
     try {
-      const reading = await generateJyotishReading(jyotishPrompt, selectedReadingType);
+      const reading = await generateJyotishReading(
+        jyotishPrompt,
+        selectedReadingType
+      );
       setJyotishPrompt('');
       setShowAIModal(false);
       setSelectedReading(reading);
@@ -398,7 +467,10 @@ export default function JyotishPage() {
       {/* Header */}
       <SafeAreaView edges={['top']} style={styles.headerContainer}>
         <LinearGradient colors={['#D53F8C', '#B83280']} style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.headerButton}>
+          <TouchableOpacity
+            onPress={() => router.back()}
+            style={styles.headerButton}
+          >
             <ArrowLeft size={24} color="#FFFFFF" />
           </TouchableOpacity>
           <View style={styles.headerContent}>
@@ -475,7 +547,10 @@ export default function JyotishPage() {
               />
               <TouchableOpacity
                 onPress={handleVoiceSearch}
-                style={[styles.voiceButton, isListening && styles.voiceButtonActive]}
+                style={[
+                  styles.voiceButton,
+                  isListening && styles.voiceButtonActive,
+                ]}
               >
                 {isListening ? (
                   <StopCircle size={18} color="#EF4444" />
@@ -516,16 +591,20 @@ export default function JyotishPage() {
                 }}
                 style={[
                   styles.categoryChip,
-                  selectedCategory === category.id && styles.categoryChipActive
+                  selectedCategory === category.id && styles.categoryChipActive,
                 ]}
               >
                 {React.cloneElement(category.icon, {
-                  color: selectedCategory === category.id ? '#FFFFFF' : '#D53F8C'
+                  color:
+                    selectedCategory === category.id ? '#FFFFFF' : '#D53F8C',
                 })}
-                <Text style={[
-                  styles.categoryText,
-                  selectedCategory === category.id && styles.categoryTextActive
-                ]}>
+                <Text
+                  style={[
+                    styles.categoryText,
+                    selectedCategory === category.id &&
+                      styles.categoryTextActive,
+                  ]}
+                >
                   {category.name}
                 </Text>
               </TouchableOpacity>
@@ -543,19 +622,27 @@ export default function JyotishPage() {
                   <Star size={24} color="#F59E0B" fill="#F59E0B" />
                   <Text style={styles.horoscopeSign}>{horoscope.sign}</Text>
                 </View>
-                <Text style={styles.horoscopePrediction}>{horoscope.prediction}</Text>
+                <Text style={styles.horoscopePrediction}>
+                  {horoscope.prediction}
+                </Text>
                 <View style={styles.luckyContainer}>
                   <View style={styles.luckyItem}>
                     <Text style={styles.luckyLabel}>Color</Text>
-                    <Text style={styles.luckyValue}>{horoscope.lucky.color}</Text>
+                    <Text style={styles.luckyValue}>
+                      {horoscope.lucky.color}
+                    </Text>
                   </View>
                   <View style={styles.luckyItem}>
                     <Text style={styles.luckyLabel}>Number</Text>
-                    <Text style={styles.luckyValue}>{horoscope.lucky.number}</Text>
+                    <Text style={styles.luckyValue}>
+                      {horoscope.lucky.number}
+                    </Text>
                   </View>
                   <View style={styles.luckyItem}>
                     <Text style={styles.luckyLabel}>Direction</Text>
-                    <Text style={styles.luckyValue}>{horoscope.lucky.direction}</Text>
+                    <Text style={styles.luckyValue}>
+                      {horoscope.lucky.direction}
+                    </Text>
                   </View>
                 </View>
               </View>
@@ -564,9 +651,16 @@ export default function JyotishPage() {
         </View>
 
         {/* Jyotish Experts */}
-       
 
-        <Experts data={filteredExperts} title={"Jyotish"} isLoading={isLoading}/>
+        {isLoading ? (
+          <LoadingComponent loading="Experts" color={colors.success} />
+        ) : (
+          <Experts
+            data={filteredExperts}
+            title={'Jyotish'}
+            isLoading={isLoading}
+          />
+        )}
       </ScrollView>
 
       {/* AI Reading Modal */}
@@ -591,7 +685,9 @@ export default function JyotishPage() {
 
               <ScrollView style={styles.aiModalContent}>
                 <View style={styles.readingTypesSection}>
-                  <Text style={styles.readingTypesTitle}>Select Reading Type:</Text>
+                  <Text style={styles.readingTypesTitle}>
+                    Select Reading Type:
+                  </Text>
                   <View style={styles.readingTypesGrid}>
                     {readingTypes.map((type) => (
                       <TouchableOpacity
@@ -602,14 +698,18 @@ export default function JyotishPage() {
                         }}
                         style={[
                           styles.readingTypeCard,
-                          selectedReadingType === type.id && styles.readingTypeCardActive
+                          selectedReadingType === type.id &&
+                            styles.readingTypeCardActive,
                         ]}
                       >
                         {type.icon}
-                        <Text style={[
-                          styles.readingTypeText,
-                          selectedReadingType === type.id && styles.readingTypeTextActive
-                        ]}>
+                        <Text
+                          style={[
+                            styles.readingTypeText,
+                            selectedReadingType === type.id &&
+                              styles.readingTypeTextActive,
+                          ]}
+                        >
                           {type.name}
                         </Text>
                       </TouchableOpacity>
@@ -644,16 +744,21 @@ export default function JyotishPage() {
                   disabled={isGenerating || !jyotishPrompt.trim()}
                   style={[
                     styles.generateButton,
-                    (isGenerating || !jyotishPrompt.trim()) && styles.generateButtonDisabled
+                    (isGenerating || !jyotishPrompt.trim()) &&
+                      styles.generateButtonDisabled,
                   ]}
                 >
                   {isGenerating ? (
                     <>
                       <Loader size={20} color="#FFFFFF" />
-                      <Text style={styles.generateButtonText}>Generating...</Text>
+                      <Text style={styles.generateButtonText}>
+                        Generating...
+                      </Text>
                     </>
                   ) : (
-                    <Text style={styles.generateButtonText}>Generate Reading</Text>
+                    <Text style={styles.generateButtonText}>
+                      Generate Reading
+                    </Text>
                   )}
                 </TouchableOpacity>
               </ScrollView>
@@ -678,31 +783,41 @@ export default function JyotishPage() {
                   <X size={24} color="#718096" />
                 </TouchableOpacity>
               </View>
-              
+
               <ScrollView style={styles.modalContent}>
                 <View style={styles.readingContent}>
                   <View style={styles.scoreContainer}>
                     <Text style={styles.scoreLabel}>Compatibility Score</Text>
-                    <Text style={styles.scoreValue}>{selectedReading.score}/10</Text>
+                    <Text style={styles.scoreValue}>
+                      {selectedReading.score}/10
+                    </Text>
                   </View>
 
                   <View style={styles.readingSection}>
                     <Text style={styles.readingSectionTitle}>Predictions</Text>
                     {selectedReading.predictions.map((prediction, index) => (
-                      <Text key={index} style={styles.predictionText}>• {prediction}</Text>
+                      <Text key={index} style={styles.predictionText}>
+                        • {prediction}
+                      </Text>
                     ))}
                   </View>
 
                   <View style={styles.readingSection}>
-                    <Text style={styles.readingSectionTitle}>Recommendations</Text>
+                    <Text style={styles.readingSectionTitle}>
+                      Recommendations
+                    </Text>
                     {selectedReading.recommendations.map((rec, index) => (
-                      <Text key={index} style={styles.recommendationText}>• {rec}</Text>
+                      <Text key={index} style={styles.recommendationText}>
+                        • {rec}
+                      </Text>
                     ))}
                   </View>
 
                   <TouchableOpacity style={styles.saveReadingButton}>
                     <Heart size={20} color="#D53F8C" />
-                    <Text style={styles.saveReadingButtonText}>Save Reading</Text>
+                    <Text style={styles.saveReadingButtonText}>
+                      Save Reading
+                    </Text>
                   </TouchableOpacity>
                 </View>
               </ScrollView>
@@ -727,19 +842,30 @@ export default function JyotishPage() {
                   <X size={24} color="#718096" />
                 </TouchableOpacity>
               </View>
-              
+
               <View style={styles.expertModalContent}>
                 <View style={styles.expertDetails}>
-                  <Image source={{ uri: selectedExpert.image }} style={styles.expertModalImage} />
+                  <Image
+                    source={{ uri: selectedExpert.image }}
+                    style={styles.expertModalImage}
+                  />
                   <View style={styles.expertModalInfo}>
-                    <Text style={styles.expertModalName}>{selectedExpert.name}</Text>
-                    <Text style={styles.expertModalSpeciality}>{selectedExpert.speciality}</Text>
+                    <Text style={styles.expertModalName}>
+                      {selectedExpert.name}
+                    </Text>
+                    <Text style={styles.expertModalSpeciality}>
+                      {selectedExpert.speciality}
+                    </Text>
                     <View style={styles.expertModalMeta}>
                       <View style={styles.ratingContainer}>
                         <Star size={16} color="#F59E0B" fill="#F59E0B" />
-                        <Text style={styles.ratingText}>{selectedExpert.rating}</Text>
+                        <Text style={styles.ratingText}>
+                          {selectedExpert.rating}
+                        </Text>
                       </View>
-                      <Text style={styles.expertModalPrice}>৳{selectedExpert.price}</Text>
+                      <Text style={styles.expertModalPrice}>
+                        ৳{selectedExpert.price}
+                      </Text>
                     </View>
                   </View>
                 </View>
@@ -747,7 +873,9 @@ export default function JyotishPage() {
                 <View style={styles.bookingInfo}>
                   <View style={styles.bookingItem}>
                     <Calendar size={20} color="#D53F8C" />
-                    <Text style={styles.bookingText}>Next Available: {selectedExpert.nextAvailable}</Text>
+                    <Text style={styles.bookingText}>
+                      Next Available: {selectedExpert.nextAvailable}
+                    </Text>
                   </View>
                   <View style={styles.bookingItem}>
                     <Clock size={20} color="#D53F8C" />
@@ -755,7 +883,9 @@ export default function JyotishPage() {
                   </View>
                   <View style={styles.bookingItem}>
                     <Phone size={20} color="#D53F8C" />
-                    <Text style={styles.bookingText}>Video/Phone Consultation</Text>
+                    <Text style={styles.bookingText}>
+                      Video/Phone Consultation
+                    </Text>
                   </View>
                 </View>
 
@@ -767,7 +897,9 @@ export default function JyotishPage() {
                     setShowExpertModal(false);
                   }}
                 >
-                  <Text style={styles.bookButtonText}>Book Now - ৳{selectedExpert.price}</Text>
+                  <Text style={styles.bookButtonText}>
+                    Book Now - ৳{selectedExpert.price}
+                  </Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -1385,5 +1517,11 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
+  },
+  loaderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 20,
   },
 });

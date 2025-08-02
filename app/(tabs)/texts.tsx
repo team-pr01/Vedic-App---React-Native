@@ -10,6 +10,7 @@ import {
   Modal,
   TextInput,
   Linking,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -35,6 +36,7 @@ import { useGetAlCoursesQuery } from '@/redux/features/Course/courseApi';
 import { useGetAllReelsQuery } from '@/redux/features/Reels/reelsApi';
 import YoutubePlayer from 'react-native-youtube-iframe';
 import { getYouTubeVideoId } from '@/utils/getYouTubeVideoId';
+import LoadingComponent from '@/components/LoadingComponent/LoadingComponent';
 
 interface Course {
   title: string;
@@ -530,104 +532,112 @@ export default function LearnScreen() {
       case 'courses':
         return (
           <View style={styles.tabContent}>
-            {data?.data.map((course: TCourse, index: number) => (
-              <View
-                key={index}
-                style={[
-                  styles.courseCard,
-                  {
-                    backgroundColor: colors.card,
-                    shadowColor: colors.cardShadow,
-                  },
-                ]}
-              >
-                <Image
-                  source={{ uri: course.imageUrl }}
-                  style={styles.courseImage}
-                />
-                <View style={styles.courseContent}>
-                  <Text style={[styles.courseTitle, { color: colors.text }]}>
-                    {course?.name}
-                  </Text>
-
-                  <View style={styles.courseMeta}>
-                    <View style={styles.metaItem}>
-                      <Clock size={14} color={colors.secondaryText} />
-                      <Text
-                        style={[
-                          styles.metaText,
-                          { color: colors.secondaryText },
-                        ]}
-                      >
-                        {course?.duration}
-                      </Text>
-                    </View>
-                  </View>
-
-                  <TouchableOpacity
-                    style={styles.continueButton}
-                    onPress={() => {
-                      if (course?.url) {
-                        Linking.openURL(course?.url).catch((err) =>
-                          console.error('Failed to open URL:', err)
-                        );
-                      }
-                    }}
-                  >
-                    <Play size={16} color="#FFFFFF" />
-                    <Text style={styles.continueButtonText}>
-                      Continue Learning
+            {isCourseLoading ? (
+               <LoadingComponent loading="Courses" color={colors.primary} />
+            ) : (
+              data?.data.map((course: TCourse, index: number) => (
+                <View
+                  key={index}
+                  style={[
+                    styles.courseCard,
+                    {
+                      backgroundColor: colors.card,
+                      shadowColor: colors.cardShadow,
+                    },
+                  ]}
+                >
+                  <Image
+                    source={{ uri: course.imageUrl }}
+                    style={styles.courseImage}
+                  />
+                  <View style={styles.courseContent}>
+                    <Text style={[styles.courseTitle, { color: colors.text }]}>
+                      {course?.name}
                     </Text>
-                  </TouchableOpacity>
+
+                    <View style={styles.courseMeta}>
+                      <View style={styles.metaItem}>
+                        <Clock size={14} color={colors.secondaryText} />
+                        <Text
+                          style={[
+                            styles.metaText,
+                            { color: colors.secondaryText },
+                          ]}
+                        >
+                          {course?.duration}
+                        </Text>
+                      </View>
+                    </View>
+
+                    <TouchableOpacity
+                      style={styles.continueButton}
+                      onPress={() => {
+                        if (course?.url) {
+                          Linking.openURL(course?.url).catch((err) =>
+                            console.error('Failed to open URL:', err)
+                          );
+                        }
+                      }}
+                    >
+                      <Play size={16} color="#FFFFFF" />
+                      <Text style={styles.continueButtonText}>
+                        Continue Learning
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
                 </View>
-              </View>
-            ))}
+              ))
+            )}
           </View>
         );
 
       case 'videos':
         return (
           <View style={styles.tabContent}>
-            {reels?.data.map((video: TReels, index: number) => (
-              <TouchableOpacity
-                key={index}
-                style={[
-                  styles.videoCard,
-                  {
-                    backgroundColor: colors.card,
-                    shadowColor: colors.cardShadow,
-                  },
-                ]}
-              >
-                {/* --- Video Player Section --- */}
-                <View style={styles.programImageContainer}>
-                  <YoutubePlayer
-                    height={200}
-                    play={playingCardIndex === index}
-                    videoId={getYouTubeVideoId(video?.videoUrl) || ''}
-                    onChangeState={(state: any) => {
-                      if (state === 'ended') setPlayingCardIndex(null);
-                    }}
-                  />
-                </View>
-
-                <View style={styles.videoInfo}>
-                  <Text style={[styles.videoTitle, { color: colors.text }]}>
-                    {video.title}
-                  </Text>
-                  <View style={styles.videoMeta}>
-                    <Text
-                      style={[
-                        styles.videoInstructor,
-                        { color: colors.secondaryText },
-                      ]}
-                    >
-                      {video.category}
-                    </Text>
+            {isReelsLoading ? (
+              <LoadingComponent loading=" " color={colors.success} />
+            ) : (
+              reels?.data.map((video: TReels, index: number) => (
+                <TouchableOpacity
+                  key={index}
+                  style={[
+                    styles.videoCard,
+                    {
+                      backgroundColor: colors.card,
+                      shadowColor: colors.cardShadow,
+                    },
+                  ]}
+                >
+                  {/* --- Video Player Section --- */}
+                  <View style={styles.programImageContainer}>
+                    <YoutubePlayer
+                      height={200}
+                      play={playingCardIndex === index}
+                      videoId={getYouTubeVideoId(video?.videoUrl) || ''}
+                      onChangeState={(state: any) => {
+                        if (state === 'ended') setPlayingCardIndex(null);
+                      }}
+                    />
                   </View>
-                </View>
-              </TouchableOpacity>
-            ))}
+
+                  <View style={styles.videoInfo}>
+                    <Text style={[styles.videoTitle, { color: colors.text }]}>
+                      {video.title}
+                    </Text>
+                    <View style={styles.videoMeta}>
+                      <Text
+                        style={[
+                          styles.videoInstructor,
+                          { color: colors.secondaryText },
+                        ]}
+                      >
+                        {video.category}
+                      </Text>
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              ))
+            )}
           </View>
         );
 
@@ -1620,5 +1630,11 @@ const styles = StyleSheet.create({
   },
   sendButtonDisabled: {
     backgroundColor: '#CBD5E0',
+  },
+  loaderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 20,
   },
 });

@@ -9,6 +9,7 @@ import {
   Image,
   Modal,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -38,6 +39,7 @@ import { useGetAllNewsQuery } from '@/redux/features/News/newsApi';
 import { useGetAllCategoriesQuery } from '@/redux/features/Categories/categoriesApi';
 import { formatDate } from './../../utils/formatDate';
 import NewsContent from '@/components/NewsContent';
+import LoadingComponent from '@/components/LoadingComponent/LoadingComponent';
 
 // Define base English categories for state management and logic
 const baseEnglishCategories = [
@@ -93,7 +95,6 @@ export default function NewsScreen() {
   const filteredCategory = categoryData?.data?.filter(
     (category: any) => category.areaName === 'news'
   );
-
   const allCategories = filteredCategory?.map(
     (category: any) => category.category
   );
@@ -101,15 +102,11 @@ export default function NewsScreen() {
   console.log(data);
 
   const colors = useThemeColors();
-  const [selectedNewsItem, setSelectedNewsItem] = useState<any | null>(
-    null
-  );
+  const [selectedNewsItem, setSelectedNewsItem] = useState<any | null>(null);
   const [isArticleModalOpen, setIsArticleModalOpen] = useState(false);
 
   const [showShareModal, setShowShareModal] = useState(false);
-  const [shareTargetNews, setShareTargetNews] = useState<any | null>(
-    null
-  );
+  const [shareTargetNews, setShareTargetNews] = useState<any | null>(null);
 
   const [isTranslating, setIsTranslating] = useState<Record<string, boolean>>(
     {}
@@ -402,7 +399,7 @@ export default function NewsScreen() {
     return defaultText;
   };
 
-  console.log(selectedNewsItem, "hi");
+  console.log(selectedNewsItem, 'hi');
 
   return (
     <SafeAreaView
@@ -456,53 +453,52 @@ export default function NewsScreen() {
 
       {/* Category Tabs */}
       <View style={styles.categoriesContainer}>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                  <TouchableOpacity
-                    onPress={() => {
-                      triggerHaptic();
-                      setSelectedCategory('');
-                    }}
-                    style={[
-                      styles.categoryChip,
-                      selectedCategory === '' && styles.categoryChipActive,
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        styles.categoryText,
-                        selectedCategory === '' && styles.categoryTextActive,
-                      ]}
-                    >
-                      All
-                    </Text>
-                  </TouchableOpacity>
-                  {allCategories?.map((category: string) => (
-                    <View>
-                      <TouchableOpacity
-                        key={category}
-                        onPress={() => {
-                          triggerHaptic();
-                          setSelectedCategory(category);
-                        }}
-                        style={[
-                          styles.categoryChip,
-                          selectedCategory === category && styles.categoryChipActive,
-                        ]}
-                      >
-                        <Text
-                          style={[
-                            styles.categoryText,
-                            selectedCategory === category &&
-                              styles.categoryTextActive,
-                          ]}
-                        >
-                          {category}
-                        </Text>
-                      </TouchableOpacity>
-                    </View>
-                  ))}
-                </ScrollView>
-              </View>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          <TouchableOpacity
+            onPress={() => {
+              triggerHaptic();
+              setSelectedCategory('');
+            }}
+            style={[
+              styles.categoryChip,
+              selectedCategory === '' && styles.categoryChipActive,
+            ]}
+          >
+            <Text
+              style={[
+                styles.categoryText,
+                selectedCategory === '' && styles.categoryTextActive,
+              ]}
+            >
+              All
+            </Text>
+          </TouchableOpacity>
+          {allCategories?.map((category: string) => (
+            <View>
+              <TouchableOpacity
+                key={category}
+                onPress={() => {
+                  triggerHaptic();
+                  setSelectedCategory(category);
+                }}
+                style={[
+                  styles.categoryChip,
+                  selectedCategory === category && styles.categoryChipActive,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.categoryText,
+                    selectedCategory === category && styles.categoryTextActive,
+                  ]}
+                >
+                  {category}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          ))}
+        </ScrollView>
+      </View>
 
       {/* Trending Topics */}
       {/* <View style={[styles.trendingSection, { backgroundColor: colors.card }]}>
@@ -544,8 +540,10 @@ export default function NewsScreen() {
             সর্বশেষ নিবন্ধসমূহ
           </Text>
 
-          {data?.data?.length === 0 &&
-          !Object.values(isTranslating).some((v) => v) ? (
+          {isLoading ? (
+            <LoadingComponent loading="Programs" color={colors.primary} />
+          ) : data?.data?.length === 0 &&
+            !Object.values(isTranslating).some((v) => v) ? (
             <View style={styles.emptyState}>
               <Filter size={48} color={colors.secondaryText} />
               <Text style={[styles.emptyTitle, { color: colors.text }]}>
@@ -594,9 +592,9 @@ export default function NewsScreen() {
 
                   <View style={styles.articleContent}>
                     <View style={styles.articleHeader}>
-                        <Text style={styles.categoryBadgeText}>
-                           {article?.category}
-                        </Text>
+                      <Text style={styles.categoryBadgeText}>
+                        {article?.category}
+                      </Text>
                       <Text
                         style={[
                           styles.publishTime,
@@ -615,7 +613,6 @@ export default function NewsScreen() {
                       )}
                     </Text>
 
-
                     {article.excerpt ? (
                       <Text
                         style={[
@@ -626,8 +623,6 @@ export default function NewsScreen() {
                         {article.excerpt}
                       </Text>
                     ) : null}
-
-                    
 
                     <Text
                       style={[
@@ -696,7 +691,7 @@ export default function NewsScreen() {
                     </View>
 
                     <View style={styles.tagsContainer}>
-                      {article?.tags?.map((tag:string, index:number) => (
+                      {article?.tags?.map((tag: string, index: number) => (
                         <View
                           key={index}
                           style={[
@@ -741,48 +736,47 @@ export default function NewsScreen() {
               ]}
             >
               <View style={styles.modalHeader}>
-                
                 <Text style={[styles.modalTitle, { color: colors.text }]}>
                   {translatedArticles[selectedNewsItem.id]?.[
                     currentLanguage.code
                   ]?.title || selectedNewsItem.title}
                 </Text>
-                
+
                 <TouchableOpacity onPress={() => setIsArticleModalOpen(false)}>
                   <X size={24} color={colors.secondaryText} />
                 </TouchableOpacity>
               </View>
 
-              <ScrollView style={[styles.modalContent, {padding: 10}]}>
+              <ScrollView style={[styles.modalContent, { padding: 10 }]}>
                 <Image
                   source={{ uri: selectedNewsItem.imageUrl }}
                   style={styles.modalImage}
                 />
 
                 <View style={[styles.articleHeader, { marginTop: 10 }]}>
-                        <Text style={styles.categoryBadgeText}>
-                           {selectedNewsItem?.category}
-                        </Text>
-                      <Text
-                        style={[
-                          styles.publishTime,
-                          { color: colors.secondaryText },
-                        ]}
-                      >
-                        {formatDate(selectedNewsItem.createdAt)}
-                      </Text>
-                    </View>
+                  <Text style={styles.categoryBadgeText}>
+                    {selectedNewsItem?.category}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.publishTime,
+                      { color: colors.secondaryText },
+                    ]}
+                  >
+                    {formatDate(selectedNewsItem.createdAt)}
+                  </Text>
+                </View>
 
-                    {selectedNewsItem.excerpt ? (
-                      <Text
-                        style={[
-                          styles.articleExcerpt,
-                          { color: colors.secondaryText },
-                        ]}
-                      >
-                        {selectedNewsItem.excerpt}
-                      </Text>
-                    ) : null}
+                {selectedNewsItem.excerpt ? (
+                  <Text
+                    style={[
+                      styles.articleExcerpt,
+                      { color: colors.secondaryText },
+                    ]}
+                  >
+                    {selectedNewsItem.excerpt}
+                  </Text>
+                ) : null}
 
                 {/* <View style={styles.articleModalContent}>
                   <Text
@@ -810,7 +804,7 @@ export default function NewsScreen() {
                   </Text>
                 </View> */}
 
-                <NewsContent htmlContent={selectedNewsItem.content}/>
+                <NewsContent htmlContent={selectedNewsItem.content} />
                 {/* <Text
                         style={[
                           styles.articleExcerpt,
@@ -1191,10 +1185,10 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#FFFFFF',
     textTransform: 'capitalize',
-    backgroundColor : "green",
+    backgroundColor: 'green',
     paddingVertical: 4,
     paddingHorizontal: 10,
-    borderRadius : 20,
+    borderRadius: 20,
   },
   publishTime: {
     fontSize: 12,
@@ -1430,9 +1424,9 @@ const styles = StyleSheet.create({
   bottomSpacing: {
     height: 20,
   },
-   articleExcerpt: {
+  articleExcerpt: {
     fontSize: 14,
-    fontWeight: "400",
+    fontWeight: '400',
     marginBottom: 6,
     opacity: 0.8,
   },
@@ -1452,8 +1446,14 @@ const styles = StyleSheet.create({
   categoryTextActive: {
     color: '#FFFFFF',
   },
-   categoriesContainer: {
+  categoriesContainer: {
     paddingVertical: 16,
     paddingLeft: 16,
+  },
+  loaderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 20,
   },
 });

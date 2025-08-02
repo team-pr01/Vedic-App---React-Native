@@ -9,6 +9,7 @@ import {
   Image,
   Modal,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -24,10 +25,6 @@ import {
   Loader,
   Heart,
   ArrowLeft,
-  Filter,
-  Play,
-  Pause,
-  Compass,
   DoorOpen,
   Bed,
   ChefHat as Kitchen,
@@ -35,12 +32,8 @@ import {
   Flower2 as Plant,
   Church as Temple,
   Chrome as Home,
-  BookOpen,
-  Newspaper,
   TriangleAlert as AlertTriangle,
   Calendar,
-  User,
-  MapPin,
   Phone,
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
@@ -52,6 +45,8 @@ import { useGetAllVastuQuery } from '@/redux/features/Vastu/vastuApi';
 import YoutubePlayer from 'react-native-youtube-iframe';
 import { getYouTubeVideoId } from '@/utils/getYouTubeVideoId';
 import NoData from '@/components/Reusable/NoData/NoData';
+import { useThemeColors } from '@/hooks/useThemeColors';
+import LoadingComponent from '@/components/LoadingComponent/LoadingComponent';
 
 export type TVastu = {
   _id: string;
@@ -226,7 +221,7 @@ export default function VastuPage() {
   const filteredExperts =
     data?.data?.filter((expert: any) => expert.category === 'Vastu Expert') ||
     [];
-
+  const colors = useThemeColors();
   const [isListening, setIsListening] = useState(false);
   const [showAIModal, setShowAIModal] = useState(false);
   const [showAnalysisModal, setShowAnalysisModal] = useState(false);
@@ -589,7 +584,15 @@ export default function VastuPage() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Vastu Videos</Text>
 
-          {vastu?.data?.length > 0 ? (
+          {isVastuLoading ? (
+            <View style={[styles.container, styles.loaderContainer]}>
+              <ActivityIndicator size="large" color="#805AD5" />
+              <Text style={{ color: colors.text, marginTop: 10 }}>
+                Loading Programs...
+              </Text>
+               <LoadingComponent loading="Programs" color={colors.primary} />
+            </View>
+          ) : vastu?.data?.length > 0 ? (
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
               {vastu?.data?.map((vastu: TVastu, index: number) => (
                 <View key={vastu?._id} style={styles.videoCard}>
@@ -598,9 +601,7 @@ export default function VastuPage() {
                     <YoutubePlayer
                       height={200}
                       play={playingCardIndex === index}
-                      videoId={
-                        getYouTubeVideoId(vastu?.videoUrl) || ''
-                      }
+                      videoId={getYouTubeVideoId(vastu?.videoUrl) || ''}
                       onChangeState={(state: any) => {
                         if (state === 'ended') setPlayingCardIndex(null);
                       }}
@@ -1386,5 +1387,11 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
+  },
+  loaderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 20,
   },
 });
