@@ -9,13 +9,29 @@ import {
   Platform,
   Modal,
   TextInput,
+  Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { BookOpen, Play, Clock, User, Star, ArrowLeft, X, MessageSquare, Brain, CircleCheck as CheckCircle, Award, Loader, Video } from 'lucide-react-native';
+import {
+  BookOpen,
+  Play,
+  Clock,
+  User,
+  Star,
+  ArrowLeft,
+  X,
+  MessageSquare,
+  Brain,
+  CircleCheck as CheckCircle,
+  Award,
+  Loader,
+  Video,
+} from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
 import { useThemeColors } from '@/hooks/useThemeColors';
+import { useGetAlCoursesQuery } from '@/redux/features/Course/courseApi';
 
 interface Course {
   title: string;
@@ -54,67 +70,65 @@ interface QuizQuestion {
   correctAnswer: number;
 }
 
-const courses: Course[] = [
-  {
-    title: 'Introduction to Vedas',
-    description: 'Learn the basics of Vedic knowledge, scriptures, and core concepts.',
-    duration: '2 hours',
-    progress: 60,
-    image: 'https://images.pexels.com/photos/3280130/pexels-photo-3280130.jpeg?auto=compress&cs=tinysrgb&w=400',
-    lastLesson: 'Understanding Vedic Philosophy'
-  },
-  {
-    title: 'Sanskrit Basics for Beginners',
-    description: 'An introductory course to learn fundamental Sanskrit alphabets and grammar.',
-    duration: '3 hours',
-    progress: 30,
-    image: 'https://images.pexels.com/photos/1181772/pexels-photo-1181772.jpeg?auto=compress&cs=tinysrgb&w=400',
-    lastLesson: 'Basic Sanskrit Grammar - Part 1'
-  }
-];
-
 const realVideos: RealVideo[] = [
   {
     title: 'Morning Vedic Chants for Positive Energy',
     duration: '15 min',
     instructor: 'Pandit Sharma',
     views: '12K',
-    thumbnail: 'https://images.pexels.com/photos/3280130/pexels-photo-3280130.jpeg?auto=compress&cs=tinysrgb&w=400',
-    videoUrl: 'https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/360/Big_Buck_Bunny_360_10s_1MB.mp4'
+    thumbnail:
+      'https://images.pexels.com/photos/3280130/pexels-photo-3280130.jpeg?auto=compress&cs=tinysrgb&w=400',
+    videoUrl:
+      'https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/360/Big_Buck_Bunny_360_10s_1MB.mp4',
   },
   {
     title: 'Discourse on Bhagavad Gita - Chapter 2',
     duration: '45 min',
     instructor: 'Swami Ramdev',
     views: '25K',
-    thumbnail: 'https://images.pexels.com/photos/1051838/pexels-photo-1051838.jpeg?auto=compress&cs=tinysrgb&w=400',
-    videoUrl: 'https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/360/Big_Buck_Bunny_360_10s_1MB.mp4'
+    thumbnail:
+      'https://images.pexels.com/photos/1051838/pexels-photo-1051838.jpeg?auto=compress&cs=tinysrgb&w=400',
+    videoUrl:
+      'https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/360/Big_Buck_Bunny_360_10s_1MB.mp4',
   },
   {
     title: 'Sanskrit Pronunciation Guide for Beginners',
     duration: '30 min',
     instructor: 'Dr. Patel',
     views: '8K',
-    thumbnail: 'https://images.pexels.com/photos/1181772/pexels-photo-1181772.jpeg?auto=compress&cs=tinysrgb&w=400',
-    videoUrl: 'https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/360/Big_Buck_Bunny_360_10s_1MB.mp4'
-  }
+    thumbnail:
+      'https://images.pexels.com/photos/1181772/pexels-photo-1181772.jpeg?auto=compress&cs=tinysrgb&w=400',
+    videoUrl:
+      'https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/360/Big_Buck_Bunny_360_10s_1MB.mp4',
+  },
 ];
+
+export type TCourse = {
+  _id: string;
+  imageUrl?: string;
+  name: string;
+  url: string;
+  duration: string;
+  category: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+};
 
 const quizTopics: QuizTopic[] = [
   { title: 'Rigveda Basics', difficulty: 'Beginner' },
   { title: 'Sanskrit Grammar Fundamentals', difficulty: 'Intermediate' },
   { title: 'Core Vedic Philosophy', difficulty: 'Advanced' },
-  { title: 'Introduction to Upanishads', difficulty: 'Intermediate' }
+  { title: 'Introduction to Upanishads', difficulty: 'Intermediate' },
 ];
 
 // Mock Quiz Service
 const QuizService = {
   generateQuiz: async (topic: string, difficulty: string): Promise<Quiz> => {
     // Enhanced AI Quiz Generation
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+
     let questions: QuizQuestion[] = [];
-    
+
     // Generate questions based on topic and difficulty
     if (topic.includes('Rigveda')) {
       if (difficulty === 'Beginner') {
@@ -123,20 +137,21 @@ const QuizService = {
             id: '1',
             question: 'What is the oldest of the four Vedas?',
             options: ['Rigveda', 'Samaveda', 'Yajurveda', 'Atharvaveda'],
-            correctAnswer: 0
+            correctAnswer: 0,
           },
           {
             id: '2',
             question: 'How many mandalas (books) are there in the Rigveda?',
             options: ['8', '10', '12', '16'],
-            correctAnswer: 1
+            correctAnswer: 1,
           },
           {
             id: '3',
-            question: 'Which deity is most frequently mentioned in the Rigveda?',
+            question:
+              'Which deity is most frequently mentioned in the Rigveda?',
             options: ['Vishnu', 'Shiva', 'Indra', 'Brahma'],
-            correctAnswer: 2
-          }
+            correctAnswer: 2,
+          },
         ];
       } else if (difficulty === 'Intermediate') {
         questions = [
@@ -144,29 +159,36 @@ const QuizService = {
             id: '1',
             question: 'The Rigveda contains approximately how many hymns?',
             options: ['1028', '1017', '1875', '731'],
-            correctAnswer: 0
+            correctAnswer: 0,
           },
           {
             id: '2',
-            question: 'Which mandala of Rigveda is known as the "Family Books"?',
-            options: ['Mandala 1-2', 'Mandala 2-7', 'Mandala 8-9', 'Mandala 9-10'],
-            correctAnswer: 1
-          }
+            question:
+              'Which mandala of Rigveda is known as the "Family Books"?',
+            options: [
+              'Mandala 1-2',
+              'Mandala 2-7',
+              'Mandala 8-9',
+              'Mandala 9-10',
+            ],
+            correctAnswer: 1,
+          },
         ];
       } else {
         questions = [
           {
             id: '1',
-            question: 'The Rigvedic meter "Gayatri" consists of how many syllables?',
+            question:
+              'The Rigvedic meter "Gayatri" consists of how many syllables?',
             options: ['24', '32', '44', '48'],
-            correctAnswer: 0
+            correctAnswer: 0,
           },
           {
             id: '2',
             question: 'Which Rigvedic hymn is known as the "Nasadiya Sukta"?',
             options: ['RV 1.1.1', 'RV 10.129', 'RV 3.62.10', 'RV 7.59.12'],
-            correctAnswer: 1
-          }
+            correctAnswer: 1,
+          },
         ];
       }
     } else if (topic.includes('Sanskrit')) {
@@ -176,83 +198,97 @@ const QuizService = {
             id: '1',
             question: 'How many letters are there in the Sanskrit alphabet?',
             options: ['48', '50', '52', '54'],
-            correctAnswer: 1
+            correctAnswer: 1,
           },
           {
             id: '2',
             question: 'What does "Namaste" literally mean?',
             options: ['Hello', 'Goodbye', 'I bow to you', 'Thank you'],
-            correctAnswer: 2
-          }
+            correctAnswer: 2,
+          },
         ];
       } else {
         questions = [
           {
             id: '1',
-            question: 'Which Sanskrit grammar text is considered most authoritative?',
-            options: ['Ashtadhyayi', 'Mahabhashya', 'Vakyapadiya', 'Siddhanta Kaumudi'],
-            correctAnswer: 0
+            question:
+              'Which Sanskrit grammar text is considered most authoritative?',
+            options: [
+              'Ashtadhyayi',
+              'Mahabhashya',
+              'Vakyapadiya',
+              'Siddhanta Kaumudi',
+            ],
+            correctAnswer: 0,
           },
           {
             id: '2',
             question: 'The Sanskrit word "Yoga" is derived from which root?',
             options: ['Yuj', 'Yog', 'Yuga', 'Yukti'],
-            correctAnswer: 0
-          }
+            correctAnswer: 0,
+          },
         ];
       }
     } else if (topic.includes('Philosophy')) {
       questions = [
         {
           id: '1',
-          question: 'How many schools of Indian philosophy are traditionally recognized?',
+          question:
+            'How many schools of Indian philosophy are traditionally recognized?',
           options: ['4', '6', '8', '10'],
-          correctAnswer: 1
+          correctAnswer: 1,
         },
         {
           id: '2',
           question: 'Which concept is central to Advaita Vedanta?',
           options: ['Duality', 'Non-duality', 'Plurality', 'Materialism'],
-          correctAnswer: 1
+          correctAnswer: 1,
         },
         {
           id: '3',
           question: 'The concept of "Maya" in Vedantic philosophy refers to:',
           options: ['Reality', 'Illusion', 'Knowledge', 'Liberation'],
-          correctAnswer: 1
-        }
+          correctAnswer: 1,
+        },
       ];
     } else {
       // Default Upanishads questions
       questions = [
         {
           id: '1',
-          question: 'How many principal Upanishads are traditionally recognized?',
+          question:
+            'How many principal Upanishads are traditionally recognized?',
           options: ['10', '12', '13', '15'],
-          correctAnswer: 2
+          correctAnswer: 2,
         },
         {
           id: '2',
-          question: 'Which Upanishad contains the famous "Tat tvam asi" statement?',
+          question:
+            'Which Upanishad contains the famous "Tat tvam asi" statement?',
           options: ['Isha', 'Kena', 'Chandogya', 'Mundaka'],
-          correctAnswer: 2
+          correctAnswer: 2,
         },
         {
           id: '3',
           question: 'The word "Upanishad" literally means:',
-          options: ['Sacred text', 'Sitting near', 'Divine knowledge', 'Ancient wisdom'],
-          correctAnswer: 1
-        }
+          options: [
+            'Sacred text',
+            'Sitting near',
+            'Divine knowledge',
+            'Ancient wisdom',
+          ],
+          correctAnswer: 1,
+        },
       ];
     }
-    
+
     return {
       id: `quiz_${Date.now()}`,
       title: topic,
       difficulty: difficulty as 'Beginner' | 'Intermediate' | 'Advanced',
-      questions
+      questions,
     };
-  }
+  },
 };
 
 // Quiz Modal Component
@@ -280,7 +316,13 @@ const QuizModal: React.FC<{
       setSelectedAnswer(null);
     } else {
       setShowResult(true);
-      onComplete(score + (selectedAnswer === quiz.questions[currentQuestion].correctAnswer ? 1 : 0), quiz.questions.length);
+      onComplete(
+        score +
+          (selectedAnswer === quiz.questions[currentQuestion].correctAnswer
+            ? 1
+            : 0),
+        quiz.questions.length
+      );
     }
   };
 
@@ -301,11 +343,15 @@ const QuizModal: React.FC<{
                 Question {currentQuestion + 1} of {quiz.questions.length}
               </Text>
               <View style={styles.progressBar}>
-                <View 
+                <View
                   style={[
-                    styles.progressFill, 
-                    { width: `${((currentQuestion + 1) / quiz.questions.length) * 100}%` }
-                  ]} 
+                    styles.progressFill,
+                    {
+                      width: `${
+                        ((currentQuestion + 1) / quiz.questions.length) * 100
+                      }%`,
+                    },
+                  ]}
                 />
               </View>
             </View>
@@ -320,14 +366,16 @@ const QuizModal: React.FC<{
                   key={index}
                   style={[
                     styles.optionButton,
-                    selectedAnswer === index && styles.selectedOption
+                    selectedAnswer === index && styles.selectedOption,
                   ]}
                   onPress={() => handleAnswerSelect(index)}
                 >
-                  <Text style={[
-                    styles.optionText,
-                    selectedAnswer === index && styles.selectedOptionText
-                  ]}>
+                  <Text
+                    style={[
+                      styles.optionText,
+                      selectedAnswer === index && styles.selectedOptionText,
+                    ]}
+                  >
                     {option}
                   </Text>
                 </TouchableOpacity>
@@ -337,13 +385,15 @@ const QuizModal: React.FC<{
             <TouchableOpacity
               style={[
                 styles.nextButton,
-                selectedAnswer === null && styles.nextButtonDisabled
+                selectedAnswer === null && styles.nextButtonDisabled,
               ]}
               onPress={handleNext}
               disabled={selectedAnswer === null}
             >
               <Text style={styles.nextButtonText}>
-                {currentQuestion < quiz.questions.length - 1 ? 'Next' : 'Finish'}
+                {currentQuestion < quiz.questions.length - 1
+                  ? 'Next'
+                  : 'Finish'}
               </Text>
             </TouchableOpacity>
           </View>
@@ -365,8 +415,12 @@ const QuizModal: React.FC<{
 };
 
 export default function LearnScreen() {
+  //   Get all Courses
+  const { data, isLoading } = useGetAlCoursesQuery({});
   const colors = useThemeColors();
-  const [activeTab, setActiveTab] = useState<'courses' | 'videos' | 'ai' | 'quiz'>('courses');
+  const [activeTab, setActiveTab] = useState<
+    'courses' | 'videos' | 'ai' | 'quiz'
+  >('courses');
   const [isGeneratingQuiz, setIsGeneratingQuiz] = useState(false);
   const [currentQuiz, setCurrentQuiz] = useState<Quiz | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -374,8 +428,14 @@ export default function LearnScreen() {
   const [selectedVideo, setSelectedVideo] = useState<RealVideo | null>(null);
   const [showChatModal, setShowChatModal] = useState(false);
   const [chatMessage, setChatMessage] = useState('');
-  const [chatHistory, setChatHistory] = useState<{role: 'user' | 'assistant', content: string}[]>([
-    {role: 'assistant', content: 'Hello! I\'m your AI learning assistant. How can I help you with your Vedic studies today?'}
+  const [chatHistory, setChatHistory] = useState<
+    { role: 'user' | 'assistant'; content: string }[]
+  >([
+    {
+      role: 'assistant',
+      content:
+        "Hello! I'm your AI learning assistant. How can I help you with your Vedic studies today?",
+    },
   ]);
   const [isSendingMessage, setIsSendingMessage] = useState(false);
 
@@ -385,7 +445,10 @@ export default function LearnScreen() {
     }
   };
 
-  const handleGenerateQuiz = async (topic: string, difficulty: 'Beginner' | 'Intermediate' | 'Advanced') => {
+  const handleGenerateQuiz = async (
+    topic: string,
+    difficulty: 'Beginner' | 'Intermediate' | 'Advanced'
+  ) => {
     try {
       setIsGeneratingQuiz(true);
       setError(null);
@@ -405,7 +468,12 @@ export default function LearnScreen() {
 
   const handleContinueLearning = (course: Course) => {
     triggerHaptic();
-    console.log("Navigating to course:", course.title, "Last lesson:", course.lastLesson);
+    console.log(
+      'Navigating to course:',
+      course.title,
+      'Last lesson:',
+      course.lastLesson
+    );
     alert(`Continue learning: ${course.title}`);
   };
 
@@ -422,26 +490,30 @@ export default function LearnScreen() {
 
   const handleSendMessage = async () => {
     if (!chatMessage.trim()) return;
-    
+
     const userMessage = { role: 'user' as const, content: chatMessage };
-    setChatHistory(prev => [...prev, userMessage]);
+    setChatHistory((prev) => [...prev, userMessage]);
     setChatMessage('');
     setIsSendingMessage(true);
-    
+
     // Simulate AI response
     setTimeout(() => {
       const responses = [
-        "The Vedas are the oldest scriptures of Hinduism. They are divided into four main texts: Rigveda, Samaveda, Yajurveda, and Atharvaveda.",
+        'The Vedas are the oldest scriptures of Hinduism. They are divided into four main texts: Rigveda, Samaveda, Yajurveda, and Atharvaveda.',
         "In Sanskrit, 'yoga' means 'union', referring to the union of individual consciousness with universal consciousness.",
         "The Bhagavad Gita consists of 700 verses and is part of the epic Mahabharata. It's structured as a dialogue between Prince Arjuna and Lord Krishna.",
-        "Meditation techniques in Vedic traditions include focusing on breath (pranayama), mantras, or specific objects of concentration.",
-        "The concept of 'dharma' refers to the moral order that sustains the cosmos, society, and the individual. It can be understood as righteous duty or virtuous conduct."
+        'Meditation techniques in Vedic traditions include focusing on breath (pranayama), mantras, or specific objects of concentration.',
+        "The concept of 'dharma' refers to the moral order that sustains the cosmos, society, and the individual. It can be understood as righteous duty or virtuous conduct.",
       ];
-      
-      const randomResponse = responses[Math.floor(Math.random() * responses.length)];
-      const aiResponse = { role: 'assistant' as const, content: randomResponse };
-      
-      setChatHistory(prev => [...prev, aiResponse]);
+
+      const randomResponse =
+        responses[Math.floor(Math.random() * responses.length)];
+      const aiResponse = {
+        role: 'assistant' as const,
+        content: randomResponse,
+      };
+
+      setChatHistory((prev) => [...prev, aiResponse]);
       setIsSendingMessage(false);
     }, 1500);
   };
@@ -451,35 +523,54 @@ export default function LearnScreen() {
       case 'courses':
         return (
           <View style={styles.tabContent}>
-            {courses.map((course, index) => (
-              <View key={index} style={[styles.courseCard, { backgroundColor: colors.card, shadowColor: colors.cardShadow }]}>
-                <Image source={{ uri: course.image }} style={styles.courseImage} />
+            {data?.data.map((course:TCourse, index:number) => (
+              <View
+                key={index}
+                style={[
+                  styles.courseCard,
+                  {
+                    backgroundColor: colors.card,
+                    shadowColor: colors.cardShadow,
+                  },
+                ]}
+              >
+                <Image
+                  source={{ uri: course.imageUrl }}
+                  style={styles.courseImage}
+                />
                 <View style={styles.courseContent}>
-                  <Text style={[styles.courseTitle, { color: colors.text }]}>{course.title}</Text>
-                  <Text style={[styles.courseDescription, { color: colors.secondaryText }]}>{course.description}</Text>
-                  
+                  <Text style={[styles.courseTitle, { color: colors.text }]}>
+                    {course?.name}
+                  </Text>
+
                   <View style={styles.courseMeta}>
                     <View style={styles.metaItem}>
                       <Clock size={14} color={colors.secondaryText} />
-                      <Text style={[styles.metaText, { color: colors.secondaryText }]}>{course.duration}</Text>
-                    </View>
-                    <Text style={[styles.progressText, { color: colors.secondaryText }]}>{course.progress}% Complete</Text>
-                  </View>
-
-                  <View style={styles.progressContainer}>
-                    <View style={styles.progressBar}>
-                      <View 
-                        style={[styles.progressFill, { width: `${course.progress}%` }]} 
-                      />
+                      <Text
+                        style={[
+                          styles.metaText,
+                          { color: colors.secondaryText },
+                        ]}
+                      >
+                        {course?.duration}
+                      </Text>
                     </View>
                   </View>
 
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     style={styles.continueButton}
-                    onPress={() => handleContinueLearning(course)}
+                    onPress={() => {
+                      if (course?.url) {
+                        Linking.openURL(course?.url).catch((err) =>
+                          console.error('Failed to open URL:', err)
+                        );
+                      }
+                    }}
                   >
                     <Play size={16} color="#FFFFFF" />
-                    <Text style={styles.continueButtonText}>Continue Learning</Text>
+                    <Text style={styles.continueButtonText}>
+                      Continue Learning
+                    </Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -491,26 +582,53 @@ export default function LearnScreen() {
         return (
           <View style={styles.tabContent}>
             {realVideos.map((video, index) => (
-              <TouchableOpacity 
-                key={index} 
-                style={[styles.videoCard, { backgroundColor: colors.card, shadowColor: colors.cardShadow }]}
+              <TouchableOpacity
+                key={index}
+                style={[
+                  styles.videoCard,
+                  {
+                    backgroundColor: colors.card,
+                    shadowColor: colors.cardShadow,
+                  },
+                ]}
                 onPress={() => handleVideoPlay(video)}
               >
                 <View style={styles.videoThumbnailContainer}>
-                  <Image source={{ uri: video.thumbnail }} style={styles.videoThumbnail} />
+                  <Image
+                    source={{ uri: video.thumbnail }}
+                    style={styles.videoThumbnail}
+                  />
                   <View style={styles.playOverlay}>
                     <Play size={24} color="#FFFFFF" fill="#FFFFFF" />
                   </View>
                   <View style={styles.videoDuration}>
-                    <Text style={styles.videoDurationText}>{video.duration}</Text>
+                    <Text style={styles.videoDurationText}>
+                      {video.duration}
+                    </Text>
                   </View>
                 </View>
-                
+
                 <View style={styles.videoInfo}>
-                  <Text style={[styles.videoTitle, { color: colors.text }]}>{video.title}</Text>
+                  <Text style={[styles.videoTitle, { color: colors.text }]}>
+                    {video.title}
+                  </Text>
                   <View style={styles.videoMeta}>
-                    <Text style={[styles.videoInstructor, { color: colors.secondaryText }]}>{video.instructor}</Text>
-                    <Text style={[styles.videoViews, { color: colors.secondaryText }]}>{video.views} views</Text>
+                    <Text
+                      style={[
+                        styles.videoInstructor,
+                        { color: colors.secondaryText },
+                      ]}
+                    >
+                      {video.instructor}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.videoViews,
+                        { color: colors.secondaryText },
+                      ]}
+                    >
+                      {video.views} views
+                    </Text>
                   </View>
                 </View>
               </TouchableOpacity>
@@ -521,29 +639,62 @@ export default function LearnScreen() {
       case 'ai':
         return (
           <View style={styles.tabContent}>
-            <View style={[styles.aiCard, { backgroundColor: colors.card, shadowColor: colors.cardShadow }]}>
+            <View
+              style={[
+                styles.aiCard,
+                {
+                  backgroundColor: colors.card,
+                  shadowColor: colors.cardShadow,
+                },
+              ]}
+            >
               <MessageSquare size={48} color="#3B82F6" />
-              <Text style={[styles.aiTitle, { color: colors.text }]}>AI Learning Assistant</Text>
-              <Text style={[styles.aiDescription, { color: colors.secondaryText }]}>
-                Get personalized help with your Vedic studies. Ask questions, get explanations, and deepen your understanding.
+              <Text style={[styles.aiTitle, { color: colors.text }]}>
+                AI Learning Assistant
               </Text>
-              <TouchableOpacity style={styles.aiButton} onPress={handleAIAssistant}>
+              <Text
+                style={[styles.aiDescription, { color: colors.secondaryText }]}
+              >
+                Get personalized help with your Vedic studies. Ask questions,
+                get explanations, and deepen your understanding.
+              </Text>
+              <TouchableOpacity
+                style={styles.aiButton}
+                onPress={handleAIAssistant}
+              >
                 <Brain size={20} color="#FFFFFF" />
                 <Text style={styles.aiButtonText}>Start Conversation</Text>
               </TouchableOpacity>
             </View>
 
-            <View style={[styles.aiFeatures, { backgroundColor: colors.card, shadowColor: colors.cardShadow }]}>
-              <Text style={[styles.aiFeaturesTitle, { color: colors.text }]}>What can AI help you with?</Text>
+            <View
+              style={[
+                styles.aiFeatures,
+                {
+                  backgroundColor: colors.card,
+                  shadowColor: colors.cardShadow,
+                },
+              ]}
+            >
+              <Text style={[styles.aiFeaturesTitle, { color: colors.text }]}>
+                What can AI help you with?
+              </Text>
               {[
                 'Explain complex Vedic concepts',
                 'Answer questions about Sanskrit',
                 'Help with pronunciation of mantras',
-                'Provide study recommendations'
+                'Provide study recommendations',
               ].map((item, index) => (
                 <View key={index} style={styles.aiFeatureItem}>
                   <CheckCircle size={16} color="#10B981" />
-                  <Text style={[styles.aiFeatureText, { color: colors.secondaryText }]}>{item}</Text>
+                  <Text
+                    style={[
+                      styles.aiFeatureText,
+                      { color: colors.secondaryText },
+                    ]}
+                  >
+                    {item}
+                  </Text>
                 </View>
               ))}
             </View>
@@ -554,33 +705,82 @@ export default function LearnScreen() {
         return (
           <View style={styles.tabContent}>
             {error && (
-              <View style={[styles.errorContainer, { backgroundColor: colors.error + '20' }]}>
-                <Text style={[styles.errorText, { color: colors.error }]}>{error}</Text>
+              <View
+                style={[
+                  styles.errorContainer,
+                  { backgroundColor: colors.error + '20' },
+                ]}
+              >
+                <Text style={[styles.errorText, { color: colors.error }]}>
+                  {error}
+                </Text>
               </View>
             )}
-            
+
             {isGeneratingQuiz ? (
-              <View style={[styles.loadingContainer, { backgroundColor: colors.card, shadowColor: colors.cardShadow }]}>
+              <View
+                style={[
+                  styles.loadingContainer,
+                  {
+                    backgroundColor: colors.card,
+                    shadowColor: colors.cardShadow,
+                  },
+                ]}
+              >
                 <Loader size={32} color="#FF6F00" />
-                <Text style={[styles.loadingText, { color: colors.secondaryText }]}>Generating your quiz...</Text>
+                <Text
+                  style={[styles.loadingText, { color: colors.secondaryText }]}
+                >
+                  Generating your quiz...
+                </Text>
               </View>
             ) : (
               <>
                 {quizTopics.map((topic, index) => (
-                  <View key={index} style={[styles.quizTopicCard, { backgroundColor: colors.card, shadowColor: colors.cardShadow }]}>
+                  <View
+                    key={index}
+                    style={[
+                      styles.quizTopicCard,
+                      {
+                        backgroundColor: colors.card,
+                        shadowColor: colors.cardShadow,
+                      },
+                    ]}
+                  >
                     <View style={styles.quizTopicHeader}>
                       <View>
-                        <Text style={[styles.quizTopicTitle, { color: colors.text }]}>{topic.title}</Text>
-                        <View style={[styles.difficultyBadge, { backgroundColor: colors.background }]}>
-                          <Text style={[styles.difficultyText, { color: colors.secondaryText }]}>{topic.difficulty}</Text>
+                        <Text
+                          style={[
+                            styles.quizTopicTitle,
+                            { color: colors.text },
+                          ]}
+                        >
+                          {topic.title}
+                        </Text>
+                        <View
+                          style={[
+                            styles.difficultyBadge,
+                            { backgroundColor: colors.background },
+                          ]}
+                        >
+                          <Text
+                            style={[
+                              styles.difficultyText,
+                              { color: colors.secondaryText },
+                            ]}
+                          >
+                            {topic.difficulty}
+                          </Text>
                         </View>
                       </View>
                       <Award size={24} color="#F59E0B" />
                     </View>
-                    
-                    <TouchableOpacity 
+
+                    <TouchableOpacity
                       style={styles.startQuizButton}
-                      onPress={() => handleGenerateQuiz(topic.title, topic.difficulty)}
+                      onPress={() =>
+                        handleGenerateQuiz(topic.title, topic.difficulty)
+                      }
                     >
                       <BookOpen size={16} color="#FFFFFF" />
                       <Text style={styles.startQuizButtonText}>Start Quiz</Text>
@@ -588,9 +788,26 @@ export default function LearnScreen() {
                   </View>
                 ))}
 
-                <View style={[styles.comingSoonCard, { backgroundColor: colors.card, shadowColor: colors.cardShadow }]}>
-                  <Text style={[styles.comingSoonTitle, { color: colors.text }]}>More Quizzes Coming Soon!</Text>
-                  <Text style={[styles.comingSoonText, { color: colors.secondaryText }]}>
+                <View
+                  style={[
+                    styles.comingSoonCard,
+                    {
+                      backgroundColor: colors.card,
+                      shadowColor: colors.cardShadow,
+                    },
+                  ]}
+                >
+                  <Text
+                    style={[styles.comingSoonTitle, { color: colors.text }]}
+                  >
+                    More Quizzes Coming Soon!
+                  </Text>
+                  <Text
+                    style={[
+                      styles.comingSoonText,
+                      { color: colors.secondaryText },
+                    ]}
+                  >
                     Check back for AI-generated quizzes based on your learning.
                   </Text>
                 </View>
@@ -605,12 +822,11 @@ export default function LearnScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: colors.background }]}
+    >
       {/* Header */}
-      <LinearGradient
-        colors={['#FF6F00', '#FF8F00']}
-        style={styles.header}
-      >
+      <LinearGradient colors={['#FF6F00', '#FF8F00']} style={styles.header}>
         <TouchableOpacity onPress={triggerHaptic}>
           <ArrowLeft size={24} color="#FFFFFF" />
         </TouchableOpacity>
@@ -622,29 +838,42 @@ export default function LearnScreen() {
       </LinearGradient>
 
       {/* Tab Navigation */}
-      <View style={[styles.tabContainer, { backgroundColor: colors.card, shadowColor: colors.cardShadow }]}>
+      <View
+        style={[
+          styles.tabContainer,
+          { backgroundColor: colors.card, shadowColor: colors.cardShadow },
+        ]}
+      >
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           {[
             { id: 'courses', name: 'Courses' },
             { id: 'videos', name: 'Videos' },
             { id: 'ai', name: 'AI Assistant' },
-            { id: 'quiz', name: 'Quiz' }
+            { id: 'quiz', name: 'Quiz' },
           ].map((tab) => (
             <TouchableOpacity
               key={tab.id}
               style={[
-                [styles.tab, { backgroundColor: colors.background, borderColor: colors.border }],
-                activeTab === tab.id && styles.activeTab
+                [
+                  styles.tab,
+                  {
+                    backgroundColor: colors.background,
+                    borderColor: colors.border,
+                  },
+                ],
+                activeTab === tab.id && styles.activeTab,
               ]}
               onPress={() => {
                 setActiveTab(tab.id as any);
                 triggerHaptic();
               }}
             >
-              <Text style={[
-                [styles.tabText, { color: colors.secondaryText }],
-                activeTab === tab.id && styles.activeTabText
-              ]}>
+              <Text
+                style={[
+                  [styles.tabText, { color: colors.secondaryText }],
+                  activeTab === tab.id && styles.activeTabText,
+                ]}
+              >
                 {tab.name}
               </Text>
             </TouchableOpacity>
@@ -653,7 +882,10 @@ export default function LearnScreen() {
       </View>
 
       {/* Content */}
-      <ScrollView style={[styles.content, { backgroundColor: colors.background }]} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={[styles.content, { backgroundColor: colors.background }]}
+        showsVerticalScrollIndicator={false}
+      >
         {renderTabContent()}
       </ScrollView>
 
@@ -668,7 +900,11 @@ export default function LearnScreen() {
 
       {/* Video Modal */}
       {showVideoModal && selectedVideo && (
-        <Modal visible={true} animationType="slide" presentationStyle="pageSheet">
+        <Modal
+          visible={true}
+          animationType="slide"
+          presentationStyle="pageSheet"
+        >
           <SafeAreaView style={styles.videoModalContainer}>
             <View style={styles.videoModalHeader}>
               <Text style={styles.videoModalTitle}>Video Player</Text>
@@ -676,7 +912,7 @@ export default function LearnScreen() {
                 <X size={24} color="#2D3748" />
               </TouchableOpacity>
             </View>
-            
+
             <View style={styles.videoPlayerContainer}>
               <View style={styles.videoPlaceholder}>
                 <Video size={64} color="#718096" />
@@ -694,47 +930,90 @@ export default function LearnScreen() {
 
       {/* AI Chat Modal */}
       {showChatModal && (
-        <Modal visible={true} animationType="slide" presentationStyle="pageSheet">
-          <SafeAreaView style={[styles.chatModalContainer, { backgroundColor: colors.background }]}>
-            <View style={[styles.chatModalHeader, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
-              <Text style={[styles.chatModalTitle, { color: colors.text }]}>AI Learning Assistant</Text>
+        <Modal
+          visible={true}
+          animationType="slide"
+          presentationStyle="pageSheet"
+        >
+          <SafeAreaView
+            style={[
+              styles.chatModalContainer,
+              { backgroundColor: colors.background },
+            ]}
+          >
+            <View
+              style={[
+                styles.chatModalHeader,
+                {
+                  backgroundColor: colors.card,
+                  borderBottomColor: colors.border,
+                },
+              ]}
+            >
+              <Text style={[styles.chatModalTitle, { color: colors.text }]}>
+                AI Learning Assistant
+              </Text>
               <TouchableOpacity onPress={() => setShowChatModal(false)}>
                 <X size={24} color={colors.text} />
               </TouchableOpacity>
             </View>
-            
-            <ScrollView style={[styles.chatMessages, { backgroundColor: colors.background }]}>
+
+            <ScrollView
+              style={[
+                styles.chatMessages,
+                { backgroundColor: colors.background },
+              ]}
+            >
               {chatHistory.map((message, index) => (
-                <View 
-                  key={index} 
+                <View
+                  key={index}
                   style={[
                     styles.chatBubble,
-                    message.role === 'user' ? styles.userBubble : styles.aiBubble
+                    message.role === 'user'
+                      ? styles.userBubble
+                      : styles.aiBubble,
                   ]}
                 >
-                  <Text style={[
-                    styles.chatText,
-                    message.role === 'user' ? styles.userText : [styles.aiText, { color: colors.text }]
-                  ]}>
+                  <Text
+                    style={[
+                      styles.chatText,
+                      message.role === 'user'
+                        ? styles.userText
+                        : [styles.aiText, { color: colors.text }],
+                    ]}
+                  >
                     {message.content}
                   </Text>
                 </View>
               ))}
             </ScrollView>
-            
-            <View style={[styles.chatInputContainer, { backgroundColor: colors.card, borderTopColor: colors.border }]}>
+
+            <View
+              style={[
+                styles.chatInputContainer,
+                { backgroundColor: colors.card, borderTopColor: colors.border },
+              ]}
+            >
               <TextInput
-                style={[styles.chatInput, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
+                style={[
+                  styles.chatInput,
+                  {
+                    backgroundColor: colors.background,
+                    color: colors.text,
+                    borderColor: colors.border,
+                  },
+                ]}
                 value={chatMessage}
                 onChangeText={setChatMessage}
                 placeholder="Ask about Vedic concepts..."
                 placeholderTextColor={colors.secondaryText}
                 multiline
               />
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={[
                   styles.sendButton,
-                  (!chatMessage.trim() || isSendingMessage) && styles.sendButtonDisabled
+                  (!chatMessage.trim() || isSendingMessage) &&
+                    styles.sendButtonDisabled,
                 ]}
                 onPress={handleSendMessage}
                 disabled={!chatMessage.trim() || isSendingMessage}
