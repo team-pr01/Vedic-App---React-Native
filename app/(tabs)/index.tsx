@@ -77,7 +77,7 @@ const services = [
     icon: TreePine,
     color: '#E53E3E',
     gradient: ['#E53E3E', '#C53030'],
-    route: '/pages/yoga',
+    route: '/yoga',
   },
   {
     id: 'sanatan',
@@ -85,7 +85,7 @@ const services = [
     icon: Temple,
     color: '#3182CE',
     gradient: ['#3182CE', '#2C5282'],
-    route: '/pages/sanatan-sthal',
+    route: '/sanatan-sthal',
   },
   {
     id: 'food',
@@ -93,7 +93,7 @@ const services = [
     icon: Utensils,
     color: '#38A169',
     gradient: ['#38A169', '#2F855A'],
-    route: '/pages/food',
+    route: '/food',
   },
   {
     id: 'shop',
@@ -109,7 +109,7 @@ const services = [
     icon: Star,
     color: '#805AD5',
     gradient: ['#805AD5', '#6B46C1'],
-    route: '/pages/vastu',
+    route: '/vastu',
   },
   {
     id: 'jyotish',
@@ -117,7 +117,7 @@ const services = [
     icon: Star,
     color: '#D53F8C',
     gradient: ['#D53F8C', '#B83280'],
-    route: '/pages/jyotish',
+    route: '/jyotish',
   },
   {
     id: 'consultancy',
@@ -125,7 +125,7 @@ const services = [
     icon: Sparkles,
     color: '#DD6B20',
     gradient: ['#DD6B20', '#C05621'],
-    route: '/pages/consultancy',
+    route: '/consultancy',
   },
 ];
 
