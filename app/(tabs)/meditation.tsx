@@ -403,6 +403,7 @@ export default function NewsScreen() {
 
   return (
     <SafeAreaView
+    edges={['top', 'left', 'right']} 
       style={[styles.container, { backgroundColor: colors.background }]}
     >
       {/* Header */}

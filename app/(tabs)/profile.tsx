@@ -114,6 +114,7 @@ export default function EmergencyScreen() {
 
   return (
     <SafeAreaView
+    edges={['top', 'left', 'right']} 
       style={[styles.container, { backgroundColor: colors.background }]}
     >
       {/* Header */}
@@ -397,7 +398,6 @@ export default function EmergencyScreen() {
           </View>
         </View>
 
-        <View style={styles.bottomSpacing} />
       </ScrollView>
     </SafeAreaView>
   );
