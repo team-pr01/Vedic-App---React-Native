@@ -18,6 +18,7 @@ import {
 SplashScreen.preventAutoHideAsync();
 
 function RootLayoutNav() {
+  
   const token = useSelector((state: RootState) => state.auth.token);
   const isAuthLoading = useSelector((state: RootState) => state._persist.rehydrated); // Check if redux-persist is done
 

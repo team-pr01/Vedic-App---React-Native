@@ -1,13 +1,19 @@
 // src/redux/api/baseApi.ts
 // (I've renamed the folder to 'api' for clarity)
 
-import { createApi, fetchBaseQuery, BaseQueryFn, FetchArgs } from '@reduxjs/toolkit/query/react';
+import {
+  createApi,
+  fetchBaseQuery,
+  BaseQueryFn,
+  FetchArgs,
+} from '@reduxjs/toolkit/query/react';
 import { RootState } from '../store';
 import { setUser, logout } from '../features/Auth/authSlice';
 
 // Original base query
 const baseQuery = fetchBaseQuery({
-  baseUrl: 'https://vedic-app-server.onrender.com/api/v1',
+  baseUrl: 'http://192.168.0.102:5000/api/v1',
+  // baseUrl: 'https://vedic-app-server.onrender.com/api/v1',
   prepareHeaders: (headers, { getState }) => {
     const token = (getState() as RootState).auth.token;
     if (token) {
@@ -18,9 +24,11 @@ const baseQuery = fetchBaseQuery({
 });
 
 // Base query with automatic re-authentication
-const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, unknown> = async (
-  args, api, extraOptions
-) => {
+const baseQueryWithReauth: BaseQueryFn<
+  string | FetchArgs,
+  unknown,
+  unknown
+> = async (args, api, extraOptions) => {
   // Wait for the initial query to resolve
   let result = await baseQuery(args, api, extraOptions);
 
@@ -58,6 +66,15 @@ const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, unknown> = a
 export const baseApi = createApi({
   reducerPath: 'baseApi',
   baseQuery: baseQueryWithReauth,
-  tagTypes: ['users', 'consultancyService','categories','yoga', 'news', 'vastu', 'course', 'reels'], // Add all your tag types here
+  tagTypes: [
+    'users',
+    'consultancyService',
+    'categories',
+    'yoga',
+    'news',
+    'vastu',
+    'course',
+    'reels',
+  ], // Add all your tag types here
   endpoints: () => ({}), // Endpoints are injected from other files
 });
