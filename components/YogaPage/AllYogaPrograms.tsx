@@ -1,4 +1,4 @@
-import { LEVELS } from '@/app/pages/yoga';
+import { LEVELS } from '@/app/(tabs)/yoga';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { TYoga } from '@/types';
 import { Clock } from 'lucide-react-native';

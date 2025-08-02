@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Tabs } from 'expo-router';
 import {
   BookOpen,
@@ -17,11 +17,8 @@ import { useThemeColors } from '@/hooks/useThemeColors';
 
 export default function TabLayout() {
   const colors = useThemeColors();
-
-  // Redux + Router for auth guard
   const token = useSelector((state: RootState) => state.auth.token);
   const router = useRouter();
-
 
   return (
     <Tabs
@@ -44,6 +41,7 @@ export default function TabLayout() {
         ),
       }}
     >
+      {/* ---- Main 5 Tabs ---- */}
       <Tabs.Screen
         name="index"
         options={{
@@ -91,7 +89,7 @@ export default function TabLayout() {
               style={[
                 styles.akfIcon,
                 {
-                  backgroundColor: focused ? colors.info : colors.info,
+                  backgroundColor: colors.info,
                   transform: [{ scale: focused ? 1.1 : 1 }],
                   borderColor: colors.card,
                 },
@@ -143,11 +141,19 @@ export default function TabLayout() {
               <AlertTriangle size={size} color={colors.warning} />
             </View>
           ),
-          tabBarLabelStyle: [styles.tabBarLabel, { color: colors.warning }
-            
-          ],
+          tabBarLabelStyle: [styles.tabBarLabel, { color: colors.warning }],
         }}
       />
+
+      {/* ---- Hidden Screens ---- */}
+      <Tabs.Screen name="consultancy" options={{ href: null }} />
+      <Tabs.Screen name="sanatan-sthal" options={{ href: null }} />
+      <Tabs.Screen name="food" options={{ href: null }} />
+      <Tabs.Screen name="jyotish" options={{ href: null }} />
+      <Tabs.Screen name="vastu" options={{ href: null }} />
+      <Tabs.Screen name="yoga" options={{ href: null }} />
+      <Tabs.Screen name="veda-reader" options={{ href: null }} />
+      <Tabs.Screen name="explore" options={{ href: null }} />
     </Tabs>
   );
 }
@@ -164,7 +170,7 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 20,
     width: '100%',
-    marginBottom:50,
+    marginBottom: 50,
   },
   tabBarItem: {
     paddingTop: 5,
@@ -196,7 +202,6 @@ const styles = StyleSheet.create({
     borderRadius: 25,
     alignItems: 'center',
     justifyContent: 'center',
-    // marginTop: -20,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
