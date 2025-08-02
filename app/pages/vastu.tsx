@@ -48,7 +48,19 @@ import { router } from 'expo-router';
 import { Video, ResizeMode, AVPlaybackStatus } from 'expo-av';
 import { useGetAllConsultancyServicesQuery } from '@/redux/features/Consultancy/consultancyApi';
 import Experts from '@/components/Experts';
+import { useGetAllVastuQuery } from '@/redux/features/Vastu/vastuApi';
+import YoutubePlayer from 'react-native-youtube-iframe';
+import { getYouTubeVideoId } from '@/utils/getYouTubeVideoId';
+import NoData from '@/components/Reusable/NoData/NoData';
 
+export type TVastu = {
+  _id: string;
+  title: string;
+  category: string;
+  videoUrl: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+};
 interface VastuTip {
   title: string;
   icon: React.ReactElement;
@@ -204,10 +216,17 @@ const generateVastuAnalysis = async (
 };
 
 export default function VastuPage() {
-  const { data, isLoading } = useGetAllConsultancyServicesQuery({});
-  const filteredExperts=data?.data?.filter((expert :any) => expert.category === 'Vastu Expert') || [];
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectedCategory, setSelectedCategory] = useState('');
+  const { data: vastu, isLoading: isVastuLoading } = useGetAllVastuQuery({
+    keyword: searchQuery,
+    category: selectedCategory,
+  });
+  const { data, isLoading } = useGetAllConsultancyServicesQuery({});
+  const filteredExperts =
+    data?.data?.filter((expert: any) => expert.category === 'Vastu Expert') ||
+    [];
+
   const [isListening, setIsListening] = useState(false);
   const [showAIModal, setShowAIModal] = useState(false);
   const [showAnalysisModal, setShowAnalysisModal] = useState(false);
@@ -294,42 +313,6 @@ export default function VastuPage() {
     },
   ];
 
-  const initialVastuExperts: VastuExpert[] = [
-    {
-      id: 1,
-      name: 'Dr. Acharya Vinod Shastri',
-      speciality: 'Vastu & Vedic Astrology',
-      experience: '20 years',
-      rating: 4.9,
-      price: '₹2000',
-      image:
-        'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=400',
-      nextAvailable: 'Available Now',
-    },
-    {
-      id: 2,
-      name: 'Smt. Radhika Sharma',
-      speciality: 'Residential & Commercial Vastu',
-      experience: '15 years',
-      rating: 4.8,
-      price: '₹1500',
-      image:
-        'https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=400',
-      nextAvailable: 'Tomorrow, 10 AM',
-    },
-    {
-      id: 3,
-      name: 'Pandit Rajesh Kumar',
-      speciality: 'Traditional Vastu & Feng Shui',
-      experience: '25 years',
-      rating: 4.9,
-      price: '₹2500',
-      image:
-        'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=400',
-      nextAvailable: 'Today, 3 PM',
-    },
-  ];
-
   const vastuVideosData: VastuVideo[] = [
     {
       id: 1,
@@ -413,14 +396,12 @@ export default function VastuPage() {
     setFilteredTips(
       initialVastuTips.filter(
         (tip) =>
-          (selectedCategory === 'all' || tip.category === selectedCategory) &&
+          (selectedCategory === '' || tip.category === selectedCategory) &&
           (!query ||
             tip.title.toLowerCase().includes(query) ||
             tip.tips.some((t) => t.toLowerCase().includes(query)))
       )
     );
-
-   
   }, [searchQuery, selectedCategory]);
 
   const handleVoiceSearch = () => {
@@ -464,47 +445,7 @@ export default function VastuPage() {
     }
   };
 
-  const handleVideoPlayToggle = async (videoId: number) => {
-    triggerHaptic();
-    const currentVideoRef = videoRefs.current.get(videoId);
-    if (!currentVideoRef) return;
-
-    const isCurrentlyPlaying = videoStates.get(videoId)?.isPlaying || false;
-
-    // Pause other videos if we are about to play this one
-    if (!isCurrentlyPlaying) {
-      for (const [id, ref] of videoRefs.current.entries()) {
-        if (id !== videoId && ref) {
-          await ref.pauseAsync();
-        }
-      }
-    }
-
-    if (isCurrentlyPlaying) {
-      await currentVideoRef.pauseAsync();
-    } else {
-      await currentVideoRef.playAsync();
-    }
-  };
-
-  const handleExpertBooking = (expert: VastuExpert) => {
-    triggerHaptic();
-    setSelectedExpert(expert);
-    setShowExpertModal(true);
-  };
-  const handlePlaybackStatusUpdate = (
-    videoId: number,
-    status: AVPlaybackStatus
-  ) => {
-    if (status.isLoaded) {
-      setVideoStates((prev) =>
-        new Map(prev).set(videoId, { isPlaying: status.isPlaying })
-      );
-    }
-  };
-
   const categories = [
-    { id: 'all', name: 'All', icon: <Compass size={20} color="#805AD5" /> },
     {
       id: 'entrance',
       name: 'Entrance',
@@ -528,6 +469,7 @@ export default function VastuPage() {
     },
     { id: 'garden', name: 'Garden', icon: <Plant size={20} color="#805AD5" /> },
   ];
+  const [playingCardIndex, setPlayingCardIndex] = useState<number | null>(null);
 
   return (
     <View style={styles.container}>
@@ -548,6 +490,7 @@ export default function VastuPage() {
         </LinearGradient>
       </SafeAreaView>
 
+      {/* Search and AI Section */}
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.searchSection}>
           <View style={styles.searchContainer}>
@@ -595,6 +538,25 @@ export default function VastuPage() {
         </View>
         <View style={styles.categoriesContainer}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            <TouchableOpacity
+              onPress={() => {
+                triggerHaptic();
+                setSelectedCategory('');
+              }}
+              style={[
+                styles.categoryChip,
+                selectedCategory === '' && styles.categoryChipActive,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.categoryText,
+                  selectedCategory === '' && styles.categoryTextActive,
+                ]}
+              >
+                All
+              </Text>
+            </TouchableOpacity>
             {categories.map((category) => (
               <TouchableOpacity
                 key={category.id}
@@ -626,50 +588,34 @@ export default function VastuPage() {
         </View>
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Vastu Videos</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            {vastuVideosData.map((videoData) => (
-              <View key={videoData.id} style={styles.videoCard}>
-                <View style={styles.videoContainer}>
-                  <Video
-                    ref={(el) => {
-                      videoRefs.current.set(videoData.id, el);
-                    }}
-                    style={styles.video}
-                    source={{ uri: videoData.videoUrl }}
-                    posterSource={{ uri: videoData.thumbnail }}
-                    usePoster
-                    resizeMode={ResizeMode.COVER}
-                    onPlaybackStatusUpdate={(status) =>
-                      handlePlaybackStatusUpdate(videoData.id, status)
-                    }
-                  />
-                  <TouchableOpacity
-                    onPress={() => handleVideoPlayToggle(videoData.id)}
-                    style={styles.playButton}
-                  >
-                    {videoStates.get(videoData.id)?.isPlaying ? (
-                      <Pause size={24} color="#FFFFFF" />
-                    ) : (
-                      <Play size={24} color="#FFFFFF" />
-                    )}
-                  </TouchableOpacity>
-                </View>
-                <View style={styles.videoInfo}>
-                  <Text style={styles.videoTitle}>{videoData.title}</Text>
-                  <View style={styles.videoMeta}>
-                    <Text style={styles.videoDuration}>
-                      {videoData.duration}
-                    </Text>
-                    <Text style={styles.videoViews}>
-                      {videoData.views} views
-                    </Text>
+
+          {vastu?.data?.length > 0 ? (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              {vastu?.data?.map((vastu: TVastu, index: number) => (
+                <View key={vastu?._id} style={styles.videoCard}>
+                  {/* --- Video Player Section --- */}
+                  <View style={styles.programImageContainer}>
+                    <YoutubePlayer
+                      height={200}
+                      play={playingCardIndex === index}
+                      videoId={
+                        getYouTubeVideoId(vastu?.videoUrl) || ''
+                      }
+                      onChangeState={(state: any) => {
+                        if (state === 'ended') setPlayingCardIndex(null);
+                      }}
+                    />
                   </View>
+
+                  <Text style={styles.videoTitle}>{vastu?.title}</Text>
                 </View>
-              </View>
-            ))}
-          </ScrollView>
+              ))}
+            </ScrollView>
+          ) : (
+            <NoData message="No data found" />
+          )}
         </View>
-        ]
+        ]{/* Popular vastu tips */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Popular Vastu Tips</Text>
           {filteredTips.length > 0 ? (
@@ -698,7 +644,7 @@ export default function VastuPage() {
           )}
         </View>
         ]
-        <Experts data={filteredExperts} title={"Vastu"} isLoading={isLoading} />
+        <Experts data={filteredExperts} title={'Vastu'} isLoading={isLoading} />
       </ScrollView>
 
       {/* AI Analysis Modal */}
@@ -919,6 +865,10 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F7FAFC',
   },
+  programImageContainer: {
+    position: 'relative',
+    height: 170,
+  },
   headerContainer: {
     backgroundColor: '#805AD5',
   },
@@ -1090,6 +1040,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#2D3748',
     marginBottom: 8,
+    padding: 4,
   },
   videoMeta: {
     flexDirection: 'row',

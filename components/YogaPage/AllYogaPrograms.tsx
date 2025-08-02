@@ -6,6 +6,7 @@ import React, { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import YoutubePlayer from 'react-native-youtube-iframe';
 import NoData from '../Reusable/NoData/NoData';
+import { getYouTubeVideoId } from '@/utils/getYouTubeVideoId';
 
 const AllYogaPrograms = ({ data }: { data: TYoga[] }) => {
   const [playingCardIndex, setPlayingCardIndex] = useState<number | null>(null);
@@ -44,7 +45,7 @@ const AllYogaPrograms = ({ data }: { data: TYoga[] }) => {
                 <YoutubePlayer
                   height={200}
                   play={playingCardIndex === index}
-                  videoId="brg5LgDN114" // Fixed YouTube video
+                  videoId={getYouTubeVideoId(program?.videoUrl) || ''}
                   onChangeState={(state: any) => {
                     if (state === 'ended') setPlayingCardIndex(null);
                   }}
@@ -101,7 +102,7 @@ const AllYogaPrograms = ({ data }: { data: TYoga[] }) => {
           ))}
         </View>
       ) : (
-       <NoData message='No programs found' />
+        <NoData message="No programs found" />
       )}
     </View>
   );
