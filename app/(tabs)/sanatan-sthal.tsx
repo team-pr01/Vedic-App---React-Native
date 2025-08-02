@@ -12,25 +12,27 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { 
-  Search, 
-  Mic, 
-  CircleStop as StopCircle, 
-  Plus, 
-  ArrowLeft, 
-  MapPin, 
-  Star, 
-  Phone, 
+import {
+  Search,
+  Mic,
+  CircleStop as StopCircle,
+  Plus,
+  ArrowLeft,
+  MapPin,
+  Star,
+  Phone,
   MessageCircle,
   Building,
   School,
   Church as Temple,
   X,
-  Send
+  Send,
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
 import { useThemeColors } from '@/hooks/useThemeColors';
+import { useGetAllTempleQuery } from '@/redux/features/Temple/templeApi';
+import AddTempleForm from '@/components/TemplePage/AddTempleForm/AddTempleForm';
 
 interface SanatanSthalItem {
   id: string;
@@ -48,114 +50,36 @@ interface SanatanSthalItem {
   specialties?: string[];
 }
 
-const MOCK_SANATAN_STHAL_ITEMS: SanatanSthalItem[] = [
-  {
-    id: '1',
-    name: 'Jagannath Temple',
-    type: 'temple',
-    location: 'Puri, Odisha',
-    description: 'One of the Char Dham pilgrimage sites, famous for the annual Rath Yatra festival.',
-    image: 'https://images.pexels.com/photos/3280130/pexels-photo-3280130.jpeg?auto=compress&cs=tinysrgb&w=400',
-    rating: 4.9,
-    contactName: 'Pandit Ramesh Sharma',
-    phone: '+91 98765 43210',
-    email: 'info@jagannathtemplepuri.org',
-    established: '12th Century',
-    specialties: ['Rath Yatra', 'Daily Aarti', 'Prasadam']
-  },
-  {
-    id: '2',
-    name: 'Vedic Gurukul Ashram',
-    type: 'gurukul',
-    location: 'Haridwar, Uttarakhand',
-    description: 'Traditional Vedic education center teaching Sanskrit, Yoga, and ancient scriptures.',
-    image: 'https://images.pexels.com/photos/1181772/pexels-photo-1181772.jpeg?auto=compress&cs=tinysrgb&w=400',
-    rating: 4.7,
-    contactName: 'Acharya Vishnu Das',
-    phone: '+91 98765 43211',
-    email: 'admission@vedicgurukul.org',
-    established: '1995',
-    specialties: ['Sanskrit Studies', 'Yoga Teacher Training', 'Vedic Mathematics']
-  },
-  {
-    id: '3',
-    name: 'Sanatan Dharma Foundation',
-    type: 'org',
-    location: 'Mumbai, Maharashtra',
-    description: 'Non-profit organization promoting Vedic culture and supporting temple communities.',
-    image: 'https://images.pexels.com/photos/1051838/pexels-photo-1051838.jpeg?auto=compress&cs=tinysrgb&w=400',
-    rating: 4.6,
-    contactName: 'Dr. Priya Agarwal',
-    phone: '+91 98765 43212',
-    email: 'contact@sanatanfoundation.org',
-    established: '2010',
-    specialties: ['Cultural Events', 'Educational Programs', 'Community Support']
-  },
-  {
-    id: '4',
-    name: 'Kedarnath Temple',
-    type: 'temple',
-    location: 'Kedarnath, Uttarakhand',
-    description: 'Sacred Jyotirlinga temple located in the Himalayas, one of the holiest Shiva temples.',
-    image: 'https://images.pexels.com/photos/3280130/pexels-photo-3280130.jpeg?auto=compress&cs=tinysrgb&w=400',
-    rating: 4.8,
-    contactName: 'Pandit Mohan Tiwari',
-    phone: '+91 98765 43213',
-    established: '8th Century',
-    specialties: ['Jyotirlinga Darshan', 'Rudrabhishek', 'Char Dham Yatra']
-  },
-  {
-    id: '5',
-    name: 'Arya Samaj Gurukul',
-    type: 'gurukul',
-    location: 'Kurukshetra, Haryana',
-    description: 'Modern Gurukul following Arya Samaj principles with focus on Vedic education.',
-    image: 'https://images.pexels.com/photos/1181772/pexels-photo-1181772.jpeg?auto=compress&cs=tinysrgb&w=400',
-    rating: 4.5,
-    contactName: 'Swami Dayanand Saraswati',
-    phone: '+91 98765 43214',
-    email: 'info@aryasamajgurukul.org',
-    established: '1980',
-    specialties: ['Vedic Studies', 'Modern Education', 'Character Building']
-  },
-  {
-    id: '6',
-    name: 'Bharat Seva Sangh',
-    type: 'org',
-    location: 'Delhi, India',
-    description: 'Cultural organization dedicated to preserving and promoting Indian heritage.',
-    image: 'https://images.pexels.com/photos/1051838/pexels-photo-1051838.jpeg?auto=compress&cs=tinysrgb&w=400',
-    rating: 4.4,
-    contactName: 'Shri Rajesh Kumar',
-    phone: '+91 98765 43215',
-    email: 'info@bharatsevasangh.org',
-    established: '1985',
-    specialties: ['Heritage Preservation', 'Youth Programs', 'Cultural Festivals']
-  }
-];
+export type TTemple = {
+  _id: string;
+  name: string;
+  mainDeity: string;
+  description: string;
+  address: string;
+  city: string;
+  state: string;
+  country: string;
+  establishedYear: number;
+  visitingHours: string;
+  contactInfo: {
+    phone: string;
+    email: string;
+    website?: string;
+  };
+  imageUrl: string;
+  videoUrl?: string;
+  createdBy: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+};
 
 export default function SanatanSthalPage() {
-  const colors = useThemeColors();
   const [searchQuery, setSearchQuery] = useState('');
-  const [filteredItems, setFilteredItems] = useState<SanatanSthalItem[]>(MOCK_SANATAN_STHAL_ITEMS);
+  const { data, isLoading } = useGetAllTempleQuery({ keyword: searchQuery });
+  const colors = useThemeColors();
   const [isListening, setIsListening] = useState(false);
   const [showRegistrationModal, setShowRegistrationModal] = useState(false);
-  const [showDetailsModal, setShowDetailsModal] = useState(false);
-  const [showMessageModal, setShowMessageModal] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<SanatanSthalItem | null>(null);
-  const [messageText, setMessageText] = useState('');
   const recognitionRef = useRef<any>(null);
-
-  // Registration form state
-  const [registrationForm, setRegistrationForm] = useState({
-    name: '',
-    type: 'temple' as 'temple' | 'gurukul' | 'org',
-    location: '',
-    description: '',
-    contactName: '',
-    phone: '',
-    email: ''
-  });
 
   const triggerHaptic = () => {
     if (Platform.OS !== 'web') {
@@ -166,7 +90,9 @@ export default function SanatanSthalPage() {
   // Initialize speech recognition
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      const SpeechRecognition =
+        (window as any).SpeechRecognition ||
+        (window as any).webkitSpeechRecognition;
       if (SpeechRecognition) {
         const recognition = new SpeechRecognition();
         recognition.continuous = false;
@@ -191,20 +117,6 @@ export default function SanatanSthalPage() {
     }
   }, []);
 
-  // Filter items based on search
-  useEffect(() => {
-    const lowerQuery = searchQuery.toLowerCase();
-    setFilteredItems(
-      MOCK_SANATAN_STHAL_ITEMS.filter(item =>
-        item.name.toLowerCase().includes(lowerQuery) ||
-        item.location.toLowerCase().includes(lowerQuery) ||
-        item.description.toLowerCase().includes(lowerQuery) ||
-        item.type.toLowerCase().includes(lowerQuery) ||
-        item.contactName.toLowerCase().includes(lowerQuery)
-      )
-    );
-  }, [searchQuery]);
-
   const handleVoiceSearch = () => {
     triggerHaptic();
     if (!recognitionRef.current) return;
@@ -222,83 +134,15 @@ export default function SanatanSthalPage() {
     }
   };
 
-  const handleItemPress = (item: SanatanSthalItem) => {
-    triggerHaptic();
-    setSelectedItem(item);
-    setShowDetailsModal(true);
-  };
-
-  const handleMessagePress = () => {
-    triggerHaptic();
-    setShowDetailsModal(false);
-    setShowMessageModal(true);
-  };
-
-  const handleSendMessage = () => {
-    if (!messageText.trim() || !selectedItem) return;
-    
-    triggerHaptic();
-    console.log(`Message sent to ${selectedItem.contactName}: ${messageText}`);
-    alert(`Message sent to ${selectedItem.contactName}!`);
-    setMessageText('');
-    setShowMessageModal(false);
-  };
-
-  const handleRegistration = () => {
-    if (!registrationForm.name || !registrationForm.location || !registrationForm.contactName) {
-      alert('Please fill in all required fields');
-      return;
-    }
-
-    triggerHaptic();
-    console.log('Registration submitted:', registrationForm);
-    alert(`${registrationForm.type.charAt(0).toUpperCase() + registrationForm.type.slice(1)} "${registrationForm.name}" registered successfully!`);
-    
-    // Reset form
-    setRegistrationForm({
-      name: '',
-      type: 'temple',
-      location: '',
-      description: '',
-      contactName: '',
-      phone: '',
-      email: ''
-    });
-    setShowRegistrationModal(false);
-  };
-
-  const getTypeIcon = (type: string) => {
-    switch (type) {
-      case 'temple':
-        return <Temple size={20} color="#FF6F00" />;
-      case 'gurukul':
-        return <School size={20} color="#10B981" />;
-      case 'org':
-        return <Building size={20} color="#3B82F6" />;
-      default:
-        return <Building size={20} color="#718096" />;
-    }
-  };
-
-  const getTypeColor = (type: string) => {
-    switch (type) {
-      case 'temple':
-        return '#FF6F00';
-      case 'gurukul':
-        return '#10B981';
-      case 'org':
-        return '#3B82F6';
-      default:
-        return '#718096';
-    }
-  };
-
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header */}
       <SafeAreaView edges={['top']} style={styles.headerContainer}>
         <LinearGradient colors={['#00BCD4', '#00ACC1']} style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.headerButton}>
+          <TouchableOpacity
+            onPress={() => router.back()}
+            style={styles.headerButton}
+          >
             <ArrowLeft size={24} color="#FFFFFF" />
           </TouchableOpacity>
           <View style={styles.headerContent}>
@@ -322,8 +166,18 @@ export default function SanatanSthalPage() {
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Search Bar */}
-        <View style={[styles.searchContainer, { backgroundColor: colors.card }]}>
-          <View style={[styles.searchBar, { backgroundColor: colors.background, shadowColor: colors.cardShadow }]}>
+        <View
+          style={[styles.searchContainer, { backgroundColor: colors.card }]}
+        >
+          <View
+            style={[
+              styles.searchBar,
+              {
+                backgroundColor: colors.background,
+                shadowColor: colors.cardShadow,
+              },
+            ]}
+          >
             <Search size={20} color={colors.secondaryText} />
             <TextInput
               style={[styles.searchInput, { color: colors.text }]}
@@ -336,7 +190,7 @@ export default function SanatanSthalPage() {
               onPress={handleVoiceSearch}
               style={[
                 styles.voiceButton,
-                isListening && styles.voiceButtonActive
+                isListening && styles.voiceButtonActive,
               ]}
             >
               {isListening ? (
@@ -350,55 +204,80 @@ export default function SanatanSthalPage() {
           {isListening && (
             <View style={styles.listeningIndicator}>
               <View style={styles.listeningDot} />
-              <Text style={[styles.listeningText, { color: colors.secondaryText }]}>Listening...</Text>
+              <Text
+                style={[styles.listeningText, { color: colors.secondaryText }]}
+              >
+                Listening...
+              </Text>
             </View>
           )}
         </View>
 
         {/* Items List */}
         <View style={styles.itemsContainer}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>Sacred Places & Organizations</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>
+            Sacred Places & Organizations
+          </Text>
           <Text style={[styles.resultsCount, { color: colors.secondaryText }]}>
-            {filteredItems.length} place{filteredItems.length !== 1 ? 's' : ''} found
+            {data?.data?.length} place{data?.data?.length !== 1 ? 's' : ''}{' '}
+            found
           </Text>
 
-          {filteredItems.map((item) => (
+          {/* All temples */}
+          {data?.data?.map((item: TTemple) => (
             <TouchableOpacity
-              key={item.id}
-              style={[styles.itemCard, { backgroundColor: colors.card, shadowColor: colors.cardShadow }]}
-              onPress={() => handleItemPress(item)}
+              key={item?._id}
+              style={[
+                styles.itemCard,
+                {
+                  backgroundColor: colors.card,
+                  shadowColor: colors.cardShadow,
+                },
+              ]}
+              // onPress={() => handleItemPress(item)}
               activeOpacity={0.8}
             >
-              <Image source={{ uri: item.image }} style={styles.itemImage} />
+              <Image source={{ uri: item.imageUrl }} style={styles.itemImage} />
               <View style={styles.itemContent}>
                 <View style={styles.itemHeader}>
                   <View style={styles.itemTitleRow}>
-                    {getTypeIcon(item.type)}
-                    <Text style={[styles.itemTitle, { color: colors.text }]}>{item.name}</Text>
-                  </View>
-                  <View style={styles.ratingContainer}>
-                    <Star size={14} color="#F59E0B" fill="#F59E0B" />
-                    <Text style={[styles.ratingText, { color: colors.text }]}>{item.rating}</Text>
+                    {/* {getTypeIcon(item.type)} */}
+                    <Text style={[styles.itemTitle, { color: colors.text }]}>
+                      {item?.name}
+                    </Text>
                   </View>
                 </View>
 
                 <View style={styles.locationContainer}>
                   <MapPin size={14} color={colors.secondaryText} />
-                  <Text style={[styles.locationText, { color: colors.secondaryText }]}>{item.location}</Text>
+                  <Text
+                    style={[
+                      styles.locationText,
+                      { color: colors.secondaryText },
+                    ]}
+                  >
+                    {item?.city}, {item?.country}
+                  </Text>
                 </View>
 
-                <Text style={[styles.itemDescription, { color: colors.secondaryText }]}>{item.description}</Text>
+                <Text
+                  style={[
+                    styles.itemDescription,
+                    { color: colors.secondaryText },
+                  ]}
+                >
+                  {item.description}
+                </Text>
 
                 <View style={styles.itemFooter}>
-                  <Text style={[styles.contactName, { color: colors.secondaryText }]}>Contact: {item.contactName}</Text>
                   <View
                     style={[
                       styles.typeBadge,
-                      { backgroundColor: getTypeColor(item.type) }
+                      // { backgroundColor: getTypeColor(item.type) },
                     ]}
                   >
                     <Text style={styles.typeBadgeText}>
-                      {item.type.charAt(0).toUpperCase() + item.type.slice(1)}
+                      Deity : {item?.mainDeity}
                     </Text>
                   </View>
                 </View>
@@ -406,10 +285,14 @@ export default function SanatanSthalPage() {
             </TouchableOpacity>
           ))}
 
-          {filteredItems.length === 0 && (
+          {data?.data?.length === 0 && (
             <View style={styles.emptyState}>
-              <Text style={[styles.emptyStateTitle, { color: colors.text }]}>No places found</Text>
-              <Text style={[styles.emptyStateText, { color: colors.secondaryText }]}>
+              <Text style={[styles.emptyStateTitle, { color: colors.text }]}>
+                No places found
+              </Text>
+              <Text
+                style={[styles.emptyStateText, { color: colors.secondaryText }]}
+              >
                 Try adjusting your search criteria or add a new place
               </Text>
             </View>
@@ -426,252 +309,7 @@ export default function SanatanSthalPage() {
         animationType="slide"
         onRequestClose={() => setShowRegistrationModal(false)}
       >
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modal, { backgroundColor: colors.card, shadowColor: colors.cardShadow }]}>
-            <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
-              <Text style={[styles.modalTitle, { color: colors.text }]}>Register New Place</Text>
-              <TouchableOpacity onPress={() => setShowRegistrationModal(false)}>
-                <X size={24} color={colors.secondaryText} />
-              </TouchableOpacity>
-            </View>
-
-            <ScrollView style={styles.modalContent}>
-              <View style={styles.formGroup}>
-                <Text style={[styles.formLabel, { color: colors.text }]}>Name *</Text>
-                <TextInput
-                  style={[styles.formInput, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
-                  value={registrationForm.name}
-                  onChangeText={(text) => setRegistrationForm({...registrationForm, name: text})}
-                  placeholder="Enter name"
-                  placeholderTextColor={colors.secondaryText}
-                />
-              </View>
-
-              <View style={styles.formGroup}>
-                <Text style={[styles.formLabel, { color: colors.text }]}>Type *</Text>
-                <View style={styles.typeSelector}>
-                  {['temple', 'gurukul', 'org'].map((type) => (
-                    <TouchableOpacity
-                      key={type}
-                      style={[
-                        [styles.typeOption, { backgroundColor: colors.background, borderColor: colors.border }],
-                        registrationForm.type === type && styles.typeOptionSelected
-                      ]}
-                      onPress={() => setRegistrationForm({...registrationForm, type: type as any})}
-                    >
-                      <Text style={[
-                        [styles.typeOptionText, { color: colors.secondaryText }],
-                        registrationForm.type === type && styles.typeOptionTextSelected
-                      ]}>
-                        {type.charAt(0).toUpperCase() + type.slice(1)}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </View>
-
-              <View style={styles.formGroup}>
-                <Text style={[styles.formLabel, { color: colors.text }]}>Location *</Text>
-                <TextInput
-                  style={[styles.formInput, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
-                  value={registrationForm.location}
-                  onChangeText={(text) => setRegistrationForm({...registrationForm, location: text})}
-                  placeholder="City, State"
-                  placeholderTextColor={colors.secondaryText}
-                />
-              </View>
-
-              <View style={styles.formGroup}>
-                <Text style={[styles.formLabel, { color: colors.text }]}>Description</Text>
-                <TextInput
-                  style={[styles.formInput, styles.formTextArea, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
-                  value={registrationForm.description}
-                  onChangeText={(text) => setRegistrationForm({...registrationForm, description: text})}
-                  placeholder="Brief description"
-                  placeholderTextColor={colors.secondaryText}
-                  multiline
-                  numberOfLines={3}
-                />
-              </View>
-
-              <View style={styles.formGroup}>
-                <Text style={[styles.formLabel, { color: colors.text }]}>Contact Name *</Text>
-                <TextInput
-                  style={[styles.formInput, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
-                  value={registrationForm.contactName}
-                  onChangeText={(text) => setRegistrationForm({...registrationForm, contactName: text})}
-                  placeholder="Contact person name"
-                  placeholderTextColor={colors.secondaryText}
-                />
-              </View>
-
-              <View style={styles.formGroup}>
-                <Text style={[styles.formLabel, { color: colors.text }]}>Phone</Text>
-                <TextInput
-                  style={[styles.formInput, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
-                  value={registrationForm.phone}
-                  onChangeText={(text) => setRegistrationForm({...registrationForm, phone: text})}
-                  placeholder="+91 98765 43210"
-                  placeholderTextColor={colors.secondaryText}
-                  keyboardType="phone-pad"
-                />
-              </View>
-
-              <View style={styles.formGroup}>
-                <Text style={[styles.formLabel, { color: colors.text }]}>Email</Text>
-                <TextInput
-                  style={[styles.formInput, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
-                  value={registrationForm.email}
-                  onChangeText={(text) => setRegistrationForm({...registrationForm, email: text})}
-                  placeholder="contact@example.org"
-                  placeholderTextColor={colors.secondaryText}
-                  keyboardType="email-address"
-                />
-              </View>
-
-              <TouchableOpacity style={[styles.submitButton, { backgroundColor: colors.info }]} onPress={handleRegistration}>
-                <Text style={styles.submitButtonText}>Register</Text>
-              </TouchableOpacity>
-            </ScrollView>
-          </View>
-        </View>
-      </Modal>
-
-      {/* Details Modal */}
-      <Modal
-        visible={showDetailsModal}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setShowDetailsModal(false)}
-      >
-        {selectedItem && (
-          <View style={styles.modalOverlay}>
-            <View style={[styles.modal, { backgroundColor: colors.card, shadowColor: colors.cardShadow }]}>
-              <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
-                <Text style={[styles.modalTitle, { color: colors.text }]}>{selectedItem.name}</Text>
-                <TouchableOpacity onPress={() => setShowDetailsModal(false)}>
-                  <X size={24} color={colors.secondaryText} />
-                </TouchableOpacity>
-              </View>
-
-              <ScrollView style={styles.modalContent}>
-                <Image source={{ uri: selectedItem.image }} style={styles.detailImage} />
-                
-                <View style={styles.detailContent}>
-                  <View style={styles.detailHeader}>
-                    {getTypeIcon(selectedItem.type)}
-                    <Text style={[styles.detailTitle, { color: colors.text }]}>{selectedItem.name}</Text>
-                    <View style={styles.ratingContainer}>
-                      <Star size={16} color="#F59E0B" fill="#F59E0B" />
-                      <Text style={[styles.ratingText, { color: colors.text }]}>{selectedItem.rating}</Text>
-                    </View>
-                  </View>
-
-                  <View style={styles.locationContainer}>
-                    <MapPin size={16} color={colors.secondaryText} />
-                    <Text style={[styles.locationText, { color: colors.secondaryText }]}>{selectedItem.location}</Text>
-                  </View>
-
-                  <Text style={[styles.detailDescription, { color: colors.secondaryText }]}>{selectedItem.description}</Text>
-
-                  {selectedItem.established && (
-                    <View style={styles.detailRow}>
-                      <Text style={[styles.detailLabel, { color: colors.text }]}>Established:</Text>
-                      <Text style={[styles.detailValue, { color: colors.secondaryText }]}>{selectedItem.established}</Text>
-                    </View>
-                  )}
-
-                  <View style={styles.detailRow}>
-                    <Text style={[styles.detailLabel, { color: colors.text }]}>Contact:</Text>
-                    <Text style={[styles.detailValue, { color: colors.secondaryText }]}>{selectedItem.contactName}</Text>
-                  </View>
-
-                  <View style={styles.detailRow}>
-                    <Text style={[styles.detailLabel, { color: colors.text }]}>Phone:</Text>
-                    <Text style={[styles.detailValue, { color: colors.secondaryText }]}>{selectedItem.phone}</Text>
-                  </View>
-
-                  {selectedItem.email && (
-                    <View style={styles.detailRow}>
-                      <Text style={[styles.detailLabel, { color: colors.text }]}>Email:</Text>
-                      <Text style={[styles.detailValue, { color: colors.secondaryText }]}>{selectedItem.email}</Text>
-                    </View>
-                  )}
-
-                  {selectedItem.specialties && (
-                    <View style={styles.specialtiesContainer}>
-                      <Text style={[styles.detailLabel, { color: colors.text }]}>Specialties:</Text>
-                      <View style={styles.specialtiesList}>
-                        {selectedItem.specialties.map((specialty, index) => (
-                          <View key={index} style={[styles.specialtyTag, { backgroundColor: colors.info + '20' }]}>
-                            <Text style={[styles.specialtyText, { color: colors.info }]}>{specialty}</Text>
-                          </View>
-                        ))}
-                      </View>
-                    </View>
-                  )}
-
-                  <View style={styles.actionButtons}>
-                    <TouchableOpacity style={styles.callButton}>
-                      <Phone size={16} color="#FFFFFF" />
-                      <Text style={styles.callButtonText}>Call</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.messageButton} onPress={handleMessagePress}>
-                      <MessageCircle size={16} color="#FFFFFF" />
-                      <Text style={styles.messageButtonText}>Message</Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              </ScrollView>
-            </View>
-          </View>
-        )}
-      </Modal>
-
-      {/* Message Modal */}
-      <Modal
-        visible={showMessageModal}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setShowMessageModal(false)}
-      >
-        {selectedItem && (
-          <View style={styles.modalOverlay}>
-            <View style={[styles.messageModal, { backgroundColor: colors.card, shadowColor: colors.cardShadow }]}>
-              <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
-                <Text style={[styles.modalTitle, { color: colors.text }]}>Message {selectedItem.contactName}</Text>
-                <TouchableOpacity onPress={() => setShowMessageModal(false)}>
-                  <X size={24} color={colors.secondaryText} />
-                </TouchableOpacity>
-              </View>
-
-              <View style={styles.messageContent}>
-                <TextInput
-                  style={[styles.messageInput, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
-                  value={messageText}
-                  onChangeText={setMessageText}
-                  placeholder="Type your message here..."
-                  placeholderTextColor={colors.secondaryText}
-                  multiline
-                  numberOfLines={6}
-                  textAlignVertical="top"
-                />
-
-                <TouchableOpacity 
-                  style={[
-                    [styles.sendButton, { backgroundColor: colors.info }],
-                    !messageText.trim() && styles.sendButtonDisabled
-                  ]}
-                  onPress={handleSendMessage}
-                  disabled={!messageText.trim()}
-                >
-                  <Send size={16} color="#FFFFFF" />
-                  <Text style={styles.sendButtonText}>Send Message</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
-        )}
+        <AddTempleForm setShowRegistrationModal={setShowRegistrationModal} />
       </Modal>
     </View>
   );
@@ -713,7 +351,7 @@ const styles = StyleSheet.create({
   },
   floatingButton: {
     position: 'absolute',
-    bottom: 100,
+    bottom: 30,
     right: 20,
     width: 56,
     height: 56,
@@ -805,7 +443,7 @@ const styles = StyleSheet.create({
   },
   itemImage: {
     width: '100%',
-    height: 120,
+    height: 200,
     resizeMode: 'cover',
   },
   itemContent: {
@@ -902,10 +540,11 @@ const styles = StyleSheet.create({
   },
   modal: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
+    borderRadius: 10,
     width: '100%',
     maxWidth: 400,
     maxHeight: '90%',
+    height: '100%',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.25,
@@ -924,23 +563,7 @@ const styles = StyleSheet.create({
     shadowRadius: 20,
     elevation: 10,
   },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#2D3748',
-  },
-  modalContent: {
-    flex: 1,
-    padding: 16,
-  },
+
   detailImage: {
     width: '100%',
     height: 150,
@@ -1118,6 +741,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     alignItems: 'center',
     marginTop: 8,
+    marginBottom: 32,
   },
   submitButtonText: {
     color: '#FFFFFF',
