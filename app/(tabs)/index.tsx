@@ -10,6 +10,7 @@ import {
   Platform,
   NativeSyntheticEvent,
   NativeScrollEvent,
+  RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -38,6 +39,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { logout, useCurrentUser } from '@/redux/features/Auth/authSlice';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { useGetAllContentsQuery } from '@/redux/features/Content/contentApi';
+import { PullToRefreshWrapper } from '@/components/Reusable/PullToRefreshWrapper/PullToRefreshWrapper';
+import { useGetAllBooksQuery } from '@/redux/features/Book/bookApi';
 
 export type TContent = {
   _id: string;
@@ -148,7 +151,30 @@ const projects = [
 ];
 
 export default function HomeScreen() {
-  const { data, isLoading } = useGetAllContentsQuery({});
+  const {
+    data,
+    isLoading,
+    refetch: refetchContent,
+  } = useGetAllContentsQuery({});
+  const {
+    data: bookData,
+    isLoading: isBooksLoading,
+    refetch: refetchBookData,
+  } = useGetAllBooksQuery({});
+
+  const [refreshing, setRefreshing] = useState(false);
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+
+    try {
+      await Promise.all([refetchContent(), refetchBookData()]);
+    } catch (error) {
+      console.error('Error while refreshing:', error);
+    } finally {
+      setRefreshing(false);
+    }
+  };
   const colors = useThemeColors();
   const [searchQuery, setSearchQuery] = useState('');
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -159,7 +185,6 @@ export default function HomeScreen() {
     (typeof projects)[0] | null
   >(null);
   const [showNotificationModal, setShowNotificationModal] = useState(false);
-  const [hasUnreadNotifications, setHasUnreadNotifications] = useState(true);
   const [showShopModal, setShowShopModal] = useState(false);
   const [searchFilters, setSearchFilters] = useState<string[]>([]);
   const dispatch = useDispatch();
@@ -241,13 +266,6 @@ export default function HomeScreen() {
   const handleMenuPress = () => {
     triggerHaptic();
     setShowSettingsModal(true);
-  };
-
-  const handleNotificationPress = () => {
-    triggerHaptic();
-    setShowNotificationModal(true);
-    // When notifications are viewed, we can consider them as "read"
-    setHasUnreadNotifications(false);
   };
 
   const handleProfilePress = () => {
@@ -358,275 +376,305 @@ export default function HomeScreen() {
   };
 
   return (
-    <SafeAreaView
-      edges={['top', 'left', 'right']}
-      style={[styles.container, { backgroundColor: colors.background }]}
-    >
-      {/* Header */}
-      <LinearGradient colors={colors.tabBarBackground} style={styles.header}>
-        <TouchableOpacity onPress={handleMenuPress} style={styles.menuButton}>
-          <Menu size={24} color={colors.text} />
-        </TouchableOpacity>
-
-        <View style={styles.dateContainer}>
-          <View
-            style={[
-              styles.dateWrapper,
-              {
-                backgroundColor: `${colors.primary}20`,
-                borderColor: `${colors.primary}40`,
-              },
-            ]}
+    <PullToRefreshWrapper onRefresh={handleRefresh}>
+      <ScrollView
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+        }
+      >
+        <SafeAreaView
+          edges={['top', 'left', 'right']}
+          style={[styles.container, { backgroundColor: colors.background }]}
+        >
+          {/* Header */}
+          <LinearGradient
+            colors={colors.tabBarBackground}
+            style={styles.header}
           >
-            <Calendar size={14} color={colors.primary} />
-            <Text style={[styles.dateText, { color: colors.primary }]}>
-              {formatBengaliDate()}
-            </Text>
-          </View>
-        </View>
+            <TouchableOpacity
+              onPress={handleMenuPress}
+              style={styles.menuButton}
+            >
+              <Menu size={24} color={colors.text} />
+            </TouchableOpacity>
 
-        <View style={styles.headerActions}>
-          {/* <TouchableOpacity style={styles.headerButton} onPress={handleNotificationPress}>
+            <View style={styles.dateContainer}>
+              <View
+                style={[
+                  styles.dateWrapper,
+                  {
+                    backgroundColor: `${colors.primary}20`,
+                    borderColor: `${colors.primary}40`,
+                  },
+                ]}
+              >
+                <Calendar size={14} color={colors.primary} />
+                <Text style={[styles.dateText, { color: colors.primary }]}>
+                  {formatBengaliDate()}
+                </Text>
+              </View>
+            </View>
+
+            <View style={styles.headerActions}>
+              {/* <TouchableOpacity style={styles.headerButton} onPress={handleNotificationPress}>
             <Bell size={20} color={colors.text} />
             {hasUnreadNotifications && <View style={[styles.notificationBadge, { backgroundColor: colors.error }]} />}
           </TouchableOpacity> */}
-          <TouchableOpacity
-            style={styles.profileButton}
-            onPress={handleProfilePress}
-          >
-            <Image
-              source={{
-                uri: 'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=100',
-              }}
-              style={styles.profileImage}
-            />
-          </TouchableOpacity>
-        </View>
-      </LinearGradient>
-
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Hero Section */}
-        <View style={styles.heroContainer}>
-          <ScrollView
-            ref={scrollViewRef}
-            horizontal
-            pagingEnabled
-            showsHorizontalScrollIndicator={false}
-            onMomentumScrollEnd={(event) => {
-              const index = Math.round(
-                event.nativeEvent.contentOffset.x / width
-              );
-              setCurrentHeroIndex(index);
-            }}
-          >
-            {data?.data?.map((hero: TContent, index: number) => (
-              <View key={index} style={styles.heroSlide}>
-                <Image
-                  source={{ uri: hero.imageUrl }}
-                  style={styles.heroImage}
-                />
-                <LinearGradient
-                  colors={['transparent', 'rgba(0,0,0,0.7)']}
-                  style={styles.heroOverlay}
-                >
-                  <View style={styles.heroContent}>
-                    <Text style={styles.heroTitle}>{hero?.title}</Text>
-                    <Text style={styles.heroSubtitle}>{hero?.subtitle}</Text>
-                    <Text style={styles.heroDescription}>
-                      {hero?.description}
-                    </Text>
-                  </View>
-                </LinearGradient>
-              </View>
-            ))}
-          </ScrollView>
-
-          {/* Hero Indicators */}
-          <View style={styles.heroIndicators}>
-            {data?.data?.map((_: any, index: number) => (
               <TouchableOpacity
-                key={index}
-                style={[
-                  styles.indicator,
-                  index === currentHeroIndex && [
-                    styles.activeIndicator,
-                    { backgroundColor: colors.info },
-                  ],
-                ]}
-                onPress={() => {
-                  scrollViewRef.current?.scrollTo({
-                    x: index * width,
-                    animated: true,
-                  });
-                  setCurrentHeroIndex(index);
-                  triggerHaptic();
-                  console.log(
-                    'Scrolling to index:',
-                    index,
-                    '=> x:',
-                    index * width
-                  );
-                  console.log('ref:', scrollViewRef.current);
-                }}
-              />
-            ))}
-          </View>
-        </View>
-
-        {/* Search Bar */}
-        <SearchBar
-          placeholderText="বৈদিক জ্ঞান, মন্দির, সংবাদ অনুসন্ধান করুন..."
-          onSearch={handleSearch}
-          onFilterClick={handleFilterClick}
-          initialQuery={searchQuery}
-          showFilter={true}
-          filterOptions={searchFilterOptions}
-          currentFilters={searchFilters}
-          onApplyFilters={handleApplyFilters}
-        />
-
-        {/* Service Icons */}
-        <View style={styles.servicesContainer}>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.servicesContent}
-          >
-            {services.map((service, index) => (
-              <TouchableOpacity
-                key={service.id}
-                style={styles.serviceItem}
-                onPress={() => handleServicePress(service.id, service.route)}
+                style={styles.profileButton}
+                onPress={handleProfilePress}
               >
-                <LinearGradient
-                  colors={service.gradient}
-                  style={styles.serviceIcon}
-                >
-                  <service.icon size={24} color="#FFFFFF" />
-                </LinearGradient>
-                <Text style={[styles.serviceName, { color: colors.text }]}>
-                  {service.name}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
-
-        {/* Sacred Texts Section */}
-        <SacredTextsSection onTextClick={handleTextPress} />
-
-        {/* Our Project Section */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text
-              style={[styles.sectionTitle, { color: colors.primary }]}
-            >{`Our Project"  ${user?.name}`}</Text>
-            <Text
-              style={[styles.sectionSubtitle, { color: colors.secondaryText }]}
-            >
-              আমাদের প্রকল্প
-            </Text>
-          </View>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.projectsContent}
-          >
-            {projects.map((project) => (
-              <View key={project.id} style={styles.projectCard}>
                 <Image
-                  source={{ uri: project.image }}
-                  style={styles.projectImage}
+                  source={{
+                    uri: 'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=100',
+                  }}
+                  style={styles.profileImage}
                 />
-                <LinearGradient
-                  colors={['transparent', 'rgba(0,0,0,0.8)']}
-                  style={styles.projectOverlay}
-                >
-                  <View style={styles.projectContent}>
-                    <Text style={styles.projectTitle}>{project.title}</Text>
-                    <Text style={styles.projectSubtitle}>
-                      {project.subtitle}
-                    </Text>
-                    <Text style={styles.projectDescription}>
-                      {project.description}{' '}
-                    </Text>
+              </TouchableOpacity>
+            </View>
+          </LinearGradient>
 
-                    <View style={styles.projectProgress}>
-                      <View style={styles.progressInfo}>
-                        <Text style={styles.progressText}>
-                          Raised: ৳{project.collectedAmount.toLocaleString()}
-                        </Text>
-                        <Text style={styles.progressGoal}>
-                          Goal: ৳{project.budget.toLocaleString()}
-                        </Text>
-                      </View>
-                      <View style={styles.progressBar}>
-                        <View
-                          style={[
-                            styles.progressFill,
-                            {
-                              width: `${
-                                (project.collectedAmount / project.budget) * 100
-                              }%`,
-                            },
-                          ]}
-                        />
-                      </View>
-                      <Text style={styles.supportersText}>
-                        {project.supporters} supporters
-                      </Text>
-                    </View>
-
-                    <TouchableOpacity
-                      style={styles.donateButton}
-                      onPress={() => handleProjectDonate(project)}
+          <ScrollView
+            style={styles.content}
+            showsVerticalScrollIndicator={false}
+          >
+            {/* Hero Section */}
+            <View style={styles.heroContainer}>
+              <ScrollView
+                ref={scrollViewRef}
+                horizontal
+                pagingEnabled
+                showsHorizontalScrollIndicator={false}
+                onMomentumScrollEnd={(event) => {
+                  const index = Math.round(
+                    event.nativeEvent.contentOffset.x / width
+                  );
+                  setCurrentHeroIndex(index);
+                }}
+              >
+                {data?.data?.map((hero: TContent, index: number) => (
+                  <View key={index} style={styles.heroSlide}>
+                    <Image
+                      source={{ uri: hero.imageUrl }}
+                      style={styles.heroImage}
+                    />
+                    <LinearGradient
+                      colors={['transparent', 'rgba(0,0,0,0.7)']}
+                      style={styles.heroOverlay}
                     >
-                      <Heart size={16} color="#FFFFFF" fill="#FFFFFF" />
-                      <Text style={styles.donateText}>Donate Now</Text>
-                    </TouchableOpacity>
+                      <View style={styles.heroContent}>
+                        <Text style={styles.heroTitle}>{hero?.title}</Text>
+                        <Text style={styles.heroSubtitle}>
+                          {hero?.subtitle}
+                        </Text>
+                        <Text style={styles.heroDescription}>
+                          {hero?.description}
+                        </Text>
+                      </View>
+                    </LinearGradient>
                   </View>
-                </LinearGradient>
+                ))}
+              </ScrollView>
+
+              {/* Hero Indicators */}
+              <View style={styles.heroIndicators}>
+                {data?.data?.map((_: any, index: number) => (
+                  <TouchableOpacity
+                    key={index}
+                    style={[
+                      styles.indicator,
+                      index === currentHeroIndex && [
+                        styles.activeIndicator,
+                        { backgroundColor: colors.info },
+                      ],
+                    ]}
+                    onPress={() => {
+                      scrollViewRef.current?.scrollTo({
+                        x: index * width,
+                        animated: true,
+                      });
+                      setCurrentHeroIndex(index);
+                      triggerHaptic();
+                      console.log(
+                        'Scrolling to index:',
+                        index,
+                        '=> x:',
+                        index * width
+                      );
+                      console.log('ref:', scrollViewRef.current);
+                    }}
+                  />
+                ))}
               </View>
-            ))}
+            </View>
+
+            {/* Search Bar */}
+            <SearchBar
+              placeholderText="বৈদিক জ্ঞান, মন্দির, সংবাদ অনুসন্ধান করুন..."
+              onSearch={handleSearch}
+              onFilterClick={handleFilterClick}
+              initialQuery={searchQuery}
+              showFilter={true}
+              filterOptions={searchFilterOptions}
+              currentFilters={searchFilters}
+              onApplyFilters={handleApplyFilters}
+            />
+
+            {/* Service Icons */}
+            <View style={styles.servicesContainer}>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.servicesContent}
+              >
+                {services.map((service, index) => (
+                  <TouchableOpacity
+                    key={service.id}
+                    style={styles.serviceItem}
+                    onPress={() =>
+                      handleServicePress(service.id, service.route)
+                    }
+                  >
+                    <LinearGradient
+                      colors={service.gradient}
+                      style={styles.serviceIcon}
+                    >
+                      <service.icon size={24} color="#FFFFFF" />
+                    </LinearGradient>
+                    <Text style={[styles.serviceName, { color: colors.text }]}>
+                      {service.name}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+
+            {/* Sacred Texts Section */}
+            <SacredTextsSection
+              onTextClick={handleTextPress}
+              data={bookData}
+              isLoading={isBooksLoading}
+            />
+
+            {/* Our Project Section */}
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <Text
+                  style={[styles.sectionTitle, { color: colors.primary }]}
+                >{`Our Project"  ${user?.name}`}</Text>
+                <Text
+                  style={[
+                    styles.sectionSubtitle,
+                    { color: colors.secondaryText },
+                  ]}
+                >
+                  আমাদের প্রকল্প
+                </Text>
+              </View>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.projectsContent}
+              >
+                {projects.map((project) => (
+                  <View key={project.id} style={styles.projectCard}>
+                    <Image
+                      source={{ uri: project.image }}
+                      style={styles.projectImage}
+                    />
+                    <LinearGradient
+                      colors={['transparent', 'rgba(0,0,0,0.8)']}
+                      style={styles.projectOverlay}
+                    >
+                      <View style={styles.projectContent}>
+                        <Text style={styles.projectTitle}>{project.title}</Text>
+                        <Text style={styles.projectSubtitle}>
+                          {project.subtitle}
+                        </Text>
+                        <Text style={styles.projectDescription}>
+                          {project.description}{' '}
+                        </Text>
+
+                        <View style={styles.projectProgress}>
+                          <View style={styles.progressInfo}>
+                            <Text style={styles.progressText}>
+                              Raised: ৳
+                              {project.collectedAmount.toLocaleString()}
+                            </Text>
+                            <Text style={styles.progressGoal}>
+                              Goal: ৳{project.budget.toLocaleString()}
+                            </Text>
+                          </View>
+                          <View style={styles.progressBar}>
+                            <View
+                              style={[
+                                styles.progressFill,
+                                {
+                                  width: `${
+                                    (project.collectedAmount / project.budget) *
+                                    100
+                                  }%`,
+                                },
+                              ]}
+                            />
+                          </View>
+                          <Text style={styles.supportersText}>
+                            {project.supporters} supporters
+                          </Text>
+                        </View>
+
+                        <TouchableOpacity
+                          style={styles.donateButton}
+                          onPress={() => handleProjectDonate(project)}
+                        >
+                          <Heart size={16} color="#FFFFFF" fill="#FFFFFF" />
+                          <Text style={styles.donateText}>Donate Now</Text>
+                        </TouchableOpacity>
+                      </View>
+                    </LinearGradient>
+                  </View>
+                ))}
+              </ScrollView>
+            </View>
+
+            <View style={styles.bottomSpacing} />
           </ScrollView>
-        </View>
 
-        <View style={styles.bottomSpacing} />
+          {/* Settings Modal */}
+          <SettingsModal
+            visible={showSettingsModal}
+            onClose={() => setShowSettingsModal(false)}
+            onLogout={handleLogout}
+          />
+
+          {/* User Profile Modal */}
+          <UserProfileModal
+            visible={showUserProfileModal}
+            onClose={() => setShowUserProfileModal(false)}
+            onNavigateToSettings={handleNavigateToSettings}
+          />
+
+          {/* Donation Modal */}
+          <DonationModal
+            isVisible={showDonationModal}
+            onClose={() => setShowDonationModal(false)}
+            project={selectedProject}
+          />
+
+          {/* Notification Modal */}
+          <NotificationModal
+            isVisible={showNotificationModal}
+            onClose={() => setShowNotificationModal(false)}
+          />
+
+          {/* Shop Confirmation Modal */}
+          <ShopConfirmationModal
+            isVisible={showShopModal}
+            onClose={() => setShowShopModal(false)}
+          />
+        </SafeAreaView>
       </ScrollView>
-
-      {/* Settings Modal */}
-      <SettingsModal
-        visible={showSettingsModal}
-        onClose={() => setShowSettingsModal(false)}
-        onLogout={handleLogout}
-      />
-
-      {/* User Profile Modal */}
-      <UserProfileModal
-        visible={showUserProfileModal}
-        onClose={() => setShowUserProfileModal(false)}
-        onNavigateToSettings={handleNavigateToSettings}
-      />
-
-      {/* Donation Modal */}
-      <DonationModal
-        isVisible={showDonationModal}
-        onClose={() => setShowDonationModal(false)}
-        project={selectedProject}
-      />
-
-      {/* Notification Modal */}
-      <NotificationModal
-        isVisible={showNotificationModal}
-        onClose={() => setShowNotificationModal(false)}
-      />
-
-      {/* Shop Confirmation Modal */}
-      <ShopConfirmationModal
-        isVisible={showShopModal}
-        onClose={() => setShowShopModal(false)}
-      />
-    </SafeAreaView>
+    </PullToRefreshWrapper>
   );
 }
 

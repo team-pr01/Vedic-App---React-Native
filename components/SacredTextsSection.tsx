@@ -7,12 +7,14 @@ import { useGetAllBooksQuery } from '@/redux/features/Book/bookApi';
 import { VedicText } from '@/types';
 
 interface SacredTextsSectionProps {
+  data: any;
+  isLoading: boolean;
   onTextClick: (textId: string) => void;
 }
 
-export default function SacredTextsSection({ onTextClick }: SacredTextsSectionProps) {
+export default function SacredTextsSection({ data, isLoading, onTextClick }: SacredTextsSectionProps) {
   const colors = useThemeColors();
-  const { data, isLoading } = useGetAllBooksQuery({});
+
 
   const handleTextPress = (textId: string) => {
     onTextClick(textId);
