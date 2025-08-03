@@ -24,14 +24,15 @@ import { VedicText, Section, Subsection, Verse, Language, VerseTranslation, Repo
 import { useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
 import { useThemeColors } from '@/hooks/useThemeColors';
+import { useGetSingleBookQuery } from '@/redux/features/Book/bookApi';
 
 function VedaReaderContent() {
   const { vedaId } = useLocalSearchParams<{ vedaId: string }>();
    const t = useTranslate();
   const colors = useThemeColors();
-
-  const veda = MOCK_VEDIC_TEXTS.find(v => v.id === vedaId);
-
+  const {data:vedaData ,isLoading}= useGetSingleBookQuery( vedaId);
+  const veda = vedaData?.data as VedicText | null;
+  console.log(veda?.sections,"ved data" )
   const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null);
   const [selectedSubsectionId, setSelectedSubsectionId] = useState<string | null>(null);
   const [selectedVerseId, setSelectedVerseId] = useState<string | null>(null);
@@ -61,8 +62,8 @@ function VedaReaderContent() {
   const flattenedVerses = useMemo(() => {
     if (!veda) return [];
     const flatList: { verse: Verse; subsection: Subsection; section: Section }[] = [];
-    veda.sections.forEach(sec => {
-      sec.subsections.forEach(subSec => {
+    veda?.sections.forEach(sec => {
+      sec?.contents.forEach(subSec => {
         subSec.verses.forEach(v => {
           flatList.push({ verse: v, subsection: subSec, section: sec });
         });

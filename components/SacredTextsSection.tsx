@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'rea
 import { BookOpen } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { useThemeColors } from '@/hooks/useThemeColors';
+import { useGetAllBooksQuery } from '@/redux/features/Book/bookApi';
 
 interface SacredText {
   id: string;
@@ -18,66 +19,10 @@ interface SacredTextsSectionProps {
   onTextClick: (textId: string) => void;
 }
 
-const SACRED_TEXTS: SacredText[] = [
-  {
-    id: 'rigveda',
-    title: 'Rigveda',
-    subtitle: 'ঋগ্বেদ',
-    description: 'The oldest of the four Vedas',
-    chapters: 10,
-    verses: 1028,
-    image: 'https://images.pexels.com/photos/3280130/pexels-photo-3280130.jpeg?auto=compress&cs=tinysrgb&w=400'
-  },
-  {
-    id: 'samaveda',
-    title: 'Samaveda',
-    subtitle: 'সামবেদ',
-    description: 'The Veda of melodies and chants',
-    chapters: 2,
-    verses: 1875,
-    image: 'https://images.pexels.com/photos/1181772/pexels-photo-1181772.jpeg?auto=compress&cs=tinysrgb&w=400'
-  },
-  {
-    id: 'yajurveda',
-    title: 'Yajurveda',
-    subtitle: 'যজুর্বেদ',
-    description: 'The Veda of sacrificial formulas',
-    chapters: 40,
-    verses: 1975,
-    image: 'https://images.pexels.com/photos/1051838/pexels-photo-1051838.jpeg?auto=compress&cs=tinysrgb&w=400'
-  },
-  {
-    id: 'atharvaveda',
-    title: 'Atharvaveda',
-    subtitle: 'অথর্ববেদ',
-    description: 'The Veda of everyday life',
-    chapters: 20,
-    verses: 5977,
-    image: 'https://images.pexels.com/photos/3280130/pexels-photo-3280130.jpeg?auto=compress&cs=tinysrgb&w=400'
-  },
-  {
-    id: 'bhagavad-gita',
-    title: 'Bhagavad Gita',
-    subtitle: 'ভগবদ্ গীতা',
-    description: 'The divine song of spiritual wisdom',
-    chapters: 18,
-    verses: 700,
-    image: 'https://images.pexels.com/photos/1051838/pexels-photo-1051838.jpeg?auto=compress&cs=tinysrgb&w=400'
-  },
-  {
-    id: 'manusmriti',
-    title: 'Manusmriti',
-    subtitle: 'মনুস্মৃতি',
-    description: 'The laws of Manu',
-    chapters: 12,
-    verses: 2685,
-    image: 'https://images.pexels.com/photos/1181772/pexels-photo-1181772.jpeg?auto=compress&cs=tinysrgb&w=400'
-  }
-];
 
 export default function SacredTextsSection({ onTextClick }: SacredTextsSectionProps) {
   const colors = useThemeColors();
-
+  const {data,isLoading} = useGetAllBooksQuery({});
   const handleTextPress = (textId: string) => {
     onTextClick(textId);
     // Navigate to the Veda reader page
@@ -95,7 +40,7 @@ export default function SacredTextsSection({ onTextClick }: SacredTextsSectionPr
         contentContainerStyle={styles.scrollContent}
         style={styles.scrollView}
       >
-        {SACRED_TEXTS.map((text, index) => (
+        {data?.data.map((text, index) => (
           <TouchableOpacity 
             key={text.id}
             style={[
@@ -106,14 +51,14 @@ export default function SacredTextsSection({ onTextClick }: SacredTextsSectionPr
                 shadowColor: colors.cardShadow
               }
             ]}
-            onPress={() => handleTextPress(text.id)}
+            onPress={() => handleTextPress(text._id)}
             activeOpacity={0.8}
           >
-            <Image source={{ uri: text.image }} style={styles.textImage} />
+            <Image source={{ uri: text.imageUrl }} style={styles.textImage} />
             <View style={styles.textOverlay}>
               <View style={styles.textContent}>
                 <Text style={styles.textTitle}>{text.title}</Text>
-                <Text style={styles.textSubtitle}>{text.subtitle}</Text>
+                <Text style={styles.textSubtitle}>{text.category}</Text>
                 <Text style={styles.textDescription}>{text.description}</Text>
                 <View style={styles.textMeta}>
                   <BookOpen size={12} color="#E2E8F0" />

@@ -37,7 +37,6 @@ import { useDispatch, useSelector } from 'react-redux';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { logout, useCurrentUser } from '@/redux/features/Auth/authSlice';
 import { useThemeColors } from '@/hooks/useThemeColors';
-import { RootState } from '@/redux/store';
 import { useGetAllContentsQuery } from '@/redux/features/Content/contentApi';
 
 export type TContent = {
@@ -331,32 +330,32 @@ export default function HomeScreen() {
   // console.log(panchangData, 'panchangData');
 
   const [currentHeroIndex, setCurrentHeroIndex] = useState(0);
-const [isManualScrolling, setIsManualScrolling] = useState(false);
-const scrollViewRef = useRef<ScrollView>(null);
+  const [isManualScrolling, setIsManualScrolling] = useState(false);
+  const scrollViewRef = useRef<ScrollView>(null);
 
-// Auto-slide effect
-useEffect(() => {
-  // Don't auto-slide if user is manually scrolling
-  if (isManualScrolling) return;
+  // Auto-slide effect
+  useEffect(() => {
+    // Don't auto-slide if user is manually scrolling
+    if (isManualScrolling) return;
 
-  const interval = setInterval(() => {
-    const nextIndex = (currentHeroIndex + 1) % data?.data?.length;
-    setCurrentHeroIndex(nextIndex);
-    scrollViewRef.current?.scrollTo({
-      x: nextIndex * width,
-      animated: true,
-    });
-  }, 5000);
+    const interval = setInterval(() => {
+      const nextIndex = (currentHeroIndex + 1) % data?.data?.length;
+      setCurrentHeroIndex(nextIndex);
+      scrollViewRef.current?.scrollTo({
+        x: nextIndex * width,
+        animated: true,
+      });
+    }, 5000);
 
-  return () => clearInterval(interval);
-}, [currentHeroIndex, isManualScrolling, data?.data?.length]);
+    return () => clearInterval(interval);
+  }, [currentHeroIndex, isManualScrolling, data?.data?.length]);
 
-// Handle manual scroll events
-const handleScrollEnd = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-  const index = Math.round(event.nativeEvent.contentOffset.x / width);
-  setCurrentHeroIndex(index);
-  setIsManualScrolling(false); // Re-enable auto-sliding after scroll ends
-};
+  // Handle manual scroll events
+  const handleScrollEnd = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const index = Math.round(event.nativeEvent.contentOffset.x / width);
+    setCurrentHeroIndex(index);
+    setIsManualScrolling(false); // Re-enable auto-sliding after scroll ends
+  };
 
   return (
     <SafeAreaView
@@ -444,7 +443,7 @@ const handleScrollEnd = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
 
           {/* Hero Indicators */}
           <View style={styles.heroIndicators}>
-            {data?.data?.map((_:any, index:number) => (
+            {data?.data?.map((_: any, index: number) => (
               <TouchableOpacity
                 key={index}
                 style={[

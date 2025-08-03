@@ -13,7 +13,7 @@ export interface VedicText {
 export interface Section {
   id: string;
   title: string;
-  subsections: Subsection[];
+ contents: Subsection[];
 }
 
 export interface Subsection {
