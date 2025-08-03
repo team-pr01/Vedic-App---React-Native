@@ -78,6 +78,7 @@ export const baseApi = createApi({
     'temple',
     'recipe',
     'content',
+    'book',
   ], // Add all your tag types here
   endpoints: () => ({}), // Endpoints are injected from other files
 });
