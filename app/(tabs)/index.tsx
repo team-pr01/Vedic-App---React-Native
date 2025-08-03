@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,8 @@ import {
   Dimensions,
   Platform,
   TextInput,
+  NativeSyntheticEvent,
+  NativeScrollEvent,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -46,8 +48,17 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { logout, useCurrentUser } from '@/redux/features/Auth/authSlice';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { RootState } from '@/redux/store';
+import { useGetAllContentsQuery } from '@/redux/features/Content/contentApi';
 
-const { width } = Dimensions.get('window');
+export type TContent = {
+  _id: string;
+  title: string;
+  subtitle: string;
+  description: string;
+  imageUrl: string;
+};
+
+const width = Dimensions.get('window').width;
 
 const heroImages = [
   {
@@ -169,8 +180,8 @@ const projects = [
 ];
 
 export default function HomeScreen() {
+  const { data, isLoading } = useGetAllContentsQuery({});
   const colors = useThemeColors();
-  const [currentHeroIndex, setCurrentHeroIndex] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [currentTime, setCurrentTime] = useState(new Date());
   const [showSettingsModal, setShowSettingsModal] = useState(false);
@@ -199,13 +210,6 @@ export default function HomeScreen() {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
   };
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentHeroIndex((prev) => (prev + 1) % heroImages.length);
-    }, 5000);
-    return () => clearInterval(interval);
-  }, []);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -357,6 +361,34 @@ export default function HomeScreen() {
 
   // console.log(panchangData, 'panchangData');
 
+  const [currentHeroIndex, setCurrentHeroIndex] = useState(0);
+const [isManualScrolling, setIsManualScrolling] = useState(false);
+const scrollViewRef = useRef<ScrollView>(null);
+
+// Auto-slide effect
+useEffect(() => {
+  // Don't auto-slide if user is manually scrolling
+  if (isManualScrolling) return;
+
+  const interval = setInterval(() => {
+    const nextIndex = (currentHeroIndex + 1) % heroImages.length;
+    setCurrentHeroIndex(nextIndex);
+    scrollViewRef.current?.scrollTo({
+      x: nextIndex * width,
+      animated: true,
+    });
+  }, 5000);
+
+  return () => clearInterval(interval);
+}, [currentHeroIndex, isManualScrolling, heroImages.length]);
+
+// Handle manual scroll events
+const handleScrollEnd = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+  const index = Math.round(event.nativeEvent.contentOffset.x / width);
+  setCurrentHeroIndex(index);
+  setIsManualScrolling(false); // Re-enable auto-sliding after scroll ends
+};
+
   return (
     <SafeAreaView
       edges={['top', 'left', 'right']}
@@ -408,6 +440,7 @@ export default function HomeScreen() {
         {/* Hero Section */}
         <View style={styles.heroContainer}>
           <ScrollView
+            ref={scrollViewRef}
             horizontal
             pagingEnabled
             showsHorizontalScrollIndicator={false}
@@ -418,18 +451,21 @@ export default function HomeScreen() {
               setCurrentHeroIndex(index);
             }}
           >
-            {heroImages.map((hero, index) => (
+            {data?.data?.map((hero: TContent, index: number) => (
               <View key={index} style={styles.heroSlide}>
-                <Image source={{ uri: hero.url }} style={styles.heroImage} />
+                <Image
+                  source={{ uri: hero.imageUrl }}
+                  style={styles.heroImage}
+                />
                 <LinearGradient
                   colors={['transparent', 'rgba(0,0,0,0.7)']}
                   style={styles.heroOverlay}
                 >
                   <View style={styles.heroContent}>
-                    <Text style={styles.heroTitle}>{hero.title}</Text>
-                    <Text style={styles.heroSubtitle}>{hero.subtitle}</Text>
+                    <Text style={styles.heroTitle}>{hero?.title}</Text>
+                    <Text style={styles.heroSubtitle}>{hero?.subtitle}</Text>
                     <Text style={styles.heroDescription}>
-                      {hero.description}
+                      {hero?.description}
                     </Text>
                   </View>
                 </LinearGradient>
@@ -450,8 +486,19 @@ export default function HomeScreen() {
                   ],
                 ]}
                 onPress={() => {
+                  scrollViewRef.current?.scrollTo({
+                    x: index * width,
+                    animated: true,
+                  });
                   setCurrentHeroIndex(index);
                   triggerHaptic();
+                  console.log(
+                    'Scrolling to index:',
+                    index,
+                    '=> x:',
+                    index * width
+                  );
+                  console.log('ref:', scrollViewRef.current);
                 }}
               />
             ))}
