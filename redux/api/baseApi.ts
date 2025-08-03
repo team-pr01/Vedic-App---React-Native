@@ -12,8 +12,8 @@ import { setUser, logout } from '../features/Auth/authSlice';
 
 // Original base query
 const baseQuery = fetchBaseQuery({
-  baseUrl: 'http://192.168.0.102:5000/api/v1',
-  // baseUrl: 'https://vedic-app-server.onrender.com/api/v1',
+  // baseUrl: 'http://192.168.0.102:5000/api/v1',
+  baseUrl: 'https://vedic-app-server.onrender.com/api/v1',
   prepareHeaders: (headers, { getState }) => {
     const token = (getState() as RootState).auth.token;
     if (token) {
