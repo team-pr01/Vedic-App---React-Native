@@ -1,45 +1,46 @@
+export interface VedicTextResponse {
+  data: VedicText[];
+}
+
 export interface VedicText {
-  id: string;
+  _id: string;
   title: string;
-  subtitle?: string;
+  category: string;
+  subCategory: string;
   description: string;
-  sections: Section[];
-  sectionLevelName?: string;
-  subsectionLevelName?: string;
-  verseLevelName?: string;
   imageUrl?: string;
+  sections: Section[];
+  createdAt: string;
+  updatedAt: string;
+  __v: number;
 }
 
 export interface Section {
-  id: string;
-  title: string;
- contents: Subsection[];
-}
-
-export interface Subsection {
-  id: string;
-  title: string;
-  verses: Verse[];
-}
-
-export interface Verse {
-  id: string;
-  sanskritLines: string[];
-  devanagariLines?: string[];
-  englishTranslation?: string;
-  bengaliTranslation?: string;
-  humanVerifiedLanguages?: string[];
-}
-
-export interface Language {
-  code: string;
+  _id: string;
   name: string;
+  number: string;
+  contents: Sukta[];
 }
 
-export interface VerseTranslation {
-  pada?: string;
-  padartha?: string;
-  bhavartha: string;
+export interface Sukta {
+  _id: string;
+  type: string;  // e.g., "SUKTA"
+  number: string;
+  contents: Mantra[];
+}
+
+export interface Mantra {
+  _id: string;
+  name: string;
+  number: string;
+  originalText: string;
+  translations: Translation[];
+}
+
+export interface Translation {
+  _id: string;
+  language: string;      // "en", "BN", etc.
+  description: string;   // translation text
 }
 
 export interface NavItem {
@@ -54,7 +55,16 @@ export interface ReportSubmission {
   reason: string;
   feedback: string;
 }
+export interface Language {
+  code: string;
+  name: string;
+}
 
+export interface VerseTranslation {
+  pada?: string;
+  padartha?: string;
+  bhavartha: string;
+}
 // Category types for filtering
 export type ItemCategory = 'temple' | 'gurukul' | 'org' | 'yoga' | 'food' | 'vastu' | 'jyotish' | 'consultancy';
 

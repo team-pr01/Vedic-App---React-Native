@@ -11,43 +11,78 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ArrowLeft, ChevronLeft, ChevronRight, Languages, Search, X, Loader, CircleAlert as AlertCircle, Flag, BookOpen, Chrome as Home, Star, Newspaper, TriangleAlert as AlertTriangle, ChevronDown } from 'lucide-react-native';
+import {
+  ArrowLeft,
+  ChevronLeft,
+  ChevronRight,
+  Languages,
+  Search,
+  X,
+  Loader,
+  CircleAlert as AlertCircle,
+  Flag,
+  BookOpen,
+  Chrome as Home,
+  Star,
+  Newspaper,
+  TriangleAlert as AlertTriangle,
+  ChevronDown,
+} from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { router, useLocalSearchParams } from 'expo-router';
 
 import { MOCK_VEDIC_TEXTS } from '../../data/mockVedicTexts';
 import { VedicTranslationService } from '../../services/translationService';
 import { useTranslate } from '../../hooks/useTranslate';
-import { allLanguages, TLanguage } from '../../redux/features/Language/languageSlice'; // Get 
+import {
+  allLanguages,
+  TLanguage,
+} from '../../redux/features/Language/languageSlice'; // Get
 import ReportModal from '../../components/ReportModal';
-import { VedicText, Section, Subsection, Verse, Language, VerseTranslation, ReportSubmission } from '../../types';
+import {
+  VedicText,
+  Section,
+  ReportSubmission,
+  Mantra,
+  Sukta,
+  VerseTranslation,
+  Language,
+} from '../../types';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { useGetSingleBookQuery } from '@/redux/features/Book/bookApi';
+import LoadingComponent from '@/components/LoadingComponent/LoadingComponent';
 
 function VedaReaderContent() {
   const { vedaId } = useLocalSearchParams<{ vedaId: string }>();
-   const t = useTranslate();
+  const t = useTranslate();
   const colors = useThemeColors();
-  const {data:vedaData ,isLoading}= useGetSingleBookQuery( vedaId);
+  const { data: vedaData, isLoading } = useGetSingleBookQuery(vedaId);
   const veda = vedaData?.data as VedicText | null;
-  console.log(veda?.sections,"ved data" )
-  const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null);
-  const [selectedSubsectionId, setSelectedSubsectionId] = useState<string | null>(null);
+  const [selectedSectionId, setSelectedSectionId] = useState<string | null>(
+    null
+  );
+  const [selectedSubsectionId, setSelectedSubsectionId] = useState<
+    string | null
+  >(null);
   const [selectedVerseId, setSelectedVerseId] = useState<string | null>(null);
-  const globalLanguage = useSelector((state: RootState) => state.language.currentLanguage);
-  const [targetLanguage, setTargetLanguage] = useState<Language>(globalLanguage);
+  const globalLanguage = useSelector(
+    (state: RootState) => state.language.currentLanguage
+  );
+  const [targetLanguage, setTargetLanguage] =
+    useState<Language>(globalLanguage);
   const [showLanguageModal, setShowLanguageModal] = useState(false);
   const [languageSearchTerm, setLanguageSearchTerm] = useState('');
 
-  const [currentTranslation, setCurrentTranslation] = useState<VerseTranslation | null>(null);
+  const [currentTranslation, setCurrentTranslation] =
+    useState<VerseTranslation | null>(null);
   const [isTranslating, setIsTranslating] = useState(false);
   const [translationError, setTranslationError] = useState<string | null>(null);
 
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
-  const [reportingVerse, setReportingVerse] = useState<Verse | null>(null);
-  
+  const [reportingVerse, setReportingVerse] = useState<Mantra | null>(null);
+
   // Dropdown states
   const [showSectionDropdown, setShowSectionDropdown] = useState(false);
   const [showSubsectionDropdown, setShowSubsectionDropdown] = useState(false);
@@ -61,10 +96,11 @@ function VedaReaderContent() {
 
   const flattenedVerses = useMemo(() => {
     if (!veda) return [];
-    const flatList: { verse: Verse; subsection: Subsection; section: Section }[] = [];
-    veda?.sections.forEach(sec => {
-      sec?.contents.forEach(subSec => {
-        subSec.verses.forEach(v => {
+    const flatList: { verse: Mantra; subsection: Sukta; section: Section }[] =
+      [];
+    veda?.sections?.forEach((sec) => {
+      sec?.contents.forEach((subSec) => {
+        subSec.contents.forEach((v) => {
           flatList.push({ verse: v, subsection: subSec, section: sec });
         });
       });
@@ -73,72 +109,111 @@ function VedaReaderContent() {
   }, [veda]);
 
   const currentVerseIndex = useMemo(() => {
-    return flattenedVerses.findIndex(item => item.verse.id === selectedVerseId);
+    return flattenedVerses.findIndex(
+      (item) => item.verse._id === selectedVerseId
+    );
   }, [flattenedVerses, selectedVerseId]);
 
-  const currentSection = useMemo(() => 
-    veda?.sections.find(s => s.id === selectedSectionId), 
+  const currentSection = useMemo(
+    () => veda?.sections?.find((s) => s._id === selectedSectionId),
     [veda?.sections, selectedSectionId]
   );
-  
-  const currentSubsection = useMemo(() => 
-    currentSection?.subsections.find(ss => ss.id === selectedSubsectionId), 
+
+  const currentSubsection = useMemo(
+    () =>
+      currentSection?.contents?.find((ss) => ss._id === selectedSubsectionId),
     [currentSection, selectedSubsectionId]
   );
-  
-  const currentVerse = useMemo(() => 
-    flattenedVerses[currentVerseIndex]?.verse, 
+
+  const currentVerse = useMemo(
+    () => flattenedVerses[currentVerseIndex]?.verse,
     [flattenedVerses, currentVerseIndex]
   );
+  const availableLanguageCodes = useMemo(() => {
+  if (!currentVerse?.translations) return [];
+  return currentVerse.translations.map((t) => t.language.toLowerCase());
+}, [currentVerse]);
 
-  const updateSelections = useCallback((sectionId: string, subsectionId: string, verseId: string) => {
-    setSelectedSectionId(sectionId);
-    setSelectedSubsectionId(subsectionId);
-    setSelectedVerseId(verseId);
-    setCurrentTranslation(null);
-    setTranslationError(null);
-  }, []);
+const filteredLanguages = useMemo(() => {
+  return allLanguages
+    .filter((lang) =>
+      availableLanguageCodes.includes(lang.code.toLowerCase()) &&
+      lang.name.toLowerCase().includes(languageSearchTerm.toLowerCase())
+    );
+}, [allLanguages, availableLanguageCodes, languageSearchTerm]);
+
+  const updateSelections = useCallback(
+    (sectionId: string, subsectionId: string, verseId: string) => {
+      setSelectedSectionId(sectionId);
+      setSelectedSubsectionId(subsectionId);
+      setSelectedVerseId(verseId);
+      setCurrentTranslation(null);
+      setTranslationError(null);
+    },
+    []
+  );
 
   useEffect(() => {
-    if (flattenedVerses.length > 0 && (!selectedVerseId || !flattenedVerses.find(fv => fv.verse.id === selectedVerseId))) {
+    if (
+      flattenedVerses.length > 0 &&
+      (!selectedVerseId ||
+        !flattenedVerses.find((fv) => fv.verse._id === selectedVerseId))
+    ) {
       const firstItem = flattenedVerses[0];
       if (firstItem) {
-        updateSelections(firstItem.section.id, firstItem.subsection.id, firstItem.verse.id);
+        updateSelections(
+          firstItem.section._id,
+          firstItem.subsection._id,
+          firstItem.verse._id
+        );
       }
     }
   }, [flattenedVerses, updateSelections, selectedVerseId]);
-  
+
   const handleTranslate = useCallback(async () => {
     if (!currentVerse || !targetLanguage || isTranslating) return;
-    
+
     setIsTranslating(true);
     setTranslationError(null);
     setCurrentTranslation(null);
 
     try {
-      const sanskritText = currentVerse.sanskritLines.join('\n');
-      
-      // Enhanced translation with better error handling
-      console.log('Starting translation for:', sanskritText, 'to', targetLanguage.name);
-      
-      const translationResult = await VedicTranslationService.translateVerseDetails(
-        sanskritText, 
-        targetLanguage.code, 
+      // Handle both string & array cases
+      const sanskritText = Array.isArray(currentVerse.originalText)
+        ? currentVerse.originalText.join('\n')
+        : currentVerse.originalText || '';
+
+      console.log(
+        'Starting translation for:',
+        sanskritText,
+        'to',
         targetLanguage.name
       );
-      
+
+      const translationResult =
+        await VedicTranslationService.translateVerseDetails(
+          sanskritText,
+          targetLanguage.code,
+          targetLanguage.name
+        );
+
       console.log('Translation result:', translationResult);
       setCurrentTranslation(translationResult);
     } catch (error: any) {
-      console.error("Translation error:", error);
-      setTranslationError(error.message || "Failed to translate. Please try again.");
-      
-      // Fallback to simple translation if available
-      if (targetLanguage.code === 'en' && currentVerse.englishTranslation) {
-        setCurrentTranslation({ bhavartha: currentVerse.englishTranslation });
-      } else if (targetLanguage.code === 'bn' && currentVerse.bengaliTranslation) {
-        setCurrentTranslation({ bhavartha: currentVerse.bengaliTranslation });
-      }
+      console.error('Translation error:', error);
+      setTranslationError(
+        error.message || 'Failed to translate. Please try again.'
+      );
+
+      // Fallback translations if available
+      // if (targetLanguage.code === 'en' && currentVerse.englishTranslation) {
+      //   setCurrentTranslation({ bhavartha: currentVerse.englishTranslation });
+      // } else if (
+      //   targetLanguage.code === 'bn' &&
+      //   currentVerse.bengaliTranslation
+      // ) {
+      //   setCurrentTranslation({ bhavartha: currentVerse.bengaliTranslation });
+      // }
     } finally {
       setIsTranslating(false);
     }
@@ -152,27 +227,35 @@ function VedaReaderContent() {
 
   const handleSectionSelect = (sectionId: string) => {
     triggerHaptic();
-    const section = veda?.sections.find(s => s.id === sectionId);
-    if (section && section.subsections.length > 0 && section.subsections[0].verses.length > 0) {
-      updateSelections(section.id, section.subsections[0].id, section.subsections[0].verses[0].id);
+    const section = veda?.sections.find((s) => s._id === sectionId);
+    if (
+      section &&
+      section.contents.length > 0 &&
+      section.contents[0].contents.length > 0
+    ) {
+      updateSelections(
+        section._id,
+        section.contents[0]._id,
+        section.contents[0].contents[0]._id
+      );
     }
     setShowSectionDropdown(false);
   };
 
-  const handleSubsectionSelect = (subsectionId: string) => {
+  const handleContentSelect = (subsectionId: string) => {
     triggerHaptic();
     const section = currentSection;
-    const subsection = section?.subsections.find(ss => ss.id === subsectionId);
-    if (section && subsection && subsection.verses.length > 0) {
-      updateSelections(section.id, subsection.id, subsection.verses[0].id);
+    const subsection = section?.contents.find((ss) => ss._id === subsectionId);
+    if (section && subsection && subsection.contents.length > 0) {
+      updateSelections(section._id, subsection._id, subsection.contents[0]._id);
     }
     setShowSubsectionDropdown(false);
   };
-  
+
   const handleVerseSelect = (verseId: string) => {
     triggerHaptic();
     if (currentSection && currentSubsection) {
-      updateSelections(currentSection.id, currentSubsection.id, verseId);
+      updateSelections(currentSection._id, currentSubsection._id, verseId);
     }
     setShowVerseDropdown(false);
   };
@@ -180,14 +263,15 @@ function VedaReaderContent() {
   const navigateVerse = (direction: 'next' | 'previous') => {
     triggerHaptic();
     if (currentVerseIndex === -1) return;
-    const newIndex = direction === 'next' ? currentVerseIndex + 1 : currentVerseIndex - 1;
+    const newIndex =
+      direction === 'next' ? currentVerseIndex + 1 : currentVerseIndex - 1;
     if (newIndex >= 0 && newIndex < flattenedVerses.length) {
       const { verse, subsection, section } = flattenedVerses[newIndex];
-      updateSelections(section.id, subsection.id, verse.id);
+      updateSelections(section._id, subsection._id, verse._id);
     }
   };
 
-  const handleOpenReportModal = (verse: Verse) => {
+  const handleOpenReportModal = (verse: Mantra) => {
     triggerHaptic();
     setReportingVerse(verse);
     setIsReportModalOpen(true);
@@ -199,27 +283,45 @@ function VedaReaderContent() {
   };
 
   const handleSubmitReport = (submission: ReportSubmission) => {
-    console.log("Report Submitted:", submission);
+    console.log('Report Submitted:', submission);
     // In a real app, this would send to your backend
-    alert(`Report for verse ${submission.verseId} submitted. Thank you for your feedback!`);
+    alert(
+      `Report for verse ${submission.verseId} submitted. Thank you for your feedback!`
+    );
     handleCloseReportModal();
   };
 
-  const filteredLanguages = allLanguages.filter(lang => 
-    lang.name.toLowerCase().includes(languageSearchTerm.toLowerCase()) ||
-    lang.code.toLowerCase().includes(languageSearchTerm.toLowerCase())
-  );
+  // const filteredLanguages = allLanguages.filter(
+  //   (lang) =>
+  //     lang.name.toLowerCase().includes(languageSearchTerm.toLowerCase()) ||
+  //     lang.code.toLowerCase().includes(languageSearchTerm.toLowerCase())
+  // );
 
-  const isHumanVerified = currentVerse?.humanVerifiedLanguages?.includes(targetLanguage.code);
+  // const isHumanVerified = currentVerse?.humanVerifiedLanguages?.includes(
+  //   targetLanguage.code
+  // ) ||false;
+
+  if(isLoading) {
+    return(<LoadingComponent loading="Vedic Text..."  color={colors.primary}/>);
+  }
 
   if (!veda) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <SafeAreaView
+        style={[styles.container, { backgroundColor: colors.background }]}
+      >
         <View style={styles.errorContainer}>
           <AlertCircle size={48} color="#EF4444" />
-          <Text style={[styles.errorTitle, { color: colors.text }]}>Veda not found</Text>
-          <Text style={[styles.errorText, { color: colors.secondaryText }]}>The requested Vedic text could not be found.</Text>
-          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <Text style={[styles.errorTitle, { color: colors.text }]}>
+            Veda not found
+          </Text>
+          <Text style={[styles.errorText, { color: colors.secondaryText }]}>
+            The requested Vedic text could not be found.
+          </Text>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => router.back()}
+          >
             <Text style={styles.backButtonText}>Go Back</Text>
           </TouchableOpacity>
         </View>
@@ -232,12 +334,15 @@ function VedaReaderContent() {
       {/* Header */}
       <SafeAreaView edges={['top']} style={styles.headerContainer}>
         <LinearGradient colors={['#FF6F00', '#FF8F00']} style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.headerButton}>
+          <TouchableOpacity
+            onPress={() => router.back()}
+            style={styles.headerButton}
+          >
             <ArrowLeft size={24} color="#FFFFFF" />
           </TouchableOpacity>
           <View style={styles.headerContent}>
-            <Text style={styles.headerTitle}>{veda.title}</Text>
-            {veda.subtitle && <Text style={styles.headerSubtitle}>{veda.subtitle}</Text>}
+            <Text style={styles.headerTitle}>{veda.title} </Text>
+            {/* {veda.subname && <Text style={styles.headerSubname}>{veda.subname}</Text>} */}
           </View>
           <View style={styles.headerPlaceholder} />
         </LinearGradient>
@@ -248,9 +353,14 @@ function VedaReaderContent() {
         <View style={styles.selectorsContainer}>
           {/* Section Dropdown */}
           <View style={styles.selectorRow}>
-            <Text style={[styles.selectorLabel, { color: colors.text }]}>{veda.sectionLevelName || 'Section'}</Text>
-            <TouchableOpacity 
-              style={[styles.dropdownButton, { backgroundColor: colors.card, borderColor: colors.border }]}
+            <Text style={[styles.selectorLabel, { color: colors.text }]}>
+              {'Section'}
+            </Text>
+            <TouchableOpacity
+              style={[
+                styles.dropdownButton,
+                { backgroundColor: colors.card, borderColor: colors.border },
+              ]}
               onPress={() => {
                 triggerHaptic();
                 setShowSectionDropdown(!showSectionDropdown);
@@ -259,28 +369,55 @@ function VedaReaderContent() {
               }}
             >
               <Text style={[styles.dropdownButtonText, { color: colors.text }]}>
-                {currentSection ? currentSection.title : `Select ${veda.sectionLevelName || 'Section'}`}
+                {currentSection
+                  ? currentSection.name
+                  : `Select ${
+                      veda?.sections[0]?.contents[0]?.type || 'Section'
+                    }`}
               </Text>
               <ChevronDown size={20} color={colors.secondaryText} />
             </TouchableOpacity>
-            
+
             {showSectionDropdown && (
-              <View style={[styles.dropdownMenu, { backgroundColor: colors.card, borderColor: colors.border, shadowColor: colors.cardShadow }]}>
-                <ScrollView style={styles.dropdownScrollView} nestedScrollEnabled={true}>
-                  {veda.sections.map(section => (
+              <View
+                style={[
+                  styles.dropdownMenu,
+                  {
+                    backgroundColor: colors.card,
+                    borderColor: colors.border,
+                    shadowColor: colors.cardShadow,
+                  },
+                ]}
+              >
+                <ScrollView
+                  style={styles.dropdownScrollView}
+                  nestedScrollEnabled={true}
+                >
+                  {veda?.sections?.map((section) => (
                     <TouchableOpacity
-                      key={section.id}
+                      key={section._id}
                       style={[
-                        [styles.dropdownItem, { borderBottomColor: colors.border }],
-                        selectedSectionId === section.id && [styles.dropdownItemActive, { backgroundColor: colors.primary + '20' }]
+                        [
+                          styles.dropdownItem,
+                          { borderBottomColor: colors.border },
+                        ],
+                        selectedSectionId === section._id && [
+                          styles.dropdownItemActive,
+                          { backgroundColor: colors.primary + '20' },
+                        ],
                       ]}
-                      onPress={() => handleSectionSelect(section.id)}
+                      onPress={() => handleSectionSelect(section._id)}
                     >
-                      <Text style={[
-                        [styles.dropdownItemText, { color: colors.text }],
-                        selectedSectionId === section.id && [styles.dropdownItemTextActive, { color: colors.primary }]
-                      ]}>
-                        {section.title}
+                      <Text
+                        style={[
+                          [styles.dropdownItemText, { color: colors.text }],
+                          selectedSectionId === section._id && [
+                            styles.dropdownItemTextActive,
+                            { color: colors.primary },
+                          ],
+                        ]}
+                      >
+                        {section.name}
                       </Text>
                     </TouchableOpacity>
                   ))}
@@ -292,9 +429,14 @@ function VedaReaderContent() {
           {/* Subsection Dropdown */}
           {currentSection && (
             <View style={styles.selectorRow}>
-              <Text style={[styles.selectorLabel, { color: colors.text }]}>{veda.subsectionLevelName || 'Subsection'}</Text>
-              <TouchableOpacity 
-                style={[styles.dropdownButton, { backgroundColor: colors.card, borderColor: colors.border }]}
+              <Text style={[styles.selectorLabel, { color: colors.text }]}>
+                {veda.sections[0]?.contents[0].type || 'Subsection'}
+              </Text>
+              <TouchableOpacity
+                style={[
+                  styles.dropdownButton,
+                  { backgroundColor: colors.card, borderColor: colors.border },
+                ]}
                 onPress={() => {
                   triggerHaptic();
                   setShowSubsectionDropdown(!showSubsectionDropdown);
@@ -302,29 +444,58 @@ function VedaReaderContent() {
                   setShowVerseDropdown(false);
                 }}
               >
-                <Text style={[styles.dropdownButtonText, { color: colors.text }]}>
-                  {currentSubsection ? currentSubsection.title : `Select ${veda.subsectionLevelName || 'Subsection'}`}
+                <Text
+                  style={[styles.dropdownButtonText, { color: colors.text }]}
+                >
+                  {currentSubsection
+                    ? currentSubsection.type
+                    : `Select ${
+                        veda.sections[0]?.contents[0].type || 'Subsection'
+                      }`}
                 </Text>
                 <ChevronDown size={20} color={colors.secondaryText} />
               </TouchableOpacity>
-              
+
               {showSubsectionDropdown && (
-                <View style={[styles.dropdownMenu, { backgroundColor: colors.card, borderColor: colors.border, shadowColor: colors.cardShadow }]}>
-                  <ScrollView style={styles.dropdownScrollView} nestedScrollEnabled={true}>
-                    {currentSection.subsections.map(subsection => (
+                <View
+                  style={[
+                    styles.dropdownMenu,
+                    {
+                      backgroundColor: colors.card,
+                      borderColor: colors.border,
+                      shadowColor: colors.cardShadow,
+                    },
+                  ]}
+                >
+                  <ScrollView
+                    style={styles.dropdownScrollView}
+                    nestedScrollEnabled={true}
+                  >
+                    {currentSection?.contents?.map((subsection) => (
                       <TouchableOpacity
-                        key={subsection.id}
+                        key={subsection._id}
                         style={[
-                          [styles.dropdownItem, { borderBottomColor: colors.border }],
-                          selectedSubsectionId === subsection.id && [styles.dropdownItemActive, { backgroundColor: colors.primary + '20' }]
+                          [
+                            styles.dropdownItem,
+                            { borderBottomColor: colors.border },
+                          ],
+                          selectedSubsectionId === subsection._id && [
+                            styles.dropdownItemActive,
+                            { backgroundColor: colors.primary + '20' },
+                          ],
                         ]}
-                        onPress={() => handleSubsectionSelect(subsection.id)}
+                        onPress={() => handleContentSelect(subsection._id)}
                       >
-                        <Text style={[
-                          [styles.dropdownItemText, { color: colors.text }],
-                          selectedSubsectionId === subsection.id && [styles.dropdownItemTextActive, { color: colors.primary }]
-                        ]}>
-                          {subsection.title}
+                        <Text
+                          style={[
+                            [styles.dropdownItemText, { color: colors.text }],
+                            selectedSubsectionId === subsection._id && [
+                              styles.dropdownItemTextActive,
+                              { color: colors.primary },
+                            ],
+                          ]}
+                        >
+                          {subsection.type}
                         </Text>
                       </TouchableOpacity>
                     ))}
@@ -337,9 +508,14 @@ function VedaReaderContent() {
           {/* Verse Dropdown */}
           {currentSubsection && (
             <View style={styles.selectorRow}>
-              <Text style={[styles.selectorLabel, { color: colors.text }]}>{veda.verseLevelName || 'Verse'}</Text>
-              <TouchableOpacity 
-                style={[styles.dropdownButton, { backgroundColor: colors.card, borderColor: colors.border }]}
+              <Text style={[styles.selectorLabel, { color: colors.text }]}>
+                {veda?.sections[0]?.contents[0]?.contents[0]?.name || 'Verse'}
+              </Text>
+              <TouchableOpacity
+                style={[
+                  styles.dropdownButton,
+                  { backgroundColor: colors.card, borderColor: colors.border },
+                ]}
                 onPress={() => {
                   triggerHaptic();
                   setShowVerseDropdown(!showVerseDropdown);
@@ -347,29 +523,59 @@ function VedaReaderContent() {
                   setShowSubsectionDropdown(false);
                 }}
               >
-                <Text style={[styles.dropdownButtonText, { color: colors.text }]}>
-                  {currentVerse ? currentVerse.id : `Select ${veda.verseLevelName || 'Verse'}`}
+                <Text
+                  style={[styles.dropdownButtonText, { color: colors.text }]}
+                >
+                  {currentVerse
+                    ? currentVerse.number
+                    : `Select ${
+                        veda?.sections[0]?.contents[0]?.contents[0]?.name ||
+                        'Verse'
+                      }`}
                 </Text>
                 <ChevronDown size={20} color={colors.secondaryText} />
               </TouchableOpacity>
-              
+
               {showVerseDropdown && (
-                <View style={[styles.dropdownMenu, { backgroundColor: colors.card, borderColor: colors.border, shadowColor: colors.cardShadow }]}>
-                  <ScrollView style={styles.dropdownScrollView} nestedScrollEnabled={true}>
-                    {currentSubsection.verses.map(verse => (
+                <View
+                  style={[
+                    styles.dropdownMenu,
+                    {
+                      backgroundColor: colors.card,
+                      borderColor: colors.border,
+                      shadowColor: colors.cardShadow,
+                    },
+                  ]}
+                >
+                  <ScrollView
+                    style={styles.dropdownScrollView}
+                    nestedScrollEnabled={true}
+                  >
+                    {currentSubsection?.contents?.map((verse) => (
                       <TouchableOpacity
-                        key={verse.id}
+                        key={verse._id}
                         style={[
-                          [styles.dropdownItem, { borderBottomColor: colors.border }],
-                          selectedVerseId === verse.id && [styles.dropdownItemActive, { backgroundColor: colors.primary + '20' }]
+                          [
+                            styles.dropdownItem,
+                            { borderBottomColor: colors.border },
+                          ],
+                          selectedVerseId === verse._id && [
+                            styles.dropdownItemActive,
+                            { backgroundColor: colors.primary + '20' },
+                          ],
                         ]}
-                        onPress={() => handleVerseSelect(verse.id)}
+                        onPress={() => handleVerseSelect(verse._id)}
                       >
-                        <Text style={[
-                          [styles.dropdownItemText, { color: colors.text }],
-                          selectedVerseId === verse.id && [styles.dropdownItemTextActive, { color: colors.primary }]
-                        ]}>
-                          {verse.id}
+                        <Text
+                          style={[
+                            [styles.dropdownItemText, { color: colors.text }],
+                            selectedVerseId === verse._id && [
+                              styles.dropdownItemTextActive,
+                              { color: colors.primary },
+                            ],
+                          ]}
+                        >
+                          {verse.number}
                         </Text>
                       </TouchableOpacity>
                     ))}
@@ -382,20 +588,30 @@ function VedaReaderContent() {
 
         {/* Verse Content */}
         {currentVerse ? (
-          <View style={[styles.verseContainer, { backgroundColor: colors.card, shadowColor: colors.cardShadow }]}>
-            {/* Sanskrit Text */}
+          <View
+            style={[
+              styles.verseContainer,
+              { backgroundColor: colors.card, shadowColor: colors.cardShadow },
+            ]}
+          >
             <View style={styles.sanskritContainer}>
-              {currentVerse.sanskritLines.map((line, index) => (
-                <Text key={index} style={[styles.sanskritText, { color: colors.text }]}>{line}</Text>
-              ))}
-              {currentVerse.devanagariLines && currentVerse.devanagariLines.map((line, index) => (
-                <Text key={`dev-${index}`} style={[styles.devanagariText, { color: colors.secondaryText }]}>{line}</Text>
-              ))}
+              {/* Handle originalText (string) safely */}
+              {currentVerse?.originalText &&
+                currentVerse.originalText
+                  .split('।') // split by danda for readability, optional
+                  .filter((line) => line.trim() !== '')
+                  .map((line, index) => (
+                    <Text
+                      key={`orig-${index}`}
+                      style={[styles.sanskritText, { color: colors.text }]}
+                    >
+                      {line.trim()}।
+                    </Text>
+                  ))}
             </View>
 
-            {/* Translation Controls */}
             <View style={styles.translationControls}>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.languageButton}
                 onPress={() => setShowLanguageModal(true)}
               >
@@ -405,7 +621,7 @@ function VedaReaderContent() {
                 </Text>
                 <ChevronRight size={16} color="#FFFFFF" />
               </TouchableOpacity>
-              
+
               <TouchableOpacity
                 style={styles.reportButton}
                 onPress={() => handleOpenReportModal(currentVerse)}
@@ -414,106 +630,181 @@ function VedaReaderContent() {
               </TouchableOpacity>
             </View>
 
-            {/* Translation Status */}
             {isTranslating && (
-              <View style={[styles.statusContainer, { backgroundColor: colors.warning + '20' }]}>
+              <View
+                style={[
+                  styles.statusContainer,
+                  { backgroundColor: colors.warning + '20' },
+                ]}
+              >
                 <Loader size={20} color="#FF6F00" style={styles.spinner} />
                 <Text style={[styles.statusText, { color: colors.warning }]}>
-                  {t('translatingTo', 'Translating to')} {targetLanguage.name}...
+                  {t('translatingTo', 'Translating to')} {targetLanguage.name}
+                  ...
                 </Text>
               </View>
             )}
 
             {translationError && (
-              <View style={[styles.errorContainer, { backgroundColor: colors.error + '20' }]}>
+              <View
+                style={[
+                  styles.errorContainer,
+                  { backgroundColor: colors.error + '20' },
+                ]}
+              >
                 <AlertCircle size={20} color="#EF4444" />
-                <Text style={[styles.errorText, { color: colors.error }]}>{translationError}</Text>
+                <Text style={[styles.errorText, { color: colors.error }]}>
+                  {translationError}
+                </Text>
               </View>
             )}
 
-            {/* Translation Content */}
             {currentTranslation && !isTranslating && !translationError && (
-              <View style={[styles.translationContainer, { borderTopColor: colors.border }]}>
+              <View
+                style={[
+                  styles.translationContainer,
+                  { borderTopColor: colors.border },
+                ]}
+              >
                 <View style={styles.translationHeader}>
-                  <Text style={[styles.translationLabel, { color: colors.secondaryText }]}>
+                  <Text
+                    style={[
+                      styles.translationLabel,
+                      { color: colors.secondaryText },
+                    ]}
+                  >
                     {t('translationByAI', 'Translation by AI')}
                   </Text>
-                  {isHumanVerified && (
-                    <View style={[styles.verifiedBadge, { backgroundColor: colors.success + '20' }]}>
-                      <Text style={[styles.verifiedText, { color: colors.success }]}>
+                  {/* {isHumanVerified && (
+                    <View
+                      style={[
+                        styles.verifiedBadge,
+                        { backgroundColor: colors.success + '20' },
+                      ]}
+                    >
+                      <Text
+                        style={[styles.verifiedText, { color: colors.success }]}
+                      >
                         {t('humanVerified', 'Human Verified')}
                       </Text>
                     </View>
-                  )}
+                  )} */}
                 </View>
 
                 {currentTranslation.pada && (
                   <View style={styles.translationSection}>
-                    <Text style={[styles.translationSectionTitle, { color: colors.primary }]}>
+                    <Text
+                      style={[
+                        styles.translationSectionTitle,
+                        { color: colors.primary },
+                      ]}
+                    >
                       {t('padaLabel', 'पद (Key Terms/Word Meanings)')}
                     </Text>
-                    <Text style={[styles.translationText, { color: colors.text }]}>{currentTranslation.pada}</Text>
+                    <Text
+                      style={[styles.translationText, { color: colors.text }]}
+                    >
+                      {currentTranslation.pada}
+                    </Text>
                   </View>
                 )}
 
                 {currentTranslation.padartha && (
                   <View style={styles.translationSection}>
-                    <Text style={[styles.translationSectionTitle, { color: colors.primary }]}>
+                    <Text
+                      style={[
+                        styles.translationSectionTitle,
+                        { color: colors.primary },
+                      ]}
+                    >
                       {t('padarthaLabel', 'पदार्थ (Phrase Analysis)')}
                     </Text>
-                    <Text style={[styles.translationText, { color: colors.text }]}>{currentTranslation.padartha}</Text>
+                    <Text
+                      style={[styles.translationText, { color: colors.text }]}
+                    >
+                      {currentTranslation.padartha}
+                    </Text>
                   </View>
                 )}
 
                 {currentTranslation.bhavartha && (
                   <View style={styles.translationSection}>
-                    <Text style={[styles.translationSectionTitle, { color: colors.primary }]}>
+                    <Text
+                      style={[
+                        styles.translationSectionTitle,
+                        { color: colors.primary },
+                      ]}
+                    >
                       {t('bhavarthaLabel', 'भावार्थ (Purport/Essence)')}
                     </Text>
-                    <Text style={[styles.translationText, { color: colors.text }]}>{currentTranslation.bhavartha}</Text>
+                    <Text
+                      style={[styles.translationText, { color: colors.text }]}
+                    >
+                      {currentTranslation.bhavartha}
+                    </Text>
                   </View>
                 )}
               </View>
             )}
 
-            {/* Navigation */}
             <View style={styles.navigationContainer}>
               <TouchableOpacity
                 style={[
                   [styles.navButton, { backgroundColor: colors.background }],
-                  currentVerseIndex <= 0 && styles.navButtonDisabled
+                  currentVerseIndex <= 0 && styles.navButtonDisabled,
                 ]}
                 onPress={() => navigateVerse('previous')}
                 disabled={currentVerseIndex <= 0}
               >
-                <ChevronLeft size={16} color={currentVerseIndex <= 0 ? colors.border : colors.secondaryText} />
-                <Text style={[
-                  [styles.navButtonText, { color: colors.secondaryText }],
-                  currentVerseIndex <= 0 && styles.navButtonTextDisabled
-                ]}>
+                <ChevronLeft
+                  size={16}
+                  color={
+                    currentVerseIndex <= 0
+                      ? colors.border
+                      : colors.secondaryText
+                  }
+                />
+                <Text
+                  style={[
+                    [styles.navButtonText, { color: colors.secondaryText }],
+                    currentVerseIndex <= 0 && styles.navButtonTextDisabled,
+                  ]}
+                >
                   {t('previousVerse', 'Previous')}
                 </Text>
               </TouchableOpacity>
 
-              <Text style={[styles.verseNumber, { color: colors.text }]}>{currentVerse.id}</Text>
+              <Text style={[styles.verseNumber, { color: colors.text }]}>
+                {currentSection?.number}.{currentSubsection?.number}.
+                {currentVerse?.number}
+              </Text>
 
               <TouchableOpacity
                 style={[
                   [styles.navButton, { backgroundColor: colors.primary }],
-                  currentVerseIndex >= flattenedVerses.length - 1 && styles.navButtonDisabled
+                  currentVerseIndex >= flattenedVerses.length - 1 &&
+                    styles.navButtonDisabled,
                 ]}
                 onPress={() => navigateVerse('next')}
                 disabled={currentVerseIndex >= flattenedVerses.length - 1}
               >
-                <Text style={[
-                  styles.navButtonTextPrimary,
-                  currentVerseIndex >= flattenedVerses.length - 1 && styles.navButtonTextDisabled
-                ]}>
+                <Text
+                  style={[
+                    styles.navButtonTextPrimary,
+                    currentVerseIndex >= flattenedVerses.length - 1 &&
+                      styles.navButtonTextDisabled,
+                  ]}
+                >
                   {t('nextVerse', 'Next')}
                 </Text>
-                <ChevronRight size={16} color={
-                  currentVerseIndex >= flattenedVerses.length - 1 ? colors.border : "#FFFFFF"
-                } />
+                <ChevronRight
+                  size={16}
+                  color={
+                    currentVerseIndex >= flattenedVerses.length - 1
+                      ? colors.border
+                      : '#FFFFFF'
+                  }
+                />
               </TouchableOpacity>
             </View>
           </View>
@@ -521,10 +812,15 @@ function VedaReaderContent() {
           <View style={styles.emptyContainer}>
             <BookOpen size={48} color="#CBD5E0" />
             <Text style={[styles.emptyTitle, { color: colors.secondaryText }]}>
-              {veda.sections.length > 0 
-                ? t('selectVersePrompt', 'Select a section, subsection, and verse to display.')
-                : t('noVedicTextAvailable', 'No content available for this Vedic text yet.')
-              }
+              {veda.sections.length > 0
+                ? t(
+                    'selectVersePrompt',
+                    'Select a section, subsection, and verse to display.'
+                  )
+                : t(
+                    'noVedicTextAvailable',
+                    'No content available for this Vedic text yet.'
+                  )}
             </Text>
           </View>
         )}
@@ -533,7 +829,12 @@ function VedaReaderContent() {
       {/* Language Selection Modal */}
       {showLanguageModal && (
         <View style={styles.modalOverlay}>
-          <View style={[styles.modal, { backgroundColor: colors.card, shadowColor: colors.cardShadow }]}>
+          <View
+            style={[
+              styles.modal,
+              { backgroundColor: colors.card, shadowColor: colors.cardShadow },
+            ]}
+          >
             <View style={styles.modalHeader}>
               <Text style={[styles.modalTitle, { color: colors.primary }]}>
                 {t('selectTranslationLanguage', 'Select Translation Language')}
@@ -543,11 +844,23 @@ function VedaReaderContent() {
               </TouchableOpacity>
             </View>
 
-            <View style={[styles.searchContainer, { backgroundColor: colors.background }]}>
-              <Search size={16} color={colors.secondaryText} style={styles.searchIcon} />
+            <View
+              style={[
+                styles.searchContainer,
+                { backgroundColor: colors.background },
+              ]}
+            >
+              <Search
+                size={16}
+                color={colors.secondaryText}
+                style={styles.searchIcon}
+              />
               <TextInput
                 style={[styles.searchInput, { color: colors.text }]}
-                placeholder={t('searchLanguagesPlaceholder', 'Search languages...')}
+                placeholder={t(
+                  'searchLanguagesPlaceholder',
+                  'Search languages...'
+                )}
                 value={languageSearchTerm}
                 onChangeText={setLanguageSearchTerm}
                 placeholderTextColor={colors.secondaryText}
@@ -555,12 +868,18 @@ function VedaReaderContent() {
             </View>
 
             <ScrollView style={styles.languageList}>
-              {filteredLanguages.map(lang => (
+              {filteredLanguages?.map((lang) => (
                 <TouchableOpacity
                   key={lang.code}
                   style={[
-                    [styles.languageItem, { backgroundColor: colors.background }],
-                    targetLanguage.code === lang.code && [styles.languageItemSelected, { backgroundColor: colors.primary }]
+                    [
+                      styles.languageItem,
+                      { backgroundColor: colors.background },
+                    ],
+                    targetLanguage.code === lang.code && [
+                      styles.languageItemSelected,
+                      { backgroundColor: colors.primary },
+                    ],
                   ]}
                   onPress={() => {
                     setTargetLanguage(lang);
@@ -569,18 +888,36 @@ function VedaReaderContent() {
                     triggerHaptic();
                   }}
                 >
-                  <Text style={[
-                    [styles.languageItemText, { color: colors.text }],
-                    targetLanguage.code === lang.code && [styles.languageItemTextSelected, { color: '#FFFFFF' }]
-                  ]}>
+                  <Text
+                    style={[
+                      [styles.languageItemText, { color: colors.text }],
+                      targetLanguage.code === lang.code && [
+                        styles.languageItemTextSelected,
+                        { color: '#FFFFFF' },
+                      ],
+                    ]}
+                  >
                     {lang.name}
                   </Text>
-                  <Text style={[styles.languageCode, { color: colors.secondaryText }]}>({lang.code})</Text>
+                  <Text
+                    style={[
+                      styles.languageCode,
+                      { color: colors.secondaryText },
+                    ]}
+                  >
+                    ({lang.code})
+                  </Text>
                 </TouchableOpacity>
               ))}
               {filteredLanguages.length === 0 && (
-                <Text style={[styles.noResultsText, { color: colors.secondaryText }]}>
-                  {t('noLanguagesFound', 'No languages found matching')} "{languageSearchTerm}"
+                <Text
+                  style={[
+                    styles.noResultsText,
+                    { color: colors.secondaryText },
+                  ]}
+                >
+                  {t('noLanguagesFound', 'No languages found matching')} "
+                  {languageSearchTerm}"
                 </Text>
               )}
             </ScrollView>
@@ -593,8 +930,8 @@ function VedaReaderContent() {
         <ReportModal
           isOpen={isReportModalOpen}
           onClose={handleCloseReportModal}
-          verseId={reportingVerse.id}
-          vedaTitle={veda.title}
+          verseId={reportingVerse._id}
+          vedaTitle={veda?.title}
           onSubmitReport={handleSubmitReport}
         />
       )}
@@ -603,11 +940,7 @@ function VedaReaderContent() {
 }
 
 export default function VedaReaderPage() {
-  return (
-   
-      <VedaReaderContent />
- 
-  );
+  return <VedaReaderContent />;
 }
 
 const styles = StyleSheet.create({
@@ -636,7 +969,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#FFFFFF',
   },
-  headerSubtitle: {
+  headerSubname: {
     fontSize: 14,
     color: '#FFF7ED',
     marginTop: 2,
