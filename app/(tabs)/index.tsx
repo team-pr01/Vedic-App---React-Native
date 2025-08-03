@@ -8,7 +8,6 @@ import {
   Image,
   Dimensions,
   Platform,
-  TextInput,
   NativeSyntheticEvent,
   NativeScrollEvent,
 } from 'react-native';
@@ -16,21 +15,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
   Star,
-  Search,
-  BookOpen,
   Heart,
-  Bell,
   Menu,
-  Mic,
-  Filter,
   Utensils,
-  Building,
   Sparkles,
-  Chrome as HomeIcon,
   TreePine,
   Calendar,
-  Clock,
-  School,
   Church as Temple,
 } from 'lucide-react-native';
 import { ShoppingBag } from 'lucide-react-native';
@@ -59,27 +49,6 @@ export type TContent = {
 };
 
 const width = Dimensions.get('window').width;
-
-const heroImages = [
-  {
-    url: 'https://images.pexels.com/photos/3280130/pexels-photo-3280130.jpeg?auto=compress&cs=tinysrgb&w=800',
-    title: 'Sacred Wisdom',
-    subtitle: 'পবিত্র জ্ঞান',
-    description: 'Discover ancient teachings',
-  },
-  {
-    url: 'https://images.pexels.com/photos/1181772/pexels-photo-1181772.jpeg?auto=compress&cs=tinysrgb&w=800',
-    title: 'Inner Peace',
-    subtitle: 'অন্তর্নিহিত শান্তি',
-    description: 'Find your spiritual path',
-  },
-  {
-    url: 'https://images.pexels.com/photos/1051838/pexels-photo-1051838.jpeg?auto=compress&cs=tinysrgb&w=800',
-    title: 'Divine Connection',
-    subtitle: 'ঐশ্বরিক সংযোগ',
-    description: 'Connect with the eternal',
-  },
-];
 
 const services = [
   {
@@ -371,7 +340,7 @@ useEffect(() => {
   if (isManualScrolling) return;
 
   const interval = setInterval(() => {
-    const nextIndex = (currentHeroIndex + 1) % heroImages.length;
+    const nextIndex = (currentHeroIndex + 1) % data?.data?.length;
     setCurrentHeroIndex(nextIndex);
     scrollViewRef.current?.scrollTo({
       x: nextIndex * width,
@@ -380,7 +349,7 @@ useEffect(() => {
   }, 5000);
 
   return () => clearInterval(interval);
-}, [currentHeroIndex, isManualScrolling, heroImages.length]);
+}, [currentHeroIndex, isManualScrolling, data?.data?.length]);
 
 // Handle manual scroll events
 const handleScrollEnd = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -475,7 +444,7 @@ const handleScrollEnd = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
 
           {/* Hero Indicators */}
           <View style={styles.heroIndicators}>
-            {heroImages.map((_, index) => (
+            {data?.data?.map((_:any, index:number) => (
               <TouchableOpacity
                 key={index}
                 style={[
