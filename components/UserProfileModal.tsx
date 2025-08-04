@@ -77,7 +77,7 @@ export default function UserProfileModal({ visible, onClose, onNavigateToSetting
           {/* Profile Section */}
           <View style={[styles.profileSection, { backgroundColor: colors.card, shadowColor: colors.cardShadow }]}>
             <Image 
-              source={{ uri: currentUser.avatar || 'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=200' }} 
+              source={{ uri: currentUser.avatar || 'https://i.ibb.co/Z6kSGkyg/user-svgrepo-com.png'}} 
               style={styles.avatar}
             />
             <Text style={[styles.name, { color: colors.text }]}>{currentUser.name}</Text>

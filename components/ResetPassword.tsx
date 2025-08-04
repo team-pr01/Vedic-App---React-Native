@@ -21,34 +21,30 @@ import {
 import * as Haptics from 'expo-haptics';
 import { useDispatch } from 'react-redux';
 import { setUser } from '@/redux/features/Auth/authSlice';
-import {
-  useForgetPasswordMutation,
-  useLoginMutation,
-} from '@/redux/features/Auth/authApi';
+import { useResetPasswordMutation } from '@/redux/features/Auth/authApi';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 
-interface LoginPageProps {
+interface ResetPasswordProps {
   onSwitchToSignup: () => void;
   onBackToMain: () => void;
 }
 
-export default function LoginPage({
+export default function ResetPassword({
   onSwitchToSignup,
   onBackToMain,
-}: LoginPageProps) {
+}: ResetPasswordProps) {
   const t = useTranslate();
-  const [email, setEmail] = useState('prerna@gmail.com');
+  const email = AsyncStorage.getItem('resetEmail') || '';
   const [password, setPassword] = useState('11111111');
+  const [otp, setOtp] = useState('11111111');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
   const dispatch = useDispatch();
-  const [login, { isLoading }] = useLoginMutation();
-  const [forgetPassword, { isLoading: isForgotPasswordLoading }] =
-    useForgetPasswordMutation();
+  const [resetPassword, { isLoading }] = useResetPasswordMutation();
 
   const triggerHaptic = () => {
     if (Platform.OS !== 'web') {
@@ -56,65 +52,80 @@ export default function LoginPage({
     }
   };
 
-  const handleLogin = async () => {
-    if (!email.trim() || !password.trim()) {
-      setError('Please enter both email and password.');
-      return;
-    }
-
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setError('Please enter a valid email address.');
-      return;
-    }
-
+  const handleReset = async () => {
+     const storedEmail = await AsyncStorage.getItem('resetEmail');
+  if (!storedEmail) {
+    setError('Something went wrong. Please try to send email again.');
+    return;
+  }
+    const payload = {
+    email: storedEmail,
+    otp,
+    newPassword: password,
+  };
+  console.log(payload)
     setIsSubmitting(true);
     setError(null);
     triggerHaptic();
 
     try {
-      const res = await login({ email, password }).unwrap();
-      const { accessToken, user } = res.data;
-
-      dispatch(setUser({ token: accessToken, user }));
+      const res = await resetPassword(payload).unwrap();
+       router.replace({ pathname: '/auth', params: { mode: 'login' } });
     } catch (err: any) {
-      console.error('Login Error:', err);
-      setError(err.message || 'Login failed. Please try again.');
+      console.error('Reset failed', err);
+      setError(err.message || 'Reset failed. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
   };
- 
 
-  const handleSubmitForgotPassword = async () => {
-    const payload = {
-      email,
-    };
-    setIsSubmitting(true);
-    setError(null);
+  // const handleGoogleLogin = async () => {
+  //   triggerHaptic();
+  //   setError(null);
+  //   setIsSubmitting(true);
+
+  //   try {
+  //     await loginWithGoogle();
+  //   } catch (err: any) {
+  //     console.error('Google Login Error:', err);
+  //     setError(err.message || 'Google login failed. Please try again.');
+  //   } finally {
+  //     setIsSubmitting(false);
+  //   }
+  // };
+
+  const handleForgotPassword = async () => {
+    if (!resetEmail.trim()) {
+      setError('Please enter your email address first.');
+      return;
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(resetEmail)) {
+      setError('Please enter a valid email address.');
+      return;
+    }
+
     triggerHaptic();
+    setError(null);
 
     try {
-      await AsyncStorage.setItem('resetEmail', resetEmail); 
-      const res = await forgetPassword(payload).unwrap();
-      if (res.success) {
-        Alert.alert(
-          t('resetPasswordSuccessTitle', 'Reset Password Success'),
-          t(
-            'resetPasswordSuccessMessage',
-            'An email has been sent with instructions to reset your password.'
-          ),
-          [{ text: t('ok', 'OK'), onPress: () => setShowForgotPassword(false) }]
-        );
-        router.replace({
-          pathname: '/auth',
-          params: { mode: 'resetPassword' },
-        });
+      await AsyncStorage.setItem('resetEmail', resetEmail); // <-- save email
+      const storedEmail = await AsyncStorage.getItem('resetEmail'); // <-- retrieve email
+
+      if (storedEmail) {
+        // simulate API success
+        const sent = true;
+        if (sent) {
+          alert(
+            `Password reset instructions have been sent to your email: ${storedEmail}`
+          );
+          setShowForgotPassword(false);
+        }
+      } else {
+        alert('Failed to retrieve email from storage');
       }
     } catch (err: any) {
-      console.error('Reset failed', err);
-      setError(err.message || 'Failed sending otp. Please try again.');
-    } finally {
-      setIsSubmitting(false);
+      setError(err.message || 'Failed to send reset email.');
     }
   };
 
@@ -141,23 +152,20 @@ export default function LoginPage({
 
       <View style={styles.formContainer}>
         <View style={styles.inputGroup}>
-          <Text style={styles.inputLabel}>Email Address</Text>
+          <Text style={styles.inputLabel}>OTP</Text>
           <View style={styles.inputContainer}>
-            <Mail size={20} color="#718096" style={styles.inputIcon} />
+            <Lock size={20} color="#718096" style={styles.inputIcon} />
             <TextInput
               style={styles.textInput}
-              value={email}
-              onChangeText={setEmail}
-              placeholder="you@example.com"
+              value={otp}
+              onChangeText={setOtp}
+              placeholder="Enter 6 digit your OTP"
               placeholderTextColor="#A0AEC0"
-              keyboardType="email-address"
-              autoCapitalize="none"
             />
           </View>
         </View>
-
         <View style={styles.inputGroup}>
-          <Text style={styles.inputLabel}>Password</Text>
+          <Text style={styles.inputLabel}>New Password</Text>
           <View style={styles.inputContainer}>
             <Lock size={20} color="#718096" style={styles.inputIcon} />
             <TextInput
@@ -182,29 +190,18 @@ export default function LoginPage({
         </View>
 
         <TouchableOpacity
-          style={styles.forgotPasswordButton}
-          onPress={() => setShowForgotPassword(true)}
-        >
-          <Text style={styles.forgotPasswordText}>
-            {t('forgotPassword', 'Forgot Password?')}
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
           style={[
             styles.loginButton,
             (isSubmitting || isLoading) && styles.loginButtonDisabled,
           ]}
-          onPress={handleLogin}
+          onPress={handleReset}
           disabled={isSubmitting || isLoading}
         >
           {isSubmitting || isLoading ? (
             <Loader size={20} color="#FFFFFF" />
           ) : null}
           <Text style={styles.loginButtonText}>
-            {isSubmitting
-              ? t('signingIn', 'Signing In...')
-              : t('signIn', 'Sign In')}
+            {isSubmitting ? 'Resetting...' : 'Reset'}
           </Text>
         </TouchableOpacity>
       </View>
@@ -240,54 +237,6 @@ export default function LoginPage({
           </Text>
         </TouchableOpacity>
       </View>
-
-      {/* Forgot Password Modal */}
-      {showForgotPassword && (
-        <View style={styles.modalOverlay}>
-          <View style={styles.modal}>
-            <Text style={styles.modalTitle}>
-              {t('resetPasswordTitle', 'Reset Password')}
-            </Text>
-            <Text style={styles.modalText}>
-              {t(
-                'resetPasswordInstructions',
-                "Enter your email address and we'll send you instructions to reset your password."
-              )}
-            </Text>
-            <View style={styles.modalInputContainer}>
-              <Mail size={20} color="#718096" style={{ marginRight: 8 }} />
-              <TextInput
-                style={styles.modalInput}
-                placeholder="you@example.com"
-                placeholderTextColor="#A0AEC0"
-                keyboardType="email-address"
-                autoCapitalize="none"
-                value={resetEmail}
-                onChangeText={setResetEmail}
-              />
-            </View>
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={styles.modalCancelButton}
-                onPress={() => setShowForgotPassword(false)}
-              >
-                <Text style={styles.modalCancelText}>
-                  {t('cancel', 'Cancel')}
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.modalConfirmButton}
-                onPress={handleSubmitForgotPassword}
-              >
-                <Text style={styles.modalConfirmText}>
-               {isForgotPasswordLoading
-                  ?'Please wait...':"Send Reset Email"}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      )}
     </View>
   );
 }

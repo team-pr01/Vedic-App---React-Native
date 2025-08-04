@@ -427,7 +427,7 @@ export default function HomeScreen() {
               >
                 <Image
                   source={{
-                    uri: user?.avatar 
+                    uri: user?.avatar ||'https://i.ibb.co/Z6kSGkyg/user-svgrepo-com.png'
                   }}
                   style={styles.profileImage}
                 />

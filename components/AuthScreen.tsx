@@ -10,8 +10,9 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Star, BookOpen, Users } from 'lucide-react-native';
 import SignupPage from './SignupPage';
 import LoginPage from './LoginPage';
+import ResetPassword from './ResetPassword';
 
-type AuthMode = 'main' | 'signup' | 'login';
+type AuthMode = 'main' | 'signup' | 'login' | 'resetPassword';
 
 export default function AuthScreen({currentAuthMode}:{
   currentAuthMode: AuthMode,
@@ -36,6 +37,14 @@ export default function AuthScreen({currentAuthMode}:{
     );
   }
 
+  if (authMode === 'resetPassword') {
+    return (
+      <ResetPassword
+        onSwitchToSignup={() => setAuthMode('login')}
+        onBackToMain={() => setAuthMode('main')}
+      />
+    );
+  }
   return (
     <View style={styles.container}>
       <LinearGradient

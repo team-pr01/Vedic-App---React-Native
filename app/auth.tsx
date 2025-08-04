@@ -5,7 +5,7 @@ import { useLocalSearchParams } from 'expo-router';
 
 export default function AuthPage() {
   const { mode } = useLocalSearchParams(); 
-  const authMode = (mode === 'signup' || mode === 'login') ? mode : 'main';
+  const authMode = (mode === 'signup' || mode === 'login' || mode==='resetPassword') ? mode : 'main';
 
   return (
     <View style={styles.container}>
