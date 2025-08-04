@@ -73,6 +73,7 @@ export type TTemple = {
   createdBy: string;
   createdAt?: Date;
   updatedAt?: Date;
+  status: 'pending' | 'approved' | 'rejected';
 };
 
 export default function SanatanSthalPage() {
@@ -80,6 +81,7 @@ export default function SanatanSthalPage() {
   const { data, isLoading, refetch } = useGetAllTempleQuery({
     keyword: searchQuery,
   });
+  const approvedTemples =data?.data?.filter( (item: TTemple) => item.status=== 'approved') || [];
   const [refreshing, setRefreshing] = useState(false);
 
   const handleRefresh = async () => {
@@ -255,12 +257,12 @@ export default function SanatanSthalPage() {
               <Text
                 style={[styles.resultsCount, { color: colors.secondaryText }]}
               >
-                {data?.data?.length} place{data?.data?.length !== 1 ? 's' : ''}{' '}
+                {approvedTemples?.length} place{approvedTemples?.length !== 1 ? 's' : ''}{' '}
                 found
               </Text>
 
               {/* All temples */}
-              {data?.data?.map((item: TTemple) => (
+              {approvedTemples?.map((item: TTemple) => (
                 <TouchableOpacity
                   key={item?._id}
                   style={[
@@ -326,7 +328,7 @@ export default function SanatanSthalPage() {
                 </TouchableOpacity>
               ))}
 
-              {data?.data?.length === 0 && (
+              {approvedTemples?.length === 0 && (
                 <View style={styles.emptyState}>
                   <Text
                     style={[styles.emptyStateTitle, { color: colors.text }]}

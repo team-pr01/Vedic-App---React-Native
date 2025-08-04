@@ -43,9 +43,9 @@ export default function TabLayout() {
     >
       {/* ---- Main 5 Tabs ---- */}
       <Tabs.Screen
-        name="index"
+        name="consultancy"
         options={{
-          title: 'Home',
+          title: 'Consultancy',
           tabBarIcon: ({ size, color, focused }) => (
             <View
               style={[
@@ -81,9 +81,9 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="akf"
+        name="index"
         options={{
-          title: 'AKF',
+          title: 'AKF Home',
           tabBarIcon: ({ size, color, focused }) => (
             <View
               style={[
@@ -146,7 +146,7 @@ export default function TabLayout() {
       />
 
       {/* ---- Hidden Screens ---- */}
-      <Tabs.Screen name="consultancy" options={{ href: null }} />
+      <Tabs.Screen name="akf" options={{ href: null }} />
       <Tabs.Screen name="sanatan-sthal" options={{ href: null }} />
       <Tabs.Screen name="food" options={{ href: null }} />
       <Tabs.Screen name="jyotish" options={{ href: null }} />
