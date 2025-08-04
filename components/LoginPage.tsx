@@ -38,8 +38,8 @@ export default function LoginPage({
   onBackToMain,
 }: LoginPageProps) {
   const t = useTranslate();
-  const [email, setEmail] = useState('prerna@gmail.com');
-  const [password, setPassword] = useState('11111111');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);

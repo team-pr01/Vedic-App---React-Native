@@ -28,8 +28,32 @@ import {
   CircleAlert as AlertCircle,
   CircleCheck as CheckCircle,
 } from 'lucide-react-native';
+type TFormData = {
+  name: string;
+  email: string;
+  phoneNumber: string;
+  password: string;
+  country: string;
+  state: string;
+  city: string;
+  area?: string;
+}
+type TInputFieldProps = {
+  name: keyof TFormData;
+  label: string;
+  placeholder: string;
+  icon: React.ReactNode;
+  secure?: boolean;
+  keyboardType?: 'default' | 'email-address' | 'phone-pad';
+  isRequired?: boolean;
+}
 
-export default function SignupPage({ onSwitchToLogin, onBackToMain }) {
+type SignupPageProps = {
+  onSwitchToLogin: () => void;
+  onBackToMain: () => void;
+};
+
+export default function SignupPage({ onSwitchToLogin, onBackToMain }: SignupPageProps) {
   const t = useTranslate();
   const [currentStep, setCurrentStep] = useState(1);
   const [error, setError] = useState<string | null>(null);
@@ -123,7 +147,7 @@ export default function SignupPage({ onSwitchToLogin, onBackToMain }) {
     }
   };
 
-  const InputField = ({ name, label, placeholder, icon, secure = false, keyboardType = 'default', isRequired=false }) => (
+  const InputField:React.FC<TInputFieldProps> = ({ name, label, placeholder, icon, secure = false, keyboardType = 'default', isRequired=false }) => (
     <Controller
       control={control}
       name={name}
