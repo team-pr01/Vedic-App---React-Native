@@ -9,6 +9,7 @@ import {
   TextInput,
   Platform,
   Modal,
+  RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -33,6 +34,7 @@ import { router } from 'expo-router';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { useGetAllTempleQuery } from '@/redux/features/Temple/templeApi';
 import AddTempleForm from '@/components/TemplePage/AddTempleForm/AddTempleForm';
+import { PullToRefreshWrapper } from '@/components/Reusable/PullToRefreshWrapper/PullToRefreshWrapper';
 
 interface SanatanSthalItem {
   id: string;
@@ -75,7 +77,22 @@ export type TTemple = {
 
 export default function SanatanSthalPage() {
   const [searchQuery, setSearchQuery] = useState('');
-  const { data, isLoading } = useGetAllTempleQuery({ keyword: searchQuery });
+  const { data, isLoading, refetch } = useGetAllTempleQuery({
+    keyword: searchQuery,
+  });
+  const [refreshing, setRefreshing] = useState(false);
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+
+    try {
+      await Promise.all([refetch()]);
+    } catch (error) {
+      console.error('Error while refreshing:', error);
+    } finally {
+      setRefreshing(false);
+    }
+  };
   const colors = useThemeColors();
   const [isListening, setIsListening] = useState(false);
   const [showRegistrationModal, setShowRegistrationModal] = useState(false);
@@ -135,183 +152,216 @@ export default function SanatanSthalPage() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* Header */}
-      <SafeAreaView edges={['top']} style={styles.headerContainer}>
-        <LinearGradient colors={['#00BCD4', '#00ACC1']} style={styles.header}>
-          <TouchableOpacity
-            onPress={() => router.back()}
-            style={styles.headerButton}
-          >
-            <ArrowLeft size={24} color="#FFFFFF" />
-          </TouchableOpacity>
-          <View style={styles.headerContent}>
-            <Text style={styles.headerTitle}>Sanatan Sthal</Text>
-            <Text style={styles.headerSubtitle}>সনাতন স্থল</Text>
-          </View>
-          <View style={styles.headerPlaceholder} />
-        </LinearGradient>
-      </SafeAreaView>
-
-      {/* Floating Add Button */}
-      <TouchableOpacity
-        style={[styles.floatingButton, { backgroundColor: colors.info }]}
-        onPress={() => {
-          triggerHaptic();
-          setShowRegistrationModal(true);
-        }}
+    <PullToRefreshWrapper onRefresh={handleRefresh}>
+      <ScrollView
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+        }
       >
-        <Plus size={24} color="#FFFFFF" />
-      </TouchableOpacity>
-
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Search Bar */}
         <View
-          style={[styles.searchContainer, { backgroundColor: colors.card }]}
+          style={[styles.container, { backgroundColor: colors.background }]}
         >
-          <View
-            style={[
-              styles.searchBar,
-              {
-                backgroundColor: colors.background,
-                shadowColor: colors.cardShadow,
-              },
-            ]}
-          >
-            <Search size={20} color={colors.secondaryText} />
-            <TextInput
-              style={[styles.searchInput, { color: colors.text }]}
-              placeholder="Search temples, gurukuls, organizations..."
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              placeholderTextColor={colors.secondaryText}
-            />
-            <TouchableOpacity
-              onPress={handleVoiceSearch}
-              style={[
-                styles.voiceButton,
-                isListening && styles.voiceButtonActive,
-              ]}
+          {/* Header */}
+          <SafeAreaView edges={['top']} style={styles.headerContainer}>
+            <LinearGradient
+              colors={['#00BCD4', '#00ACC1']}
+              style={styles.header}
             >
-              {isListening ? (
-                <StopCircle size={18} color="#EF4444" />
-              ) : (
-                <Mic size={18} color={colors.info} />
-              )}
-            </TouchableOpacity>
-          </View>
-
-          {isListening && (
-            <View style={styles.listeningIndicator}>
-              <View style={styles.listeningDot} />
-              <Text
-                style={[styles.listeningText, { color: colors.secondaryText }]}
+              <TouchableOpacity
+                onPress={() => router.back()}
+                style={styles.headerButton}
               >
-                Listening...
-              </Text>
-            </View>
-          )}
-        </View>
+                <ArrowLeft size={24} color="#FFFFFF" />
+              </TouchableOpacity>
+              <View style={styles.headerContent}>
+                <Text style={styles.headerTitle}>Sanatan Sthal</Text>
+                <Text style={styles.headerSubtitle}>সনাতন স্থল</Text>
+              </View>
+              <View style={styles.headerPlaceholder} />
+            </LinearGradient>
+          </SafeAreaView>
 
-        {/* Items List */}
-        <View style={styles.itemsContainer}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>
-            Sacred Places & Organizations
-          </Text>
-          <Text style={[styles.resultsCount, { color: colors.secondaryText }]}>
-            {data?.data?.length} place{data?.data?.length !== 1 ? 's' : ''}{' '}
-            found
-          </Text>
+          {/* Floating Add Button */}
+          <TouchableOpacity
+            style={[styles.floatingButton, { backgroundColor: colors.info }]}
+            onPress={() => {
+              triggerHaptic();
+              setShowRegistrationModal(true);
+            }}
+          >
+            <Plus size={24} color="#FFFFFF" />
+          </TouchableOpacity>
 
-          {/* All temples */}
-          {data?.data?.map((item: TTemple) => (
-            <TouchableOpacity
-              key={item?._id}
-              style={[
-                styles.itemCard,
-                {
-                  backgroundColor: colors.card,
-                  shadowColor: colors.cardShadow,
-                },
-              ]}
-              // onPress={() => handleItemPress(item)}
-              activeOpacity={0.8}
+          <ScrollView
+            style={styles.content}
+            showsVerticalScrollIndicator={false}
+          >
+            {/* Search Bar */}
+            <View
+              style={[styles.searchContainer, { backgroundColor: colors.card }]}
             >
-              <Image source={{ uri: item.imageUrl }} style={styles.itemImage} />
-              <View style={styles.itemContent}>
-                <View style={styles.itemHeader}>
-                  <View style={styles.itemTitleRow}>
-                    {/* {getTypeIcon(item.type)} */}
-                    <Text style={[styles.itemTitle, { color: colors.text }]}>
-                      {item?.name}
-                    </Text>
-                  </View>
-                </View>
+              <View
+                style={[
+                  styles.searchBar,
+                  {
+                    backgroundColor: colors.background,
+                    shadowColor: colors.cardShadow,
+                  },
+                ]}
+              >
+                <Search size={20} color={colors.secondaryText} />
+                <TextInput
+                  style={[styles.searchInput, { color: colors.text }]}
+                  placeholder="Search temples, gurukuls, organizations..."
+                  value={searchQuery}
+                  onChangeText={setSearchQuery}
+                  placeholderTextColor={colors.secondaryText}
+                />
+                <TouchableOpacity
+                  onPress={handleVoiceSearch}
+                  style={[
+                    styles.voiceButton,
+                    isListening && styles.voiceButtonActive,
+                  ]}
+                >
+                  {isListening ? (
+                    <StopCircle size={18} color="#EF4444" />
+                  ) : (
+                    <Mic size={18} color={colors.info} />
+                  )}
+                </TouchableOpacity>
+              </View>
 
-                <View style={styles.locationContainer}>
-                  <MapPin size={14} color={colors.secondaryText} />
+              {isListening && (
+                <View style={styles.listeningIndicator}>
+                  <View style={styles.listeningDot} />
                   <Text
                     style={[
-                      styles.locationText,
+                      styles.listeningText,
                       { color: colors.secondaryText },
                     ]}
                   >
-                    {item?.city}, {item?.country}
+                    Listening...
                   </Text>
                 </View>
+              )}
+            </View>
 
-                <Text
-                  style={[
-                    styles.itemDescription,
-                    { color: colors.secondaryText },
-                  ]}
-                >
-                  {item.description}
-                </Text>
-
-                <View style={styles.itemFooter}>
-                  <View
-                    style={[
-                      styles.typeBadge,
-                      // { backgroundColor: getTypeColor(item.type) },
-                    ]}
-                  >
-                    <Text style={styles.typeBadgeText}>
-                      Deity : {item?.mainDeity}
-                    </Text>
-                  </View>
-                </View>
-              </View>
-            </TouchableOpacity>
-          ))}
-
-          {data?.data?.length === 0 && (
-            <View style={styles.emptyState}>
-              <Text style={[styles.emptyStateTitle, { color: colors.text }]}>
-                No places found
+            {/* Items List */}
+            <View style={styles.itemsContainer}>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>
+                Sacred Places & Organizations
               </Text>
               <Text
-                style={[styles.emptyStateText, { color: colors.secondaryText }]}
+                style={[styles.resultsCount, { color: colors.secondaryText }]}
               >
-                Try adjusting your search criteria or add a new place
+                {data?.data?.length} place{data?.data?.length !== 1 ? 's' : ''}{' '}
+                found
               </Text>
+
+              {/* All temples */}
+              {data?.data?.map((item: TTemple) => (
+                <TouchableOpacity
+                  key={item?._id}
+                  style={[
+                    styles.itemCard,
+                    {
+                      backgroundColor: colors.card,
+                      shadowColor: colors.cardShadow,
+                    },
+                  ]}
+                  // onPress={() => handleItemPress(item)}
+                  activeOpacity={0.8}
+                >
+                  <Image
+                    source={{ uri: item.imageUrl }}
+                    style={styles.itemImage}
+                  />
+                  <View style={styles.itemContent}>
+                    <View style={styles.itemHeader}>
+                      <View style={styles.itemTitleRow}>
+                        {/* {getTypeIcon(item.type)} */}
+                        <Text
+                          style={[styles.itemTitle, { color: colors.text }]}
+                        >
+                          {item?.name}
+                        </Text>
+                      </View>
+                    </View>
+
+                    <View style={styles.locationContainer}>
+                      <MapPin size={14} color={colors.secondaryText} />
+                      <Text
+                        style={[
+                          styles.locationText,
+                          { color: colors.secondaryText },
+                        ]}
+                      >
+                        {item?.city}, {item?.country}
+                      </Text>
+                    </View>
+
+                    <Text
+                      style={[
+                        styles.itemDescription,
+                        { color: colors.secondaryText },
+                      ]}
+                    >
+                      {item.description}
+                    </Text>
+
+                    <View style={styles.itemFooter}>
+                      <View
+                        style={[
+                          styles.typeBadge,
+                          // { backgroundColor: getTypeColor(item.type) },
+                        ]}
+                      >
+                        <Text style={styles.typeBadgeText}>
+                          Deity : {item?.mainDeity}
+                        </Text>
+                      </View>
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              ))}
+
+              {data?.data?.length === 0 && (
+                <View style={styles.emptyState}>
+                  <Text
+                    style={[styles.emptyStateTitle, { color: colors.text }]}
+                  >
+                    No places found
+                  </Text>
+                  <Text
+                    style={[
+                      styles.emptyStateText,
+                      { color: colors.secondaryText },
+                    ]}
+                  >
+                    Try adjusting your search criteria or add a new place
+                  </Text>
+                </View>
+              )}
             </View>
-          )}
+
+            <View style={styles.bottomSpacing} />
+          </ScrollView>
+
+          {/* Registration Modal */}
+          <Modal
+            visible={showRegistrationModal}
+            transparent
+            animationType="slide"
+            onRequestClose={() => setShowRegistrationModal(false)}
+          >
+            <AddTempleForm
+              setShowRegistrationModal={setShowRegistrationModal}
+            />
+          </Modal>
         </View>
-
-        <View style={styles.bottomSpacing} />
       </ScrollView>
-
-      {/* Registration Modal */}
-      <Modal
-        visible={showRegistrationModal}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setShowRegistrationModal(false)}
-      >
-        <AddTempleForm setShowRegistrationModal={setShowRegistrationModal} />
-      </Modal>
-    </View>
+    </PullToRefreshWrapper>
   );
 }
 

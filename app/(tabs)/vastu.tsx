@@ -10,6 +10,7 @@ import {
   Modal,
   Platform,
   ActivityIndicator,
+  RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -47,6 +48,7 @@ import { getYouTubeVideoId } from '@/utils/getYouTubeVideoId';
 import NoData from '@/components/Reusable/NoData/NoData';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import LoadingComponent from '@/components/LoadingComponent/LoadingComponent';
+import { PullToRefreshWrapper } from '@/components/Reusable/PullToRefreshWrapper/PullToRefreshWrapper';
 
 export type TVastu = {
   _id: string;
@@ -213,14 +215,28 @@ const generateVastuAnalysis = async (
 export default function VastuPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
-  const { data: vastu, isLoading: isVastuLoading } = useGetAllVastuQuery({
+  const { data: vastu, isLoading: isVastuLoading, refetch: refetchVastu } = useGetAllVastuQuery({
     keyword: searchQuery,
     category: selectedCategory,
   });
-  const { data, isLoading } = useGetAllConsultancyServicesQuery({});
+  const { data, isLoading, refetch: refetchConsultancy } = useGetAllConsultancyServicesQuery({});
   const filteredExperts =
     data?.data?.filter((expert: any) => expert.category === 'Vastu Expert') ||
     [];
+    const [refreshing, setRefreshing] = useState(false);
+    
+      const handleRefresh = async () => {
+        setRefreshing(true);
+    
+        try {
+          await Promise.all([refetchVastu(), refetchConsultancy()]);
+        } catch (error) {
+          console.error('Error while refreshing:', error);
+        } finally {
+          setRefreshing(false);
+        }
+      };
+
   const colors = useThemeColors();
   const [isListening, setIsListening] = useState(false);
   const [showAIModal, setShowAIModal] = useState(false);
@@ -467,7 +483,13 @@ export default function VastuPage() {
   const [playingCardIndex, setPlayingCardIndex] = useState<number | null>(null);
 
   return (
-    <View style={styles.container}>
+     <PullToRefreshWrapper onRefresh={handleRefresh}>
+      <ScrollView
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+      }
+    >
+       <View style={styles.container}>
       {/* Header */}
       <SafeAreaView edges={['top']} style={styles.headerContainer}>
         <LinearGradient colors={['#805AD5', '#6B46C1']} style={styles.header}>
@@ -858,6 +880,9 @@ export default function VastuPage() {
         </Modal>
       )}
     </View>
+    </ScrollView>
+    </PullToRefreshWrapper>
+   
   );
 }
 

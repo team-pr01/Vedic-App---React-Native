@@ -10,6 +10,7 @@ import {
   Modal,
   Platform,
   ActivityIndicator,
+  RefreshControl,
 } from 'react-native';
 import {
   Search,
@@ -35,6 +36,7 @@ import { TConsultancyService } from '@/types';
 import { useGetAllCategoriesQuery } from '@/redux/features/Categories/categoriesApi';
 import ConsultancyHeader from '@/components/ConsultancyPage/ConsultancyHeader';
 import NoData from '@/components/Reusable/NoData/NoData';
+import { PullToRefreshWrapper } from '@/components/Reusable/PullToRefreshWrapper/PullToRefreshWrapper';
 
 const triggerHaptic = () => {
   if (Platform.OS !== 'web') {
@@ -136,11 +138,26 @@ const generateConsultationRecommendations = async (
 export default function ConsultancyPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
-  const { data, isLoading } = useGetAllConsultancyServicesQuery({
+  const { data, isLoading, refetch: refetchConsultancy } = useGetAllConsultancyServicesQuery({
     category: selectedCategory,
     keyword: searchQuery,
   });
-  const { data: categoryData } = useGetAllCategoriesQuery({});
+  const { data: categoryData, refetch: refetchCategories } = useGetAllCategoriesQuery({});
+  const [refreshing, setRefreshing] = useState(false);
+  
+    const handleRefresh = async () => {
+      setRefreshing(true);
+  
+      try {
+        await Promise.all([refetchCategories(), refetchConsultancy()]);
+      } catch (error) {
+        console.error('Error while refreshing:', error);
+      } finally {
+        setRefreshing(false);
+      }
+    };
+
+
   const filteredCategory = categoryData?.data?.filter(
     (category: any) => category.areaName === 'consultancyService'
   );
@@ -253,7 +270,13 @@ export default function ConsultancyPage() {
   ];
 
   return (
-    <View style={styles.container}>
+    <PullToRefreshWrapper onRefresh={handleRefresh}>
+      <ScrollView
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+      }
+    >
+       <View style={styles.container}>
       {/* Header */}
       <ConsultancyHeader />
 
@@ -780,6 +803,8 @@ export default function ConsultancyPage() {
         </Modal>
       )}
     </View>
+    </ScrollView>
+    </PullToRefreshWrapper>
   );
 }
 
