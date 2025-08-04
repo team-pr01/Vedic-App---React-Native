@@ -388,112 +388,122 @@ export default function NewsScreen() {
   return (
     <PullToRefreshWrapper onRefresh={handleRefresh}>
       <ScrollView
-      refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
-      }
-    >
-      <SafeAreaView
-        edges={['top', 'left', 'right']}
-        style={[styles.container, { backgroundColor: colors.background }]}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+        }
       >
-        {/* Header */}
-        <LinearGradient colors={colors.headerBackground} style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()}>
-            <ArrowLeft size={24} color="#FFFFFF" />
-          </TouchableOpacity>
-          <View style={styles.headerContent}>
-            <Text style={styles.headerTitle}>Spiritual News</Text>
-            <Text style={styles.headerSubtitle}>আধ্যাত্মিক সংবাদ</Text>
-          </View>
-          <TouchableOpacity onPress={triggerHaptic}>
-            <Filter size={24} color="#FFFFFF" />
-          </TouchableOpacity>
-        </LinearGradient>
-
-        {/* Search and Language Section */}
-        <View
-          style={[
-            styles.searchSection,
-            { backgroundColor: colors.card, borderBottomColor: colors.border },
-          ]}
+        <SafeAreaView
+          edges={['top', 'left', 'right']}
+          style={[styles.container, { backgroundColor: colors.background }]}
         >
-          <View style={styles.searchContainer}>
-            <View
-              style={[styles.searchBar, { backgroundColor: colors.background }]}
-            >
-              <Search size={20} color={colors.secondaryText} />
-              <TextInput
-                style={[styles.searchInput, { color: colors.text }]}
-                placeholder="Search news..."
-                value={searchQuery}
-                onChangeText={setSearchQuery}
-                placeholderTextColor={colors.secondaryText}
-              />
-            </View>
-            <TouchableOpacity
-              style={[
-                styles.languageButton,
-                { backgroundColor: colors.background },
-              ]}
-              onPress={() => setShowLanguageModal(true)}
-            >
-              <Languages size={20} color={colors.primary} />
+          {/* Header */}
+          <LinearGradient
+            colors={colors.headerBackground}
+            style={styles.header}
+          >
+            <TouchableOpacity onPress={() => router.back()}>
+              <ArrowLeft size={24} color="#FFFFFF" />
             </TouchableOpacity>
-          </View>
-        </View>
+            <View style={styles.headerContent}>
+              <Text style={styles.headerTitle}>Spiritual News</Text>
+              <Text style={styles.headerSubtitle}>আধ্যাত্মিক সংবাদ</Text>
+            </View>
+            <TouchableOpacity onPress={triggerHaptic}>
+              <Filter size={24} color="#FFFFFF" />
+            </TouchableOpacity>
+          </LinearGradient>
 
-        {/* Category Tabs */}
-        <View style={styles.categoriesContainer}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            <TouchableOpacity
-              onPress={() => {
-                triggerHaptic();
-                setSelectedCategory('');
-              }}
-              style={[
-                styles.categoryChip,
-                selectedCategory === '' && styles.categoryChipActive,
-              ]}
-            >
-              <Text
+          {/* Search and Language Section */}
+          <View
+            style={[
+              styles.searchSection,
+              {
+                backgroundColor: colors.card,
+                borderBottomColor: colors.border,
+              },
+            ]}
+          >
+            <View style={styles.searchContainer}>
+              <View
                 style={[
-                  styles.categoryText,
-                  selectedCategory === '' && styles.categoryTextActive,
+                  styles.searchBar,
+                  { backgroundColor: colors.background },
                 ]}
               >
-                All
-              </Text>
-            </TouchableOpacity>
-            {allCategories?.map((category: string) => (
-              <View>
-                <TouchableOpacity
-                  key={category}
-                  onPress={() => {
-                    triggerHaptic();
-                    setSelectedCategory(category);
-                  }}
+                <Search size={20} color={colors.secondaryText} />
+                <TextInput
+                  style={[styles.searchInput, { color: colors.text }]}
+                  placeholder="Search news..."
+                  value={searchQuery}
+                  onChangeText={setSearchQuery}
+                  placeholderTextColor={colors.secondaryText}
+                />
+              </View>
+              <TouchableOpacity
+                style={[
+                  styles.languageButton,
+                  { backgroundColor: colors.background },
+                ]}
+                onPress={() => setShowLanguageModal(true)}
+              >
+                <Languages size={20} color={colors.primary} />
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* Category Tabs */}
+          <View style={styles.categoriesContainer}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              <TouchableOpacity
+                onPress={() => {
+                  triggerHaptic();
+                  setSelectedCategory('');
+                }}
+                style={[
+                  styles.categoryChip,
+                  selectedCategory === '' && styles.categoryChipActive,
+                ]}
+              >
+                <Text
                   style={[
-                    styles.categoryChip,
-                    selectedCategory === category && styles.categoryChipActive,
+                    styles.categoryText,
+                    selectedCategory === '' && styles.categoryTextActive,
                   ]}
                 >
-                  <Text
+                  All
+                </Text>
+              </TouchableOpacity>
+              {allCategories?.map((category: string) => (
+                <View>
+                  <TouchableOpacity
+                    key={category}
+                    onPress={() => {
+                      triggerHaptic();
+                      setSelectedCategory(category);
+                    }}
                     style={[
-                      styles.categoryText,
+                      styles.categoryChip,
                       selectedCategory === category &&
-                        styles.categoryTextActive,
+                        styles.categoryChipActive,
                     ]}
                   >
-                    {category}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            ))}
-          </ScrollView>
-        </View>
+                    <Text
+                      style={[
+                        styles.categoryText,
+                        selectedCategory === category &&
+                          styles.categoryTextActive,
+                      ]}
+                    >
+                      {category}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              ))}
+            </ScrollView>
+          </View>
 
-        {/* Trending Topics */}
-        {/* <View style={[styles.trendingSection, { backgroundColor: colors.card }]}>
+          {/* Trending Topics */}
+          {/* <View style={[styles.trendingSection, { backgroundColor: colors.card }]}>
         <View style={styles.trendingHeader}>
           <TrendingUp size={20} color="#F59E0B" />
           <Text style={[styles.trendingTitle, { color: colors.text }]}>
@@ -520,261 +530,269 @@ export default function NewsScreen() {
         </ScrollView>
       </View> */}
 
-        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-          {/* News Articles */}
-          <View style={styles.articlesSection}>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>
-              Latest Articles
-            </Text>
-            <Text
-              style={[styles.sectionSubtitle, { color: colors.secondaryText }]}
-            >
-              সর্বশেষ নিবন্ধসমূহ
-            </Text>
+          <ScrollView
+            style={styles.content}
+            showsVerticalScrollIndicator={false}
+          >
+            {/* News Articles */}
+            <View style={styles.articlesSection}>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>
+                Latest Articles
+              </Text>
+              <Text
+                style={[
+                  styles.sectionSubtitle,
+                  { color: colors.secondaryText },
+                ]}
+              >
+                সর্বশেষ নিবন্ধসমূহ
+              </Text>
 
-            {isLoading ? (
-              <LoadingComponent loading="Programs" color={colors.primary} />
-            ) : data?.data?.length === 0 &&
-              !Object.values(isTranslating).some((v) => v) ? (
-              <View style={styles.emptyState}>
-                <Filter size={48} color={colors.secondaryText} />
-                <Text style={[styles.emptyTitle, { color: colors.text }]}>
-                  No news found
-                </Text>
-                <Text
+              {isLoading ? (
+                <LoadingComponent loading="Programs" color={colors.primary} />
+              ) : data?.data?.length === 0 &&
+                !Object.values(isTranslating).some((v) => v) ? (
+                <View style={styles.emptyState}>
+                  <Filter size={48} color={colors.secondaryText} />
+                  <Text style={[styles.emptyTitle, { color: colors.text }]}>
+                    No news found
+                  </Text>
+                  <Text
+                    style={[
+                      styles.emptyDescription,
+                      { color: colors.secondaryText },
+                    ]}
+                  >
+                    Try adjusting your search or category filters
+                  </Text>
+                </View>
+              ) : (
+                data?.data?.map((article: any) => {
+                  const translationKey = `${article.id}_${currentLanguage.code}`;
+                  const isLoadingTranslation = isTranslating[translationKey];
+                  const translated =
+                    translatedArticles[article.id]?.[currentLanguage.code];
+                  const displayTitle = translated?.title || article.title;
+                  const displaySummary = translated?.summary || article.summary;
+                  const { count: loveCount, loved: userLoved } = loveReacts[
+                    article.id
+                  ] || { count: 0, loved: false };
+                  const categoryIndex = baseEnglishCategories.indexOf(
+                    article.category
+                  );
+
+                  return (
+                    <TouchableOpacity
+                      key={article.id}
+                      style={[
+                        styles.articleCard,
+                        {
+                          backgroundColor: colors.card,
+                          shadowColor: colors.cardShadow,
+                        },
+                      ]}
+                      onPress={() => handleOpenArticleModal(article)}
+                    >
+                      <Image
+                        source={{ uri: article.imageUrl }}
+                        style={styles.articleImage}
+                      />
+
+                      <View style={styles.articleContent}>
+                        <View style={styles.articleHeader}>
+                          <Text style={styles.categoryBadgeText}>
+                            {article?.category}
+                          </Text>
+                          <Text
+                            style={[
+                              styles.publishTime,
+                              { color: colors.secondaryText },
+                            ]}
+                          >
+                            {formatDate(article.createdAt)}
+                          </Text>
+                        </View>
+
+                        <Text
+                          style={[styles.articleTitle, { color: colors.text }]}
+                        >
+                          {isLoadingTranslation && !translated?.title ? (
+                            <Loader size={16} color={colors.primary} />
+                          ) : (
+                            displayTitle
+                          )}
+                        </Text>
+
+                        {article.excerpt ? (
+                          <Text
+                            style={[
+                              styles.articleExcerpt,
+                              { color: colors.secondaryText },
+                            ]}
+                          >
+                            {article.excerpt}
+                          </Text>
+                        ) : null}
+
+                        <Text
+                          style={[
+                            styles.articleSummary,
+                            { color: colors.secondaryText },
+                          ]}
+                        >
+                          {isLoadingTranslation && !translated?.summary ? (
+                            <Loader size={14} color={colors.primary} />
+                          ) : (
+                            displaySummary
+                          )}
+                        </Text>
+
+                        <View style={styles.articleMeta}>
+                          <View style={styles.metaLeft}>
+                            <View style={styles.metaItem}>
+                              <Eye size={14} color={colors.secondaryText} />
+                              <Text
+                                style={[
+                                  styles.metaText,
+                                  { color: colors.secondaryText },
+                                ]}
+                              >
+                                {article.views}
+                              </Text>
+                            </View>
+                          </View>
+
+                          <View style={styles.articleActions}>
+                            <TouchableOpacity
+                              style={styles.actionButton}
+                              onPress={(e) => {
+                                e.stopPropagation();
+                                handleLoveReact(article.id);
+                              }}
+                            >
+                              <Heart
+                                size={20}
+                                color={
+                                  userLoved
+                                    ? colors.error
+                                    : colors.secondaryText
+                                }
+                                fill={userLoved ? '#EF4444' : 'none'}
+                              />
+                              <Text
+                                style={[
+                                  styles.actionText,
+                                  { color: colors.secondaryText },
+                                  userLoved && { color: colors.error },
+                                ]}
+                              >
+                                {loveCount}
+                              </Text>
+                            </TouchableOpacity>
+
+                            <TouchableOpacity
+                              style={styles.actionButton}
+                              onPress={(e) => {
+                                e.stopPropagation();
+                                handleShare(article);
+                              }}
+                            >
+                              <Share2 size={20} color={colors.secondaryText} />
+                            </TouchableOpacity>
+                          </View>
+                        </View>
+
+                        <View style={styles.tagsContainer}>
+                          {article?.tags?.map((tag: string, index: number) => (
+                            <View
+                              key={index}
+                              style={[
+                                styles.tag,
+                                { backgroundColor: colors.info + '20' },
+                              ]}
+                            >
+                              <Text
+                                style={[styles.tagText, { color: colors.info }]}
+                              >
+                                #{tag}
+                              </Text>
+                            </View>
+                          ))}
+                        </View>
+                      </View>
+                    </TouchableOpacity>
+                  );
+                })
+              )}
+            </View>
+
+            <View style={styles.bottomSpacing} />
+          </ScrollView>
+
+          {/* Article Modal */}
+          {isArticleModalOpen && selectedNewsItem && (
+            <Modal
+              visible={isArticleModalOpen}
+              transparent
+              animationType="slide"
+              onRequestClose={() => setIsArticleModalOpen(false)}
+            >
+              <View style={styles.modalOverlay}>
+                <View
                   style={[
-                    styles.emptyDescription,
-                    { color: colors.secondaryText },
+                    styles.articleModal,
+                    {
+                      backgroundColor: colors.card,
+                      shadowColor: colors.cardShadow,
+                    },
                   ]}
                 >
-                  Try adjusting your search or category filters
-                </Text>
-              </View>
-            ) : (
-              data?.data?.map((article: any) => {
-                const translationKey = `${article.id}_${currentLanguage.code}`;
-                const isLoadingTranslation = isTranslating[translationKey];
-                const translated =
-                  translatedArticles[article.id]?.[currentLanguage.code];
-                const displayTitle = translated?.title || article.title;
-                const displaySummary = translated?.summary || article.summary;
-                const { count: loveCount, loved: userLoved } = loveReacts[
-                  article.id
-                ] || { count: 0, loved: false };
-                const categoryIndex = baseEnglishCategories.indexOf(
-                  article.category
-                );
+                  <View style={styles.modalHeader}>
+                    <Text style={[styles.modalTitle, { color: colors.text }]}>
+                      {translatedArticles[selectedNewsItem.id]?.[
+                        currentLanguage.code
+                      ]?.title || selectedNewsItem.title}
+                    </Text>
 
-                return (
-                  <TouchableOpacity
-                    key={article.id}
-                    style={[
-                      styles.articleCard,
-                      {
-                        backgroundColor: colors.card,
-                        shadowColor: colors.cardShadow,
-                      },
-                    ]}
-                    onPress={() => handleOpenArticleModal(article)}
-                  >
+                    <TouchableOpacity
+                      onPress={() => setIsArticleModalOpen(false)}
+                    >
+                      <X size={24} color={colors.secondaryText} />
+                    </TouchableOpacity>
+                  </View>
+
+                  <ScrollView style={[styles.modalContent, { padding: 10 }]}>
                     <Image
-                      source={{ uri: article.imageUrl }}
-                      style={styles.articleImage}
+                      source={{ uri: selectedNewsItem.imageUrl }}
+                      style={styles.modalImage}
                     />
 
-                    <View style={styles.articleContent}>
-                      <View style={styles.articleHeader}>
-                        <Text style={styles.categoryBadgeText}>
-                          {article?.category}
-                        </Text>
-                        <Text
-                          style={[
-                            styles.publishTime,
-                            { color: colors.secondaryText },
-                          ]}
-                        >
-                          {formatDate(article.createdAt)}
-                        </Text>
-                      </View>
-
-                      <Text
-                        style={[styles.articleTitle, { color: colors.text }]}
-                      >
-                        {isLoadingTranslation && !translated?.title ? (
-                          <Loader size={16} color={colors.primary} />
-                        ) : (
-                          displayTitle
-                        )}
+                    <View style={[styles.articleHeader, { marginTop: 10 }]}>
+                      <Text style={styles.categoryBadgeText}>
+                        {selectedNewsItem?.category}
                       </Text>
-
-                      {article.excerpt ? (
-                        <Text
-                          style={[
-                            styles.articleExcerpt,
-                            { color: colors.secondaryText },
-                          ]}
-                        >
-                          {article.excerpt}
-                        </Text>
-                      ) : null}
-
                       <Text
                         style={[
-                          styles.articleSummary,
+                          styles.publishTime,
                           { color: colors.secondaryText },
                         ]}
                       >
-                        {isLoadingTranslation && !translated?.summary ? (
-                          <Loader size={14} color={colors.primary} />
-                        ) : (
-                          displaySummary
-                        )}
+                        {formatDate(selectedNewsItem.createdAt)}
                       </Text>
-
-                      <View style={styles.articleMeta}>
-                        <View style={styles.metaLeft}>
-                          <View style={styles.metaItem}>
-                            <Eye size={14} color={colors.secondaryText} />
-                            <Text
-                              style={[
-                                styles.metaText,
-                                { color: colors.secondaryText },
-                              ]}
-                            >
-                              {article.views}
-                            </Text>
-                          </View>
-                        </View>
-
-                        <View style={styles.articleActions}>
-                          <TouchableOpacity
-                            style={styles.actionButton}
-                            onPress={(e) => {
-                              e.stopPropagation();
-                              handleLoveReact(article.id);
-                            }}
-                          >
-                            <Heart
-                              size={20}
-                              color={
-                                userLoved ? colors.error : colors.secondaryText
-                              }
-                              fill={userLoved ? '#EF4444' : 'none'}
-                            />
-                            <Text
-                              style={[
-                                styles.actionText,
-                                { color: colors.secondaryText },
-                                userLoved && { color: colors.error },
-                              ]}
-                            >
-                              {loveCount}
-                            </Text>
-                          </TouchableOpacity>
-
-                          <TouchableOpacity
-                            style={styles.actionButton}
-                            onPress={(e) => {
-                              e.stopPropagation();
-                              handleShare(article);
-                            }}
-                          >
-                            <Share2 size={20} color={colors.secondaryText} />
-                          </TouchableOpacity>
-                        </View>
-                      </View>
-
-                      <View style={styles.tagsContainer}>
-                        {article?.tags?.map((tag: string, index: number) => (
-                          <View
-                            key={index}
-                            style={[
-                              styles.tag,
-                              { backgroundColor: colors.info + '20' },
-                            ]}
-                          >
-                            <Text
-                              style={[styles.tagText, { color: colors.info }]}
-                            >
-                              #{tag}
-                            </Text>
-                          </View>
-                        ))}
-                      </View>
                     </View>
-                  </TouchableOpacity>
-                );
-              })
-            )}
-          </View>
 
-          <View style={styles.bottomSpacing} />
-        </ScrollView>
+                    {selectedNewsItem.excerpt ? (
+                      <Text
+                        style={[
+                          styles.articleExcerpt,
+                          { color: colors.secondaryText },
+                        ]}
+                      >
+                        {selectedNewsItem.excerpt}
+                      </Text>
+                    ) : null}
 
-        {/* Article Modal */}
-        {isArticleModalOpen && selectedNewsItem && (
-          <Modal
-            visible={isArticleModalOpen}
-            transparent
-            animationType="slide"
-            onRequestClose={() => setIsArticleModalOpen(false)}
-          >
-            <View style={styles.modalOverlay}>
-              <View
-                style={[
-                  styles.articleModal,
-                  {
-                    backgroundColor: colors.card,
-                    shadowColor: colors.cardShadow,
-                  },
-                ]}
-              >
-                <View style={styles.modalHeader}>
-                  <Text style={[styles.modalTitle, { color: colors.text }]}>
-                    {translatedArticles[selectedNewsItem.id]?.[
-                      currentLanguage.code
-                    ]?.title || selectedNewsItem.title}
-                  </Text>
-
-                  <TouchableOpacity
-                    onPress={() => setIsArticleModalOpen(false)}
-                  >
-                    <X size={24} color={colors.secondaryText} />
-                  </TouchableOpacity>
-                </View>
-
-                <ScrollView style={[styles.modalContent, { padding: 10 }]}>
-                  <Image
-                    source={{ uri: selectedNewsItem.imageUrl }}
-                    style={styles.modalImage}
-                  />
-
-                  <View style={[styles.articleHeader, { marginTop: 10 }]}>
-                    <Text style={styles.categoryBadgeText}>
-                      {selectedNewsItem?.category}
-                    </Text>
-                    <Text
-                      style={[
-                        styles.publishTime,
-                        { color: colors.secondaryText },
-                      ]}
-                    >
-                      {formatDate(selectedNewsItem.createdAt)}
-                    </Text>
-                  </View>
-
-                  {selectedNewsItem.excerpt ? (
-                    <Text
-                      style={[
-                        styles.articleExcerpt,
-                        { color: colors.secondaryText },
-                      ]}
-                    >
-                      {selectedNewsItem.excerpt}
-                    </Text>
-                  ) : null}
-
-                  {/* <View style={styles.articleModalContent}>
+                    {/* <View style={styles.articleModalContent}>
                   <Text
                     style={[styles.articleModalText, { color: colors.text }]}
                   >
@@ -800,8 +818,8 @@ export default function NewsScreen() {
                   </Text>
                 </View> */}
 
-                  <NewsContent htmlContent={selectedNewsItem.content} />
-                  {/* <Text
+                    <NewsContent htmlContent={selectedNewsItem.content} />
+                    {/* <Text
                         style={[
                           styles.articleExcerpt,
                           { color: "#000" },
@@ -809,220 +827,231 @@ export default function NewsScreen() {
                       >
                         {selectedNewsItem.content}
                       </Text> */}
-                </ScrollView>
+                  </ScrollView>
 
+                  <View
+                    style={[
+                      styles.modalFooter,
+                      { borderTopColor: colors.border },
+                    ]}
+                  >
+                    <View style={styles.footerInfo}>
+                      <Text
+                        style={[
+                          styles.footerText,
+                          { color: colors.secondaryText },
+                        ]}
+                      >
+                        {selectedNewsItem.date} • {selectedNewsItem.views} views
+                      </Text>
+                    </View>
+                    <View style={styles.footerActions}>
+                      <TouchableOpacity
+                        style={[
+                          styles.footerButton,
+                          { backgroundColor: colors.background },
+                          loveReacts[selectedNewsItem.id]?.loved && {
+                            backgroundColor: colors.error + '20',
+                          },
+                        ]}
+                        onPress={() => handleLoveReact(selectedNewsItem.id)}
+                      >
+                        <Heart
+                          size={20}
+                          color={
+                            loveReacts[selectedNewsItem.id]?.loved
+                              ? colors.error
+                              : colors.secondaryText
+                          }
+                          fill={
+                            loveReacts[selectedNewsItem.id]?.loved
+                              ? colors.error
+                              : 'none'
+                          }
+                        />
+                        <Text
+                          style={[
+                            styles.footerButtonText,
+                            { color: colors.secondaryText },
+                            loveReacts[selectedNewsItem.id]?.loved && {
+                              color: colors.error,
+                            },
+                          ]}
+                        >
+                          {loveReacts[selectedNewsItem.id]?.count || 0}
+                        </Text>
+                      </TouchableOpacity>
+
+                      <TouchableOpacity
+                        style={[
+                          styles.footerButton,
+                          { backgroundColor: colors.background },
+                        ]}
+                        onPress={() => {
+                          handleShare(selectedNewsItem);
+                          setIsArticleModalOpen(false);
+                        }}
+                      >
+                        <Share2 size={20} color={colors.secondaryText} />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                </View>
+              </View>
+            </Modal>
+          )}
+
+          {/* Share Modal */}
+          {showShareModal && shareTargetNews && (
+            <Modal
+              visible={showShareModal}
+              transparent
+              animationType="fade"
+              onRequestClose={() => setShowShareModal(false)}
+            >
+              <View style={styles.modalOverlay}>
                 <View
                   style={[
-                    styles.modalFooter,
-                    { borderTopColor: colors.border },
+                    styles.shareModal,
+                    {
+                      backgroundColor: colors.card,
+                      shadowColor: colors.cardShadow,
+                    },
                   ]}
                 >
-                  <View style={styles.footerInfo}>
+                  <View style={styles.shareModalHeader}>
+                    <Text
+                      style={[styles.shareModalTitle, { color: colors.text }]}
+                    >
+                      Share News
+                    </Text>
+                    <TouchableOpacity onPress={() => setShowShareModal(false)}>
+                      <X size={24} color={colors.secondaryText} />
+                    </TouchableOpacity>
+                  </View>
+
+                  <View style={styles.shareOptions}>
+                    <TouchableOpacity
+                      style={[
+                        styles.shareOption,
+                        { backgroundColor: '#1877F2' },
+                      ]}
+                      onPress={() => handleSharePlatform('facebook')}
+                    >
+                      <Facebook size={24} color="#FFFFFF" />
+                      <Text style={styles.shareOptionText}>Facebook</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      style={[
+                        styles.shareOption,
+                        { backgroundColor: '#1DA1F2' },
+                      ]}
+                      onPress={() => handleSharePlatform('twitter')}
+                    >
+                      <Twitter size={24} color="#FFFFFF" />
+                      <Text style={styles.shareOptionText}>Twitter</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      style={[
+                        styles.shareOption,
+                        { backgroundColor: '#0A66C2' },
+                      ]}
+                      onPress={() => handleSharePlatform('linkedin')}
+                    >
+                      <Linkedin size={24} color="#FFFFFF" />
+                      <Text style={styles.shareOptionText}>LinkedIn</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      style={[
+                        styles.shareOption,
+                        { backgroundColor: colors.secondaryText },
+                      ]}
+                      onPress={() => handleSharePlatform('copy')}
+                    >
+                      <Link2 size={24} color="#FFFFFF" />
+                      <Text style={styles.shareOptionText}>Copy Link</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </View>
+            </Modal>
+          )}
+
+          {/* Language Modal */}
+          {showLanguageModal && (
+            <Modal
+              visible={showLanguageModal}
+              transparent
+              animationType="fade"
+              onRequestClose={() => setShowLanguageModal(false)}
+            >
+              <View style={styles.modalOverlay}>
+                <View
+                  style={[
+                    styles.languageModal,
+                    {
+                      backgroundColor: colors.card,
+                      shadowColor: colors.cardShadow,
+                    },
+                  ]}
+                >
+                  <View style={styles.languageModalHeader}>
                     <Text
                       style={[
-                        styles.footerText,
-                        { color: colors.secondaryText },
+                        styles.languageModalTitle,
+                        { color: colors.primary },
                       ]}
                     >
-                      {selectedNewsItem.date} • {selectedNewsItem.views} views
+                      Select Language
                     </Text>
-                  </View>
-                  <View style={styles.footerActions}>
                     <TouchableOpacity
-                      style={[
-                        styles.footerButton,
-                        { backgroundColor: colors.background },
-                        loveReacts[selectedNewsItem.id]?.loved && {
-                          backgroundColor: colors.error + '20',
-                        },
-                      ]}
-                      onPress={() => handleLoveReact(selectedNewsItem.id)}
+                      onPress={() => setShowLanguageModal(false)}
                     >
-                      <Heart
-                        size={20}
-                        color={
-                          loveReacts[selectedNewsItem.id]?.loved
-                            ? colors.error
-                            : colors.secondaryText
-                        }
-                        fill={
-                          loveReacts[selectedNewsItem.id]?.loved
-                            ? colors.error
-                            : 'none'
-                        }
-                      />
-                      <Text
-                        style={[
-                          styles.footerButtonText,
-                          { color: colors.secondaryText },
-                          loveReacts[selectedNewsItem.id]?.loved && {
-                            color: colors.error,
-                          },
-                        ]}
-                      >
-                        {loveReacts[selectedNewsItem.id]?.count || 0}
-                      </Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                      style={[
-                        styles.footerButton,
-                        { backgroundColor: colors.background },
-                      ]}
-                      onPress={() => {
-                        handleShare(selectedNewsItem);
-                        setIsArticleModalOpen(false);
-                      }}
-                    >
-                      <Share2 size={20} color={colors.secondaryText} />
+                      <X size={24} color={colors.secondaryText} />
                     </TouchableOpacity>
                   </View>
-                </View>
-              </View>
-            </View>
-          </Modal>
-        )}
 
-        {/* Share Modal */}
-        {showShareModal && shareTargetNews && (
-          <Modal
-            visible={showShareModal}
-            transparent
-            animationType="fade"
-            onRequestClose={() => setShowShareModal(false)}
-          >
-            <View style={styles.modalOverlay}>
-              <View
-                style={[
-                  styles.shareModal,
-                  {
-                    backgroundColor: colors.card,
-                    shadowColor: colors.cardShadow,
-                  },
-                ]}
-              >
-                <View style={styles.shareModalHeader}>
-                  <Text
-                    style={[styles.shareModalTitle, { color: colors.text }]}
-                  >
-                    Share News
-                  </Text>
-                  <TouchableOpacity onPress={() => setShowShareModal(false)}>
-                    <X size={24} color={colors.secondaryText} />
-                  </TouchableOpacity>
-                </View>
-
-                <View style={styles.shareOptions}>
-                  <TouchableOpacity
-                    style={[styles.shareOption, { backgroundColor: '#1877F2' }]}
-                    onPress={() => handleSharePlatform('facebook')}
-                  >
-                    <Facebook size={24} color="#FFFFFF" />
-                    <Text style={styles.shareOptionText}>Facebook</Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    style={[styles.shareOption, { backgroundColor: '#1DA1F2' }]}
-                    onPress={() => handleSharePlatform('twitter')}
-                  >
-                    <Twitter size={24} color="#FFFFFF" />
-                    <Text style={styles.shareOptionText}>Twitter</Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    style={[styles.shareOption, { backgroundColor: '#0A66C2' }]}
-                    onPress={() => handleSharePlatform('linkedin')}
-                  >
-                    <Linkedin size={24} color="#FFFFFF" />
-                    <Text style={styles.shareOptionText}>LinkedIn</Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    style={[
-                      styles.shareOption,
-                      { backgroundColor: colors.secondaryText },
-                    ]}
-                    onPress={() => handleSharePlatform('copy')}
-                  >
-                    <Link2 size={24} color="#FFFFFF" />
-                    <Text style={styles.shareOptionText}>Copy Link</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            </View>
-          </Modal>
-        )}
-
-        {/* Language Modal */}
-        {showLanguageModal && (
-          <Modal
-            visible={showLanguageModal}
-            transparent
-            animationType="fade"
-            onRequestClose={() => setShowLanguageModal(false)}
-          >
-            <View style={styles.modalOverlay}>
-              <View
-                style={[
-                  styles.languageModal,
-                  {
-                    backgroundColor: colors.card,
-                    shadowColor: colors.cardShadow,
-                  },
-                ]}
-              >
-                <View style={styles.languageModalHeader}>
-                  <Text
-                    style={[
-                      styles.languageModalTitle,
-                      { color: colors.primary },
-                    ]}
-                  >
-                    Select Language
-                  </Text>
-                  <TouchableOpacity onPress={() => setShowLanguageModal(false)}>
-                    <X size={24} color={colors.secondaryText} />
-                  </TouchableOpacity>
-                </View>
-
-                <ScrollView style={styles.languageList}>
-                  {allLanguages.map((language) => (
-                    <TouchableOpacity
-                      key={language.code}
-                      style={[
-                        styles.languageOption,
-                        { borderBottomColor: colors.border },
-                        currentLanguage.code === language.code && {
-                          backgroundColor: colors.primary,
-                        },
-                      ]}
-                      onPress={() => {
-                        setCurrentLanguage(language);
-                        setShowLanguageModal(false);
-                        triggerHaptic();
-                      }}
-                    >
-                      <Text
+                  <ScrollView style={styles.languageList}>
+                    {allLanguages.map((language) => (
+                      <TouchableOpacity
+                        key={language.code}
                         style={[
-                          styles.languageOptionText,
-                          { color: colors.text },
+                          styles.languageOption,
+                          { borderBottomColor: colors.border },
                           currentLanguage.code === language.code && {
-                            color: '#FFFFFF',
-                            fontWeight: 'bold',
+                            backgroundColor: colors.primary,
                           },
                         ]}
+                        onPress={() => {
+                          setCurrentLanguage(language);
+                          setShowLanguageModal(false);
+                          triggerHaptic();
+                        }}
                       >
-                        {language.name}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
+                        <Text
+                          style={[
+                            styles.languageOptionText,
+                            { color: colors.text },
+                            currentLanguage.code === language.code && {
+                              color: '#FFFFFF',
+                              fontWeight: 'bold',
+                            },
+                          ]}
+                        >
+                          {language.name}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                </View>
               </View>
-            </View>
-          </Modal>
-        )}
-      </SafeAreaView>
-    </ScrollView>
+            </Modal>
+          )}
+        </SafeAreaView>
+      </ScrollView>
     </PullToRefreshWrapper>
   );
 }

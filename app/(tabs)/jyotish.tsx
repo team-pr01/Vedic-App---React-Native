@@ -40,6 +40,8 @@ import Experts from '@/components/Experts';
 import { useGetAllConsultancyServicesQuery } from '@/redux/features/Consultancy/consultancyApi';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import LoadingComponent from '@/components/LoadingComponent/LoadingComponent';
+import { PullToRefreshWrapper } from '@/components/Reusable/PullToRefreshWrapper/PullToRefreshWrapper';
+import { RefreshControl } from 'react-native';
 
 interface JyotishReading {
   id: string;
@@ -232,7 +234,20 @@ const generateJyotishReading = async (
 };
 
 export default function JyotishPage() {
-  const { data, isLoading } = useGetAllConsultancyServicesQuery({});
+  const { data, isLoading, refetch: refetchConsultancy } = useGetAllConsultancyServicesQuery({});
+  const [refreshing, setRefreshing] = useState(false);
+  
+    const handleRefresh = async () => {
+      setRefreshing(true);
+  
+      try {
+        await Promise.all([refetchConsultancy()]);
+      } catch (error) {
+        console.error('Error while refreshing:', error);
+      } finally {
+        setRefreshing(false);
+      }
+    };
   const filteredExperts =
     data?.data?.filter((expert: any) => expert.category === 'Jyotish Expert') ||
     [];
@@ -254,42 +269,6 @@ export default function JyotishPage() {
   );
   const recognitionRef = useRef<any>(null);
   const colors = useThemeColors();
-
-  const jyotishExperts: JyotishExpert[] = [
-    {
-      id: 1,
-      name: 'Pandit Rajesh Sharma',
-      speciality: 'Vedic Astrology & Palmistry',
-      experience: '25 years',
-      rating: 4.9,
-      price: '2500',
-      image:
-        'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=400',
-      nextAvailable: 'Today, 4:00 PM',
-    },
-    {
-      id: 2,
-      name: 'Acharya Sunita Devi',
-      speciality: 'Numerology & Gemstone Therapy',
-      experience: '18 years',
-      rating: 4.8,
-      price: '2000',
-      image:
-        'https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=400',
-      nextAvailable: 'Tomorrow, 11:00 AM',
-    },
-    {
-      id: 3,
-      name: 'Guru Vishwanath',
-      speciality: 'Horary Astrology & Remedies',
-      experience: '30 years',
-      rating: 4.9,
-      price: '3000',
-      image:
-        'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=400',
-      nextAvailable: 'Today, 7:00 PM',
-    },
-  ];
 
   const dailyHoroscope: DailyHoroscope[] = [
     {
@@ -456,14 +435,14 @@ export default function JyotishPage() {
     }
   };
 
-  const handleExpertBooking = (expert: JyotishExpert) => {
-    triggerHaptic();
-    setSelectedExpert(expert);
-    setShowExpertModal(true);
-  };
-
   return (
-    <View style={styles.container}>
+     <PullToRefreshWrapper onRefresh={handleRefresh}>
+      <ScrollView
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+      }
+    >
+       <View style={styles.container}>
       {/* Header */}
       <SafeAreaView edges={['top']} style={styles.headerContainer}>
         <LinearGradient colors={['#D53F8C', '#B83280']} style={styles.header}>
@@ -907,6 +886,9 @@ export default function JyotishPage() {
         </Modal>
       )}
     </View>
+    </ScrollView>
+    </PullToRefreshWrapper>
+   
   );
 }
 

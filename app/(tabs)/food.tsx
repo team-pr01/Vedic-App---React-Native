@@ -9,6 +9,7 @@ import {
   Modal,
   Platform,
   Linking,
+  RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -30,6 +31,7 @@ import YoutubePlayer from 'react-native-youtube-iframe';
 import { getYouTubeVideoId } from '@/utils/getYouTubeVideoId';
 import { useGetAllRecipiesQuery } from '@/redux/features/Recipe/recipeApi';
 import { useGetAllCategoriesQuery } from '@/redux/features/Categories/categoriesApi';
+import { PullToRefreshWrapper } from '@/components/Reusable/PullToRefreshWrapper/PullToRefreshWrapper';
 
 interface Recipe {
   id: string;
@@ -170,11 +172,25 @@ const generateRecipe = async (prompt: string): Promise<Recipe> => {
 export default function FoodPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
-  const { data, isLoading } = useGetAllRecipiesQuery({
+  const { data, isLoading, refetch:refetchRecipe } = useGetAllRecipiesQuery({
     category: selectedCategory,
     keyword: searchQuery,
   });
-  const { data: categoryData } = useGetAllCategoriesQuery({});
+  const { data: categoryData, refetch:refetchCategories } = useGetAllCategoriesQuery({});
+  const [refreshing, setRefreshing] = useState(false);
+
+   const handleRefresh = async () => {
+    setRefreshing(true);
+
+    try {
+      await Promise.all([refetchCategories(), refetchRecipe()]);
+    } catch (error) {
+      console.error('Error while refreshing:', error);
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
   const filteredCategory = categoryData?.data?.filter(
     (category: any) => category.areaName === 'recipe'
   );
@@ -353,251 +369,267 @@ export default function FoodPage() {
   const [playingCardIndex, setPlayingCardIndex] = useState<number | null>(null);
 
   return (
-    <View style={styles.container}>
-      {/* Header */}
-      <SafeAreaView edges={['top']} style={styles.headerContainer}>
-        <LinearGradient colors={['#38A169', '#2F855A']} style={styles.header}>
-          <TouchableOpacity
-            onPress={() => router.back()}
-            style={styles.headerButton}
+    <PullToRefreshWrapper onRefresh={handleRefresh}>
+      <ScrollView
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+        }
+      >
+        <View style={styles.container}>
+          {/* Header */}
+          <SafeAreaView edges={['top']} style={styles.headerContainer}>
+            <LinearGradient
+              colors={['#38A169', '#2F855A']}
+              style={styles.header}
+            >
+              <TouchableOpacity
+                onPress={() => router.back()}
+                style={styles.headerButton}
+              >
+                <ArrowLeft size={24} color="#FFFFFF" />
+              </TouchableOpacity>
+              <View style={styles.headerContent}>
+                <Text style={styles.headerTitle}>Vedic Food & Recipes</Text>
+                <Text style={styles.headerSubtitle}>বৈদিক খাদ্য ও রেসিপি</Text>
+              </View>
+              <View style={styles.headerPlaceholder} />
+            </LinearGradient>
+          </SafeAreaView>
+
+          <ScrollView
+            style={styles.content}
+            showsVerticalScrollIndicator={false}
           >
-            <ArrowLeft size={24} color="#FFFFFF" />
-          </TouchableOpacity>
-          <View style={styles.headerContent}>
-            <Text style={styles.headerTitle}>Vedic Food & Recipes</Text>
-            <Text style={styles.headerSubtitle}>বৈদিক খাদ্য ও রেসিপি</Text>
-          </View>
-          <View style={styles.headerPlaceholder} />
-        </LinearGradient>
-      </SafeAreaView>
-
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Search and AI Section */}
-        <View style={styles.searchSection}>
-          <View style={styles.searchContainer}>
-            <View style={styles.searchBar}>
-              <Search size={20} color="#718096" />
-              <TextInput
-                style={styles.searchInput}
-                placeholder="Search recipes..."
-                value={searchQuery}
-                onChangeText={setSearchQuery}
-                placeholderTextColor="#A0AEC0"
-              />
-              <TouchableOpacity
-                onPress={handleVoiceSearch}
-                style={[
-                  styles.voiceButton,
-                  isListening && styles.voiceButtonActive,
-                ]}
-              >
-                {isListening ? (
-                  <StopCircle size={18} color="#EF4444" />
-                ) : (
-                  <Mic size={18} color="#38A169" />
-                )}
-              </TouchableOpacity>
-            </View>
-            <TouchableOpacity
-              onPress={() => {
-                triggerHaptic();
-                setShowAIModal(true);
-              }}
-              style={styles.aiButton}
-            >
-              <Brain size={20} color="#FFFFFF" />
-              <Text style={styles.aiButtonText}>AI Recipe</Text>
-            </TouchableOpacity>
-          </View>
-
-          {isListening && (
-            <View style={styles.listeningIndicator}>
-              <View style={styles.listeningDot} />
-              <Text style={styles.listeningText}>Listening...</Text>
-            </View>
-          )}
-        </View>
-
-        {/* Categories */}
-        <View style={styles.categoriesContainer}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            <TouchableOpacity
-              onPress={() => {
-                triggerHaptic();
-                setSelectedCategory('');
-              }}
-              style={[
-                styles.categoryChip,
-                selectedCategory === '' && styles.categoryChipActive,
-              ]}
-            >
-              <Text
-                style={[
-                  styles.categoryText,
-                  selectedCategory === '' && styles.categoryTextActive,
-                ]}
-              >
-                All
-              </Text>
-            </TouchableOpacity>
-            {allCategories?.map((category: string) => (
-              <TouchableOpacity
-                key={category}
-                onPress={() => {
-                  triggerHaptic();
-                  setSelectedCategory(category);
-                }}
-                style={[
-                  styles.categoryChip,
-                  selectedCategory === category && styles.categoryChipActive,
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.categoryText,
-                    selectedCategory === category && styles.categoryTextActive,
-                  ]}
-                >
-                  {category}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
-
-        {/* Recipes Grid */}
-        <View style={styles.recipesContainer}>
-          {data?.data?.length === 0 ? (
-            <View style={styles.emptyState}>
-              <Text style={styles.emptyStateTitle}>No recipes found</Text>
-              <Text style={styles.emptyStateText}>
-                Try a different search or category, or use the AI Recipe
-                generator!
-              </Text>
-            </View>
-          ) : (
-            data?.data?.map((recipe: any, index: number) => (
-              <TouchableOpacity
-                key={recipe._id}
-                style={styles.recipeCard}
-                onPress={() => handleViewRecipe(recipe)}
-                activeOpacity={0.8}
-              >
-                {/* --- Video Player Section --- */}
-                <View style={styles.programImageContainer}>
-                  <YoutubePlayer
-                    height={200}
-                    play={playingCardIndex === index}
-                    videoId={getYouTubeVideoId(recipe?.videoUrl) || ''}
-                    onChangeState={(state: any) => {
-                      if (state === 'ended') setPlayingCardIndex(null);
-                    }}
+            {/* Search and AI Section */}
+            <View style={styles.searchSection}>
+              <View style={styles.searchContainer}>
+                <View style={styles.searchBar}>
+                  <Search size={20} color="#718096" />
+                  <TextInput
+                    style={styles.searchInput}
+                    placeholder="Search recipes..."
+                    value={searchQuery}
+                    onChangeText={setSearchQuery}
+                    placeholderTextColor="#A0AEC0"
                   />
-                </View>
-                <View style={styles.recipeContent}>
-                  <Text style={styles.recipeTitle}>{recipe.name}</Text>
-                  <View style={styles.recipeMeta}>
-                    <View style={styles.metaItem}>
-                      <Clock size={16} color="#718096" />
-                      <Text style={styles.metaText}>{recipe.duration}</Text>
-                    </View>
-                    <View style={styles.metaItem}>
-                      <Box size={16} color="#F59E0B" />
-                      <Text style={styles.metaText}>{recipe.category}</Text>
-                    </View>
-                  </View>
                   <TouchableOpacity
-                    onPress={() => {
-                      if (recipe?.videoUrl) {
-                        Linking.openURL(recipe?.videoUrl);
-                      } else {
-                        console.warn('No video URL found for this recipe.');
-                      }
-                    }}
-                    style={styles.viewButton}
+                    onPress={handleVoiceSearch}
+                    style={[
+                      styles.voiceButton,
+                      isListening && styles.voiceButtonActive,
+                    ]}
                   >
-                    <Text style={styles.viewButtonText}>View Recipe</Text>
-                    <ChevronRight size={16} color="#FFFFFF" />
+                    {isListening ? (
+                      <StopCircle size={18} color="#EF4444" />
+                    ) : (
+                      <Mic size={18} color="#38A169" />
+                    )}
                   </TouchableOpacity>
                 </View>
-              </TouchableOpacity>
-            ))
-          )}
-        </View>
-
-        <View style={styles.bottomSpacing} />
-      </ScrollView>
-
-      {/* AI Modal */}
-      {showAIModal && (
-        <Modal
-          visible={showAIModal}
-          transparent
-          animationType="slide"
-          onRequestClose={() => setShowAIModal(false)}
-        >
-          <View style={styles.modalOverlay}>
-            <View style={styles.aiModal}>
-              <View style={styles.modalHeader}>
-                <View style={styles.aiModalTitle}>
-                  <Brain size={24} color="#3B82F6" />
-                  <Text style={styles.modalTitle}>AI Recipe Generator</Text>
-                </View>
-                <TouchableOpacity onPress={() => setShowAIModal(false)}>
-                  <X size={24} color="#718096" />
+                <TouchableOpacity
+                  onPress={() => {
+                    triggerHaptic();
+                    setShowAIModal(true);
+                  }}
+                  style={styles.aiButton}
+                >
+                  <Brain size={20} color="#FFFFFF" />
+                  <Text style={styles.aiButtonText}>AI Recipe</Text>
                 </TouchableOpacity>
               </View>
 
-              <View style={styles.aiModalContent}>
-                <Text style={styles.promptLabel}>
-                  Describe the recipe you want (e.g., ingredients, cuisine,
-                  type):
-                </Text>
-                <TextInput
-                  style={styles.promptInput}
-                  value={recipePrompt}
-                  onChangeText={setRecipePrompt}
-                  placeholder="E.g., A healthy sattvic breakfast using oats and fruits..."
-                  multiline
-                  numberOfLines={4}
-                  textAlignVertical="top"
-                  placeholderTextColor="#A0AEC0"
-                />
+              {isListening && (
+                <View style={styles.listeningIndicator}>
+                  <View style={styles.listeningDot} />
+                  <Text style={styles.listeningText}>Listening...</Text>
+                </View>
+              )}
+            </View>
 
-                {error && (
-                  <View style={styles.errorContainer}>
-                    <Text style={styles.errorText}>{error}</Text>
-                  </View>
-                )}
-
+            {/* Categories */}
+            <View style={styles.categoriesContainer}>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                 <TouchableOpacity
-                  onPress={handleGenerateRecipe}
-                  disabled={isGenerating || !recipePrompt.trim()}
+                  onPress={() => {
+                    triggerHaptic();
+                    setSelectedCategory('');
+                  }}
                   style={[
-                    styles.generateButton,
-                    (isGenerating || !recipePrompt.trim()) &&
-                      styles.generateButtonDisabled,
+                    styles.categoryChip,
+                    selectedCategory === '' && styles.categoryChipActive,
                   ]}
                 >
-                  {isGenerating ? (
-                    <>
-                      <Loader size={20} color="#FFFFFF" />
-                      <Text style={styles.generateButtonText}>
-                        Generating...
-                      </Text>
-                    </>
-                  ) : (
-                    <Text style={styles.generateButtonText}>
-                      Generate Recipe
-                    </Text>
-                  )}
+                  <Text
+                    style={[
+                      styles.categoryText,
+                      selectedCategory === '' && styles.categoryTextActive,
+                    ]}
+                  >
+                    All
+                  </Text>
                 </TouchableOpacity>
-              </View>
+                {allCategories?.map((category: string) => (
+                  <TouchableOpacity
+                    key={category}
+                    onPress={() => {
+                      triggerHaptic();
+                      setSelectedCategory(category);
+                    }}
+                    style={[
+                      styles.categoryChip,
+                      selectedCategory === category &&
+                        styles.categoryChipActive,
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.categoryText,
+                        selectedCategory === category &&
+                          styles.categoryTextActive,
+                      ]}
+                    >
+                      {category}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
             </View>
-          </View>
-        </Modal>
-      )}
-    </View>
+
+            {/* Recipes Grid */}
+            <View style={styles.recipesContainer}>
+              {data?.data?.length === 0 ? (
+                <View style={styles.emptyState}>
+                  <Text style={styles.emptyStateTitle}>No recipes found</Text>
+                  <Text style={styles.emptyStateText}>
+                    Try a different search or category, or use the AI Recipe
+                    generator!
+                  </Text>
+                </View>
+              ) : (
+                data?.data?.map((recipe: any, index: number) => (
+                  <TouchableOpacity
+                    key={recipe._id}
+                    style={styles.recipeCard}
+                    onPress={() => handleViewRecipe(recipe)}
+                    activeOpacity={0.8}
+                  >
+                    {/* --- Video Player Section --- */}
+                    <View style={styles.programImageContainer}>
+                      <YoutubePlayer
+                        height={200}
+                        play={playingCardIndex === index}
+                        videoId={getYouTubeVideoId(recipe?.videoUrl) || ''}
+                        onChangeState={(state: any) => {
+                          if (state === 'ended') setPlayingCardIndex(null);
+                        }}
+                      />
+                    </View>
+                    <View style={styles.recipeContent}>
+                      <Text style={styles.recipeTitle}>{recipe.name}</Text>
+                      <View style={styles.recipeMeta}>
+                        <View style={styles.metaItem}>
+                          <Clock size={16} color="#718096" />
+                          <Text style={styles.metaText}>{recipe.duration}</Text>
+                        </View>
+                        <View style={styles.metaItem}>
+                          <Box size={16} color="#F59E0B" />
+                          <Text style={styles.metaText}>{recipe.category}</Text>
+                        </View>
+                      </View>
+                      <TouchableOpacity
+                        onPress={() => {
+                          if (recipe?.videoUrl) {
+                            Linking.openURL(recipe?.videoUrl);
+                          } else {
+                            console.warn('No video URL found for this recipe.');
+                          }
+                        }}
+                        style={styles.viewButton}
+                      >
+                        <Text style={styles.viewButtonText}>View Recipe</Text>
+                        <ChevronRight size={16} color="#FFFFFF" />
+                      </TouchableOpacity>
+                    </View>
+                  </TouchableOpacity>
+                ))
+              )}
+            </View>
+
+            <View style={styles.bottomSpacing} />
+          </ScrollView>
+
+          {/* AI Modal */}
+          {showAIModal && (
+            <Modal
+              visible={showAIModal}
+              transparent
+              animationType="slide"
+              onRequestClose={() => setShowAIModal(false)}
+            >
+              <View style={styles.modalOverlay}>
+                <View style={styles.aiModal}>
+                  <View style={styles.modalHeader}>
+                    <View style={styles.aiModalTitle}>
+                      <Brain size={24} color="#3B82F6" />
+                      <Text style={styles.modalTitle}>AI Recipe Generator</Text>
+                    </View>
+                    <TouchableOpacity onPress={() => setShowAIModal(false)}>
+                      <X size={24} color="#718096" />
+                    </TouchableOpacity>
+                  </View>
+
+                  <View style={styles.aiModalContent}>
+                    <Text style={styles.promptLabel}>
+                      Describe the recipe you want (e.g., ingredients, cuisine,
+                      type):
+                    </Text>
+                    <TextInput
+                      style={styles.promptInput}
+                      value={recipePrompt}
+                      onChangeText={setRecipePrompt}
+                      placeholder="E.g., A healthy sattvic breakfast using oats and fruits..."
+                      multiline
+                      numberOfLines={4}
+                      textAlignVertical="top"
+                      placeholderTextColor="#A0AEC0"
+                    />
+
+                    {error && (
+                      <View style={styles.errorContainer}>
+                        <Text style={styles.errorText}>{error}</Text>
+                      </View>
+                    )}
+
+                    <TouchableOpacity
+                      onPress={handleGenerateRecipe}
+                      disabled={isGenerating || !recipePrompt.trim()}
+                      style={[
+                        styles.generateButton,
+                        (isGenerating || !recipePrompt.trim()) &&
+                          styles.generateButtonDisabled,
+                      ]}
+                    >
+                      {isGenerating ? (
+                        <>
+                          <Loader size={20} color="#FFFFFF" />
+                          <Text style={styles.generateButtonText}>
+                            Generating...
+                          </Text>
+                        </>
+                      ) : (
+                        <Text style={styles.generateButtonText}>
+                          Generate Recipe
+                        </Text>
+                      )}
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </View>
+            </Modal>
+          )}
+        </View>
+      </ScrollView>
+    </PullToRefreshWrapper>
   );
 }
 
