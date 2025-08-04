@@ -77,7 +77,7 @@ export default function UserProfileModal({ visible, onClose, onNavigateToSetting
           {/* Profile Section */}
           <View style={[styles.profileSection, { backgroundColor: colors.card, shadowColor: colors.cardShadow }]}>
             <Image 
-              source={{ uri: currentUser.avatarUrl || 'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=200' }} 
+              source={{ uri: currentUser.avatar || 'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=200' }} 
               style={styles.avatar}
             />
             <Text style={[styles.name, { color: colors.text }]}>{currentUser.name}</Text>
@@ -98,7 +98,7 @@ export default function UserProfileModal({ visible, onClose, onNavigateToSetting
           </View>
 
           {/* Activity Summary */}
-          <View style={styles.section}>
+          {/* <View style={styles.section}>
             <Text style={[styles.sectionTitle, { color: colors.secondaryText }]}>
               {t('activitySummaryTitle', 'ACTIVITY SUMMARY').toUpperCase()}
             </Text>
@@ -147,16 +147,16 @@ export default function UserProfileModal({ visible, onClose, onNavigateToSetting
                 value={currentUser.stats?.consultanciesHired || 0} 
               />
             </View>
-          </View>
+          </View> */}
 
           {/* Account & App Settings */}
           <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: colors.secondaryText }]}>
+            {/* <Text style={[styles.sectionTitle, { color: colors.secondaryText }]}>
               {t('accountAndAppSettingsTitle', 'ACCOUNT & APP').toUpperCase()}
-            </Text>
-            <Text style={[styles.sectionSubtitle, { color: colors.secondaryText }]}>
+            </Text> */}
+            {/* <Text style={[styles.sectionSubtitle, { color: colors.secondaryText }]}>
               {t('accountAndAppSettingsTitle', 'অ্যাকাউন্ট ও অ্যাপ')}
-            </Text>
+            </Text> */}
             <View style={[styles.settingsContainer, { backgroundColor: colors.card, shadowColor: colors.cardShadow }]}>
               <TouchableOpacity
                 style={styles.settingItem}
