@@ -22,6 +22,7 @@ import * as Haptics from 'expo-haptics';
 import { useDispatch } from 'react-redux';
 import { setUser } from '@/redux/features/Auth/authSlice';
 import { useLoginMutation } from '@/redux/features/Auth/authApi';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface LoginPageProps {
   onSwitchToSignup: () => void;
@@ -39,6 +40,7 @@ export default function LoginPage({
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
   const dispatch = useDispatch();
   const [login, { isLoading }] = useLoginMutation();
 
@@ -68,8 +70,6 @@ export default function LoginPage({
       const { accessToken, user } = res.data;
 
       dispatch(setUser({ token: accessToken, user }));
-
-      Alert.alert('Login Success', `Welcome ${user.name}`);
     } catch (err: any) {
       console.error('Login Error:', err);
       setError(err.message || 'Login failed. Please try again.');
@@ -93,30 +93,38 @@ export default function LoginPage({
   //   }
   // };
 
-  // const handleForgotPassword = async () => {
-  //   if (!email.trim()) {
-  //     setError('Please enter your email address first.');
-  //     return;
-  //   }
+ const handleForgotPassword = async () => {
+  if (!resetEmail.trim()) {
+    setError('Please enter your email address first.');
+    return;
+  }
 
-  //   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-  //     setError('Please enter a valid email address.');
-  //     return;
-  //   }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(resetEmail)) {
+    setError('Please enter a valid email address.');
+    return;
+  }
 
-  //   triggerHaptic();
-  //   setError(null);
+  triggerHaptic();
+  setError(null);
 
-  //   try {
-  //     const sent = await resetPassword(email);
-  //     if (sent) {
-  //       alert('Password reset instructions have been sent to your email.');
-  //       setShowForgotPassword(false);
-  //     }
-  //   } catch (err: any) {
-  //     setError(err.message || 'Failed to send reset email.');
-  //   }
-  // };
+  try {
+    await AsyncStorage.setItem('resetEmail', resetEmail); // <-- save email
+    const storedEmail = await AsyncStorage.getItem('resetEmail'); // <-- retrieve email
+
+    if (storedEmail) {
+      // simulate API success
+      const sent = true;
+      if (sent) {
+        alert(`Password reset instructions have been sent to your email: ${storedEmail}`);
+        setShowForgotPassword(false);
+      }
+    } else {
+      alert('Failed to retrieve email from storage');
+    }
+  } catch (err: any) {
+    setError(err.message || 'Failed to send reset email.');
+  }
+};
 
   return (
     <View style={styles.container}>
@@ -254,6 +262,18 @@ export default function LoginPage({
                 "Enter your email address and we'll send you instructions to reset your password."
               )}
             </Text>
+            <View style={styles.modalInputContainer}>
+              <Mail size={20} color="#718096" style={{ marginRight: 8 }} />
+              <TextInput
+                style={styles.modalInput}
+                placeholder="you@example.com"
+                placeholderTextColor="#A0AEC0"
+                keyboardType="email-address"
+                autoCapitalize="none"
+                value={resetEmail}
+                onChangeText={setResetEmail}
+              />
+            </View>
             <View style={styles.modalButtons}>
               <TouchableOpacity
                 style={styles.modalCancelButton}
@@ -265,7 +285,7 @@ export default function LoginPage({
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.modalConfirmButton}
-                // onPress={handleForgotPassword}
+                onPress={handleForgotPassword}
               >
                 <Text style={styles.modalConfirmText}>
                   {t('sendResetEmail', 'Send Reset Email')}
@@ -490,4 +510,14 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#FFFFFF',
   },
+  modalInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#DDD',
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    marginBottom: 16,
+  },
+  modalInput: { flex: 1, height: 40 },
 });
