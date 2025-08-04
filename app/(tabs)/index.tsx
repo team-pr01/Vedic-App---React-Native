@@ -41,6 +41,7 @@ import { useThemeColors } from '@/hooks/useThemeColors';
 import { useGetAllContentsQuery } from '@/redux/features/Content/contentApi';
 import { PullToRefreshWrapper } from '@/components/Reusable/PullToRefreshWrapper/PullToRefreshWrapper';
 import { useGetAllBooksQuery } from '@/redux/features/Book/bookApi';
+import { useGetMeQuery } from '@/redux/features/Auth/authApi';
 
 export type TContent = {
   _id: string;
@@ -426,7 +427,7 @@ export default function HomeScreen() {
               >
                 <Image
                   source={{
-                    uri: 'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=100',
+                    uri: user?.avatar 
                   }}
                   style={styles.profileImage}
                 />

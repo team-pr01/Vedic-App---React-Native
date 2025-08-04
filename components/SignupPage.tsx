@@ -7,13 +7,31 @@ import {
   TextInput,
   ScrollView,
   Platform,
+  Image,
+  Button,
 } from 'react-native';
 import { useTranslate } from '@/hooks/useTranslate';
 import { allLanguages } from '@/redux/features/Language/languageSlice';
-import { User, Mail, Lock, Phone, Calendar, Globe, MapPin, ArrowLeft, ArrowRight, Loader, CircleAlert as AlertCircle, CircleCheck as CheckCircle } from 'lucide-react-native';
+import {
+  User,
+  Mail,
+  Lock,
+  Phone,
+  Calendar,
+  Globe,
+  MapPin,
+  ArrowLeft,
+  ArrowRight,
+  Loader,
+  CircleAlert as AlertCircle,
+  CircleCheck as CheckCircle,
+} from 'lucide-react-native';
 import OtpVerificationPage from './OtpVerificationPage';
 import * as Haptics from 'expo-haptics';
-
+import { useForm } from 'react-hook-form';
+import * as ImagePicker from 'expo-image-picker';
+import { useSignupMutation } from '@/redux/features/Auth/authApi';
+import { router } from 'expo-router';
 
 type SignupStep = 1 | 2 | 3 | 4 | 5; // 5 is OTP
 
@@ -22,25 +40,33 @@ interface SignupPageProps {
   onBackToMain: () => void;
 }
 
-export default function SignupPage({ onSwitchToLogin, onBackToMain }: SignupPageProps) {
+export default function SignupPage({
+  onSwitchToLogin,
+  onBackToMain,
+}: SignupPageProps) {
+  const t = useTranslate();
+  const {
+    handleSubmit,
+    setValue,
+    watch,
+    formState: { errors },
+    reset,
+  } = useForm<any>({});
 
-    const t = useTranslate();
   const [currentStep, setCurrentStep] = useState<SignupStep>(1);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  const [formData, setFormData] = useState<Partial<UserProfileData & { password?: string; confirmPassword?: string }>>({
+
+  const [formData, setFormData] = useState({
     name: '',
     email: '',
     country: '',
     state: '',
     city: '',
-    village: '',
-    phone: '',
+    area: '',
+    phoneNumber: '',
     dob: '',
-    preferredLanguage: allLanguages.find(l => l.code === 'bn')?.code || allLanguages[0].code,
     password: '',
-    confirmPassword: '',
   });
 
   const triggerHaptic = () => {
@@ -50,101 +76,113 @@ export default function SignupPage({ onSwitchToLogin, onBackToMain }: SignupPage
   };
 
   const handleChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleNextStep = () => {
     triggerHaptic();
     setError(null);
-    
-    if (currentStep === 1 && (!formData.name?.trim() || !formData.email?.trim())) {
-     setError(t('nameAndEmailRequired', 'Full Name and Email are required.'));
+
+    if (
+      currentStep === 1 &&
+      (!formData.name?.trim() || !formData.email?.trim())
+    ) {
+      setError(t('nameAndEmailRequired', 'Full Name and Email are required.'));
       return;
     }
-    if (currentStep === 1 && formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-     setError(t('invalidEmailFormat', 'Please enter a valid email address.'));
+    if (
+      currentStep === 1 &&
+      formData.email &&
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)
+    ) {
+      setError(t('invalidEmailFormat', 'Please enter a valid email address.'));
       return;
     }
-    if (currentStep === 4 && (!formData.password || formData.password.length < 6)) {
-      setError(t('passwordMinLength', 'Password must be at least 6 characters.'));
+    if (!formData.password || formData.password.length < 6) {
+      setError(
+        t('passwordMinLength', 'Password must be at least 6 characters.')
+      );
       return;
     }
-    if (currentStep === 4 && formData.password !== formData.confirmPassword) {
-     setError(t('passwordsDoNotMatch', 'Passwords do not match.'));
-      return;
-    }
-    setCurrentStep(prev => Math.min(prev + 1, 5) as SignupStep);
+    setCurrentStep((prev) => Math.min(prev + 1, 2) as SignupStep);
   };
 
   const handlePrevStep = () => {
     triggerHaptic();
     setError(null);
-    setCurrentStep(prev => Math.max(prev - 1, 1) as SignupStep);
+    setCurrentStep((prev) => Math.max(prev - 1, 1) as SignupStep);
   };
+
+  const pickCoverImage = async () => {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        quality: 1,
+      });
   
-  // const handleGoogleSignup = async () => {
-  //   triggerHaptic();
-  //   setError(null);
-  //   setIsSubmitting(true);
-  //   try {
-  //     await loginWithGoogle();
-  //   } catch (err: any) {
-  //     console.error("Google Sign-Up Error:", err);
-  //     setError(err.message || translate('googleSignUpFailed', 'Google Sign-Up failed. Please try again.'));
-  //   } finally {
-  //     setIsSubmitting(false);
-  //   }
-  // };
+      if (!result.canceled && result.assets?.[0]?.uri) {
+        setValue('imageUrl', result.assets[0].uri); // save picked image URI in form
+      }
+    };
 
-  const handleSubmit = async () => {
-    if (currentStep !== 4) return;
-    
-    if (formData.password !== formData.confirmPassword) {
-     setError(t('passwordsDoNotMatch', 'Passwords do not match.'));
-      return;
-    }
-    if (!formData.email || !formData.password || !formData.name) {
-      setError(t('fillRequiredFields', 'Please fill all required fields.'));
-      return;
-    }
+  const [signup, {isLoading}] = useSignupMutation();
 
-    setIsSubmitting(true);
-    setError(null);
-    // try {
-    //   const { confirmPassword, ...signupData } = formData;
-    //   const user = await (signupData as UserProfileData & { password: string });
-    //   if (user && user.email) {
-    //     AsyncStorage.setItem('pendingSignupEmail', user.email);
-    //     const otpSent = await sendOtp('email', user.email);
-    //     if (otpSent) {
-    //       setCurrentStep(5);
-    //     } else {
-    //       setError(translate('otpSendFailed', 'Failed to send OTP. Please try again.'));
-    //     }
-    //   } else {
-    //     setError(t('signupFailed', 'Signup failed. Please try again.'));
-    //   }
-    // } catch (err: any) {
-    //   console.error("Signup Error:", err);
-    //   if (err.message.includes('already registered')) {
-    //     setError(translate('emailInUse', 'This email is already registered. Try logging in.'));
-    //   } else {
-    //     setError(err.message || translate('signupFailed', 'Signup failed. Please try again.'));
-    //   }
-    // } finally {
-    //   setIsSubmitting(false);
-    // }
+  const handleSignup = async (data: any) => {
+    console.log(formData, 'form data');
+    try {
+      if (currentStep !== 2) return;
+
+      if (!formData.email || !formData.password || !formData.name) {
+        setError(t('fillRequiredFields', 'Please fill all required fields.'));
+        return;
+      }
+
+      const signupFormData = new FormData();
+
+      const imageUri = watch('imageUrl') || data.imageUrl;
+      if (imageUri) {
+        const filename = imageUri.split('/').pop() || 'photo.jpg';
+        const match = /\.(\w+)$/.exec(filename);
+        const type = match ? `image/${match[1]}` : 'image';
+
+        signupFormData.append('file', {
+          uri: imageUri,
+          name: filename,
+          type,
+        } as any);
+      }
+
+      signupFormData.append('name', formData.name);
+      signupFormData.append('email', formData.email);
+      signupFormData.append('password', formData.password);
+      signupFormData.append('country', formData.country);
+      signupFormData.append('state', formData.state);
+      signupFormData.append('city', formData.city);
+      signupFormData.append('area', formData.area);
+      signupFormData.append('phoneNumber', formData.phoneNumber);
+
+      const response = await signup(signupFormData).unwrap();
+      console.log(response, 'response');
+      if(response?.success){
+        router.replace("/auth")
+      }
+
+      setIsSubmitting(true);
+      setError(null);
+    } catch (err) {
+      console.log(err);
+    }
   };
-  
-  const InputField = ({ 
-    name, 
-    type, 
-    label, 
-    placeholder, 
-    icon, 
-    required = false, 
-    value, 
-    onChangeText 
+
+  const InputField = ({
+    name,
+    type,
+    label,
+    placeholder,
+    icon,
+    required = false,
+    value,
+    onChangeText,
   }: {
     name: string;
     type: string;
@@ -166,34 +204,42 @@ export default function SignupPage({ onSwitchToLogin, onBackToMain }: SignupPage
           placeholder={placeholder}
           placeholderTextColor="#A0AEC0"
           secureTextEntry={type === 'password'}
-          keyboardType={type === 'email' ? 'email-address' : type === 'tel' ? 'phone-pad' : 'default'}
+          keyboardType={
+            type === 'email'
+              ? 'email-address'
+              : type === 'tel'
+              ? 'phone-pad'
+              : 'default'
+          }
         />
       </View>
     </View>
   );
 
-  const progressPercentage = ((currentStep - 1) / 4) * 100;
+  const progressPercentage = ((currentStep - 1) / 2) * 100;
 
-  if (currentStep === 5) {
-    return (
-      <OtpVerificationPage 
-        email={formData.email || ''} 
-        onOtpVerified={() => {}} 
-        onBack={() => setCurrentStep(4)} 
-      />
-    );
-  }
+  // if (currentStep === 5) {
+  //   return (
+  //     <OtpVerificationPage
+  //       email={formData.email || ''}
+  //       onOtpVerified={() => {}}
+  //       onBack={() => setCurrentStep(4)}
+  //     />
+  //   );
+  // }
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity 
-        onPress={currentStep === 1 ? onBackToMain : handlePrevStep} 
+      <TouchableOpacity
+        onPress={currentStep === 1 ? onBackToMain : handlePrevStep}
         style={styles.backButton}
       >
         <ArrowLeft size={20} color="#FF6F00" />
         <Text style={styles.backButtonText}>
-          {t(currentStep === 1 ? 'backToOptions' : 'previousStep', 
-                    currentStep === 1 ? 'Back to options' : 'Previous Step')}
+          {t(
+            currentStep === 1 ? 'backToOptions' : 'previousStep',
+            currentStep === 1 ? 'Back to options' : 'Previous Step'
+          )}
         </Text>
       </TouchableOpacity>
 
@@ -203,16 +249,18 @@ export default function SignupPage({ onSwitchToLogin, onBackToMain }: SignupPage
       <Text style={styles.subtitle}>
         {t('joinVedicCommunity', 'Join our community to explore Vedic wisdom.')}
       </Text>
-      
+
       {/* Progress Bar */}
       <View style={styles.progressContainer}>
         <View style={styles.progressInfo}>
           <Text style={styles.progressText}>
-            {t('step', 'Step')} {currentStep} {t('of', 'of')} 4
+            {t('step', 'Step')} {currentStep} {t('of', 'of')} 2
           </Text>
         </View>
         <View style={styles.progressBar}>
-          <View style={[styles.progressFill, { width: `${progressPercentage}%` }]} />
+          <View
+            style={[styles.progressFill, { width: `${progressPercentage}%` }]}
+          />
         </View>
       </View>
 
@@ -223,139 +271,136 @@ export default function SignupPage({ onSwitchToLogin, onBackToMain }: SignupPage
         </View>
       )}
 
-      <ScrollView style={styles.formContainer} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.formContainer}
+        showsVerticalScrollIndicator={false}
+      >
         {currentStep === 1 && (
           <>
-            <InputField 
-              name="name" 
-              type="text" 
-              label={t('fullNameLabel', 'Full Name')} 
-              placeholder={t('fullNamePlaceholder', 'Enter your full name')} 
-              icon={<User size={20} color="#718096" />} 
-              required 
-              value={formData.name} 
-              onChangeText={(text) => handleChange('name', text)} 
+            <InputField
+              name="name"
+              type="text"
+              label={t('fullNameLabel', 'Full Name')}
+              placeholder={t('fullNamePlaceholder', 'Enter your full name')}
+              icon={<User size={20} color="#718096" />}
+              required
+              value={formData.name}
+              onChangeText={(text) => handleChange('name', text)}
             />
-            <InputField 
-              name="email" 
-              type="email" 
-              label={t('emailLabel', 'Email Address')} 
-              placeholder={t('emailPlaceholder', 'you@example.com')} 
-              icon={<Mail size={20} color="#718096" />} 
-              required 
-              value={formData.email} 
-              onChangeText={(text) => handleChange('email', text)} 
+            <InputField
+              name="email"
+              type="email"
+              label={t('emailLabel', 'Email Address')}
+              placeholder={t('emailPlaceholder', 'you@example.com')}
+              icon={<Mail size={20} color="#718096" />}
+              required
+              value={formData.email}
+              onChangeText={(text) => handleChange('email', text)}
             />
+            <InputField
+              name="phoneNumber"
+              type="tel"
+              label={t('phoneLabel', 'Phone Number (with country code)')}
+              placeholder={t('phonePlaceholder', 'e.g., +8801712345678')}
+              icon={<Phone size={20} color="#718096" />}
+              value={formData.phoneNumber}
+              onChangeText={(text) => handleChange('phoneNumber', text)}
+            />
+            <InputField
+              name="password"
+              type="password"
+              label={t('createPasswordLabel', 'Create Password')}
+              placeholder="••••••••"
+              icon={<Lock size={20} color="#718096" />}
+              required
+              value={formData.password}
+              onChangeText={(text) => handleChange('password', text)}
+            />
+            <View style={{ marginBottom: 16, position: 'relative' }}>
+              <Text style={styles.label}>Select profile picture</Text>
+              <Button
+                title="Pick Image from Gallery"
+                onPress={pickCoverImage}
+              />
+
+              {watch('imageUrl') && (
+                <Image
+                  source={{ uri: watch('imageUrl') }}
+                  style={{
+                    width: 200,
+                    height: 200,
+                    marginTop: 10,
+                    borderRadius: 8,
+                  }}
+                />
+              )}
+
+              {watch('imageUrl') && (
+                <TouchableOpacity
+                  style={styles.removeButton}
+                  onPress={() => setValue('imageUrl', '')}
+                >
+                  <Text style={[styles.removeText, { color: '#FF0000' }]}>
+                    ×
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
           </>
         )}
-        
+
         {currentStep === 2 && (
           <>
-            <InputField 
-              name="country" 
-              type="text" 
-              label={t('countryLabel', 'Country')} 
-              placeholder={t('countryPlaceholder', 'e.g., India, Bangladesh')} 
-              icon={<Globe size={20} color="#718096" />} 
-              value={formData.country} 
-              onChangeText={(text) => handleChange('country', text)} 
+            <InputField
+              name="country"
+              type="text"
+              label={t('countryLabel', 'Country')}
+              placeholder={t('countryPlaceholder', 'e.g., India, Bangladesh')}
+              icon={<Globe size={20} color="#718096" />}
+              value={formData.country}
+              onChangeText={(text) => handleChange('country', text)}
             />
-            <InputField 
-              name="state" 
-              type="text" 
-              label={t('stateLabel', 'State/Province')} 
-              placeholder={t('statePlaceholder', 'e.g., West Bengal, Dhaka Division')} 
-              icon={<MapPin size={20} color="#718096" />} 
-              value={formData.state} 
-              onChangeText={(text) => handleChange('state', text)} 
+            <InputField
+              name="state"
+              type="text"
+              label={t('stateLabel', 'State/Province')}
+              placeholder={t(
+                'statePlaceholder',
+                'e.g., West Bengal, Dhaka Division'
+              )}
+              icon={<MapPin size={20} color="#718096" />}
+              value={formData.state}
+              onChangeText={(text) => handleChange('state', text)}
             />
-            <InputField 
-              name="city" 
-              type="text" 
-              label={t('cityLabel', 'City/Town')} 
-              placeholder={t('cityPlaceholder', 'e.g., Kolkata, Dhaka')} 
-              icon={<MapPin size={20} color="#718096" />} 
-              value={formData.city} 
-              onChangeText={(text) => handleChange('city', text)} 
+            <InputField
+              name="city"
+              type="text"
+              label={t('cityLabel', 'City/Town')}
+              placeholder={t('cityPlaceholder', 'e.g., Kolkata, Dhaka')}
+              icon={<MapPin size={20} color="#718096" />}
+              value={formData.city}
+              onChangeText={(text) => handleChange('city', text)}
             />
-            <InputField 
-              name="village" 
-              type="text" 
-              label={t('villageLabel', 'Village/Area (Optional)')} 
-              placeholder={t('villagePlaceholder', 'e.g., Shantiniketan, Mirpur')} 
-              icon={<MapPin size={20} color="#718096" />} 
-              value={formData.village} 
-              onChangeText={(text) => handleChange('village', text)} 
-            />
-          </>
-        )}
-        
-        {currentStep === 3 && (
-          <>
-            <InputField 
-              name="phone" 
-              type="tel" 
-              label={t('phoneLabel', 'Phone Number (with country code)')} 
-              placeholder={t('phonePlaceholder', 'e.g., +8801712345678')} 
-              icon={<Phone size={20} color="#718096" />} 
-              value={formData.phone} 
-              onChangeText={(text) => handleChange('phone', text)} 
-            />
-            <InputField 
-              name="dob" 
-              type="date" 
-              label={t('dobLabel', 'Date of Birth')} 
-              icon={<Calendar size={20} color="#718096" />} 
-              value={formData.dob} 
-              onChangeText={(text) => handleChange('dob', text)} 
+            <InputField
+              name="area"
+              type="text"
+              label={t('villageLabel', 'Village/Area (Optional)')}
+              placeholder={t(
+                'villagePlaceholder',
+                'e.g., Shantiniketan, Mirpur'
+              )}
+              icon={<MapPin size={20} color="#718096" />}
+              value={formData.area}
+              onChangeText={(text) => handleChange('area', text)}
             />
           </>
         )}
-        
-        {currentStep === 4 && (
-          <>
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>{t('languageLabel', 'Preferred Language')}</Text>
-              <View style={styles.inputContainer}>
-                <View style={styles.inputIcon}>
-                  <Globe size={20} color="#718096" />
-                </View>
-                <View style={styles.selectContainer}>
-                  {/* Simple text display - in real app would be a proper picker */}
-                  <Text style={styles.selectText}>
-                    {allLanguages.find(l => l.code === formData.preferredLanguage)?.name || 'Select Language'}
-                  </Text>
-                </View>
-              </View>
-            </View>
-            <InputField 
-              name="password" 
-              type="password" 
-              label={t('createPasswordLabel', 'Create Password')} 
-              placeholder="••••••••" 
-              icon={<Lock size={20} color="#718096" />} 
-              required 
-              value={formData.password} 
-              onChangeText={(text) => handleChange('password', text)} 
-            />
-            <InputField 
-              name="confirmPassword" 
-              type="password" 
-              label={t('confirmPasswordLabel', 'Confirm Password')} 
-              placeholder="••••••••" 
-              icon={<Lock size={20} color="#718096" />} 
-              required 
-              value={formData.confirmPassword} 
-              onChangeText={(text) => handleChange('confirmPassword', text)} 
-            />
-          </>
-        )}
-        
+
         <View style={styles.buttonContainer}>
-          {currentStep < 4 ? (
-            <TouchableOpacity 
-              style={styles.nextButton} 
-              onPress={handleNextStep} 
+          {currentStep < 2 ? (
+            <TouchableOpacity
+              style={styles.nextButton}
+              onPress={handleNextStep}
               // disabled={isLoadingAuth}
             >
               <Text style={styles.nextButtonText}>
@@ -364,24 +409,24 @@ export default function SignupPage({ onSwitchToLogin, onBackToMain }: SignupPage
               <ArrowRight size={20} color="#FFFFFF" />
             </TouchableOpacity>
           ) : (
-            <TouchableOpacity 
-              style={styles.submitButton} 
-              onPress={handleSubmit} 
+            <TouchableOpacity
+              style={styles.submitButton}
+              onPress={handleSubmit(handleSignup)}
               // disabled={isSubmitting || isLoadingAuth}
             >
-              {(isSubmitting ) ? (
+              {isSubmitting ? (
                 <Loader size={20} color="#FFFFFF" />
               ) : (
                 <CheckCircle size={20} color="#FFFFFF" />
               )}
               <Text style={styles.submitButtonText}>
-                {t('createAccountAndVerify', 'Create Account & Verify')}
+                {isLoading ? "Loading..." : "Create Account"}
               </Text>
             </TouchableOpacity>
           )}
         </View>
       </ScrollView>
-      
+
       <View style={styles.divider}>
         <View style={styles.dividerLine} />
         <Text style={styles.dividerText}>
@@ -410,9 +455,7 @@ export default function SignupPage({ onSwitchToLogin, onBackToMain }: SignupPage
           {t('alreadyHaveAccount', 'Already have an account?')}{' '}
         </Text>
         <TouchableOpacity onPress={onSwitchToLogin}>
-          <Text style={styles.loginLink}>
-            {t('loginLink', 'Login here')}
-          </Text>
+          <Text style={styles.loginLink}>{t('loginLink', 'Login here')}</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -607,5 +650,27 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: '#FF6F00',
+  },
+   label: {
+    marginBottom: 5,
+    fontWeight: 'bold',
+  },
+  remove: {
+    position: 'absolute',
+    top: 0,
+    right: 8,
+  },
+  removeText: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#FF0000',
+  },
+  removeButton: {
+    position: 'absolute',
+    top: 70,
+    right: 140,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });

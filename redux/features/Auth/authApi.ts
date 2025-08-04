@@ -1,58 +1,105 @@
-// src/redux/features/Auth/authApi.ts
-// (This file now becomes a feature-specific API definition)
+import { baseApi } from "@/redux/api/baseApi";
 
-import { baseApi } from '../../api/baseApi'; 
-import { setUser } from './authSlice';
-
-// Use `injectEndpoints` to add endpoints to the `baseApi`
 const authApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     login: builder.mutation({
-      query: (credentials) => ({
-        url: '/auth/login', 
+      query: (userInfo) => ({
+        url: '/auth/login',
         method: 'POST',
-        body: credentials,
+        body: userInfo,
       }),
-      async onQueryStarted(arg, { dispatch, queryFulfilled }) {
-        try {
-          const { data } = await queryFulfilled;
-          if (data && data.data) {
-            dispatch(setUser(data.data));
-          }
-        } catch (error) {
-          console.error('Login failed:', error);
-        }
-      },
     }),
 
     signup: builder.mutation({
-       query: (userInfo) => ({
-         url: '/auth/register',
-         method: 'POST',
-         body: userInfo,
-       }),
-       async onQueryStarted(arg, { dispatch, queryFulfilled }) {
-        try {
-          const { data } = await queryFulfilled;
-          if (data && data.data) {
-            dispatch(setUser(data.data));
-          }
-        } catch (error) {
-          console.error('Signup failed:', error);
-        }
-      },
-    }),
-    registerUser: builder.mutation<any, any>({
-      query: (data) => ({
-        url: `/auth/signup`,
+      query: (signupData) => ({
         method: 'POST',
-        body: data,
-        credentials: 'include',
+        url: '/auth/signup',
+        body: signupData,
+      }),
+      // invalidatesTags : ["products"]
+    }),
+
+    getMe: builder.query({
+      query: () => ({
+        method: 'GET',
+        url: `/user/me`,
+      }),
+      providesTags: ['users'],
+    }),
+
+    getUserById: builder.query({
+      query: (userId) => ({
+        method: 'GET',
+        url: `/user/${userId}`,
+      }),
+      providesTags: ['users'],
+    }),
+
+    updateProfile: builder.mutation({
+      query: (profileUpdatedData) => ({
+        method: 'PUT',
+        url: `/user/me`,
+        body: profileUpdatedData,
       }),
       invalidatesTags: ['users'],
     }),
-    
+
+    changeUserRoleToAdmin: builder.mutation({
+      query: (userId) => ({
+        url: `/users/make-admin/${userId}`,
+        method: 'PUT',
+      }),
+      invalidatesTags: ['users'],
+    }),
+
+    changeUserRoleToUser: builder.mutation({
+      query: (userId) => ({
+        url: `/users/make-user/${userId}`,
+        method: 'PUT',
+      }),
+      invalidatesTags: ['users'],
+    }),
+
+    deleteUser: builder.mutation({
+      query: (userId) => ({
+        url: `/users/delete-user/${userId}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['users'],
+    }),
+
+    forgetPassword: builder.mutation({
+      query: (email) => ({
+        url: `/auth/forgot-password`,
+        method: 'POST',
+        body: email,
+      }),
+      invalidatesTags: ['users'],
+    }),
+
+    resetPassword: builder.mutation({
+      query: ({ token, resetPasswordData }) => ({
+        url: `/auth/reset-password`,
+        method: 'POST',
+        headers: {
+          Authorization: `${token}`,
+        },
+        body: resetPasswordData,
+      }),
+      invalidatesTags: ['users'],
+    }),
   }),
 });
 
-export const { useLoginMutation, useSignupMutation, useRegisterUserMutation } = authApi;
+export const {
+  useLoginMutation,
+  useSignupMutation,
+  useUpdateProfileMutation,
+  useGetMeQuery,
+  useGetUserByIdQuery,
+  useChangeUserRoleToAdminMutation,
+  useChangeUserRoleToUserMutation,
+  useDeleteUserMutation,
+  useForgetPasswordMutation,
+  useResetPasswordMutation,
+} = authApi;
