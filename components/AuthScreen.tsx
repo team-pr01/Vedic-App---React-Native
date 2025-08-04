@@ -13,8 +13,10 @@ import LoginPage from './LoginPage';
 
 type AuthMode = 'main' | 'signup' | 'login';
 
-export default function AuthScreen() {
-  const [authMode, setAuthMode] = useState<AuthMode>('main');
+export default function AuthScreen({currentAuthMode}:{
+  currentAuthMode: AuthMode,
+}) {
+  const [authMode, setAuthMode] = useState<AuthMode>(currentAuthMode || 'main');
 
   if (authMode === 'signup') {
     return (

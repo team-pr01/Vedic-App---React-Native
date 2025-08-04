@@ -1,22 +1,19 @@
-// app/auth.tsx
-// (This is your old app/index.tsx, just renamed)
-
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
-import AuthScreen from '../components/AuthScreen'; 
+import AuthScreen from '../components/AuthScreen';
+import { useLocalSearchParams } from 'expo-router';
 
 export default function AuthPage() {
-  // We no longer need any logic here. The _layout handles it.
-  // This page's only job is to show the AuthScreen component.
+  const { mode } = useLocalSearchParams(); 
+  const authMode = (mode === 'signup' || mode === 'login') ? mode : 'main';
+
   return (
     <View style={styles.container}>
-      <AuthScreen />
+      <AuthScreen currentAuthMode={authMode} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
+  container: { flex: 1 },
 });
