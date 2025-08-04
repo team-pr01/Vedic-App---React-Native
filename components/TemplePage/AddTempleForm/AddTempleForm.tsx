@@ -133,7 +133,7 @@ const AddTempleForm = ({
       console.log(response);
 
       if (response?.success) {
-        Alert.alert('Success', response.message || 'Temple added successfully');
+        Alert.alert('Temple added successfully. Temple will be listed if Admin approves.' );
         reset();
         setMediaGallery([]);
         setShowRegistrationModal(false);
@@ -207,19 +207,19 @@ const AddTempleForm = ({
           />
           <Input
             label="Phone"
-            name="contactInfo.phone"
+            name="phone"
             setValue={setValue}
             watch={watch}
           />
           <Input
             label="Email"
-            name="contactInfo.email"
+            name="email"
             setValue={setValue}
             watch={watch}
           />
           <Input
             label="Website"
-            name="contactInfo.website"
+            name="website"
             setValue={setValue}
             watch={watch}
           />
@@ -257,7 +257,7 @@ const AddTempleForm = ({
           />
 
           <View style={styles.buttonContainer}>
-            <Button title="Submit" onPress={handleSubmit(onSubmit)} />
+            <Button title={isLoading?"Submitting...":"Submit"} onPress={handleSubmit(onSubmit)} />
           </View>
         </ScrollView>
       </View>
