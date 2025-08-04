@@ -36,8 +36,8 @@ export default function ResetPassword({
 }: ResetPasswordProps) {
   const t = useTranslate();
   const email = AsyncStorage.getItem('resetEmail') || '';
-  const [password, setPassword] = useState('11111111');
-  const [otp, setOtp] = useState('11111111');
+  const [password, setPassword] = useState('');
+  const [otp, setOtp] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
