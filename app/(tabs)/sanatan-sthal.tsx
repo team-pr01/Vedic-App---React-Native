@@ -35,6 +35,7 @@ import { useThemeColors } from '@/hooks/useThemeColors';
 import { useGetAllTempleQuery } from '@/redux/features/Temple/templeApi';
 import AddTempleForm from '@/components/TemplePage/AddTempleForm/AddTempleForm';
 import { PullToRefreshWrapper } from '@/components/Reusable/PullToRefreshWrapper/PullToRefreshWrapper';
+import LoadingComponent from '@/components/LoadingComponent/LoadingComponent';
 
 interface SanatanSthalItem {
   id: string;
@@ -81,7 +82,8 @@ export default function SanatanSthalPage() {
   const { data, isLoading, refetch } = useGetAllTempleQuery({
     keyword: searchQuery,
   });
-  const approvedTemples =data?.data?.filter( (item: TTemple) => item.status=== 'approved') || [];
+  const approvedTemples =
+    data?.data?.filter((item: TTemple) => item.status === 'approved') || [];
   const [refreshing, setRefreshing] = useState(false);
 
   const handleRefresh = async () => {
@@ -257,78 +259,82 @@ export default function SanatanSthalPage() {
               <Text
                 style={[styles.resultsCount, { color: colors.secondaryText }]}
               >
-                {approvedTemples?.length} place{approvedTemples?.length !== 1 ? 's' : ''}{' '}
-                found
+                {approvedTemples?.length} place
+                {approvedTemples?.length !== 1 ? 's' : ''} found
               </Text>
 
               {/* All temples */}
-              {approvedTemples?.map((item: TTemple) => (
-                <TouchableOpacity
-                  key={item?._id}
-                  style={[
-                    styles.itemCard,
-                    {
-                      backgroundColor: colors.card,
-                      shadowColor: colors.cardShadow,
-                    },
-                  ]}
-                  // onPress={() => handleItemPress(item)}
-                  activeOpacity={0.8}
-                >
-                  <Image
-                    source={{ uri: item.imageUrl }}
-                    style={styles.itemImage}
-                  />
-                  <View style={styles.itemContent}>
-                    <View style={styles.itemHeader}>
-                      <View style={styles.itemTitleRow}>
-                        {/* {getTypeIcon(item.type)} */}
+              {isLoading ? (
+                <LoadingComponent loading="Temple" color={colors.info} />
+              ) : (
+                approvedTemples?.map((item: TTemple) => (
+                  <TouchableOpacity
+                    key={item?._id}
+                    style={[
+                      styles.itemCard,
+                      {
+                        backgroundColor: colors.card,
+                        shadowColor: colors.cardShadow,
+                      },
+                    ]}
+                    // onPress={() => handleItemPress(item)}
+                    activeOpacity={0.8}
+                  >
+                    <Image
+                      source={{ uri: item.imageUrl }}
+                      style={styles.itemImage}
+                    />
+                    <View style={styles.itemContent}>
+                      <View style={styles.itemHeader}>
+                        <View style={styles.itemTitleRow}>
+                          {/* {getTypeIcon(item.type)} */}
+                          <Text
+                            style={[styles.itemTitle, { color: colors.text }]}
+                          >
+                            {item?.name}
+                          </Text>
+                        </View>
+                      </View>
+
+                      <View style={styles.locationContainer}>
+                        <MapPin size={14} color={colors.secondaryText} />
                         <Text
-                          style={[styles.itemTitle, { color: colors.text }]}
+                          style={[
+                            styles.locationText,
+                            { color: colors.secondaryText },
+                          ]}
                         >
-                          {item?.name}
+                          {item?.city}, {item?.country}
                         </Text>
                       </View>
-                    </View>
 
-                    <View style={styles.locationContainer}>
-                      <MapPin size={14} color={colors.secondaryText} />
                       <Text
                         style={[
-                          styles.locationText,
+                          styles.itemDescription,
                           { color: colors.secondaryText },
                         ]}
                       >
-                        {item?.city}, {item?.country}
+                        {item.description}
                       </Text>
-                    </View>
 
-                    <Text
-                      style={[
-                        styles.itemDescription,
-                        { color: colors.secondaryText },
-                      ]}
-                    >
-                      {item.description}
-                    </Text>
-
-                    <View style={styles.itemFooter}>
-                      <View
-                        style={[
-                          styles.typeBadge,
-                          // { backgroundColor: getTypeColor(item.type) },
-                        ]}
-                      >
-                        <Text style={styles.typeBadgeText}>
-                          Deity : {item?.mainDeity}
-                        </Text>
+                      <View style={styles.itemFooter}>
+                        <View
+                          style={[
+                            styles.typeBadge,
+                            // { backgroundColor: getTypeColor(item.type) },
+                          ]}
+                        >
+                          <Text style={styles.typeBadgeText}>
+                            Deity : {item?.mainDeity}
+                          </Text>
+                        </View>
                       </View>
                     </View>
-                  </View>
-                </TouchableOpacity>
-              ))}
+                  </TouchableOpacity>
+                ))
+              )}
 
-              {approvedTemples?.length === 0 && (
+              {isLoading?"":approvedTemples?.length === 0 && (
                 <View style={styles.emptyState}>
                   <Text
                     style={[styles.emptyStateTitle, { color: colors.text }]}

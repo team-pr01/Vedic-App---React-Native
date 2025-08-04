@@ -7,8 +7,7 @@ const ConsultancyHeader = () => {
   return (
     <SafeAreaView edges={['top']} style={styles.headerContainer}>
       <LinearGradient colors={['#DD6B20', '#C05621']} style={styles.header}>
-        <TouchableOpacity
-          onPress={() => router.back()}
+        <TouchableOpacity onPress={() => router.push('/(tabs)')}
           style={styles.headerButton}
         >
           <ArrowLeft size={24} color="#FFFFFF" />

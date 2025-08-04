@@ -32,6 +32,9 @@ import { getYouTubeVideoId } from '@/utils/getYouTubeVideoId';
 import { useGetAllRecipiesQuery } from '@/redux/features/Recipe/recipeApi';
 import { useGetAllCategoriesQuery } from '@/redux/features/Categories/categoriesApi';
 import { PullToRefreshWrapper } from '@/components/Reusable/PullToRefreshWrapper/PullToRefreshWrapper';
+import LoadingComponent from '@/components/LoadingComponent/LoadingComponent';
+import { Colors } from 'react-native/Libraries/NewAppScreen';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 interface Recipe {
   id: string;
@@ -178,7 +181,7 @@ export default function FoodPage() {
   });
   const { data: categoryData, refetch:refetchCategories } = useGetAllCategoriesQuery({});
   const [refreshing, setRefreshing] = useState(false);
-
+  const colors = useThemeColors();
    const handleRefresh = async () => {
     setRefreshing(true);
 
@@ -497,7 +500,7 @@ export default function FoodPage() {
 
             {/* Recipes Grid */}
             <View style={styles.recipesContainer}>
-              {data?.data?.length === 0 ? (
+              {isLoading?<LoadingComponent loading='Recipes' color={colors.success}/> :data?.data?.length === 0 ? (
                 <View style={styles.emptyState}>
                   <Text style={styles.emptyStateTitle}>No recipes found</Text>
                   <Text style={styles.emptyStateText}>
