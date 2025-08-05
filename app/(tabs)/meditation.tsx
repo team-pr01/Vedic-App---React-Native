@@ -647,7 +647,7 @@ export default function NewsScreen() {
                           )}
                         </Text>
 
-                        <View style={styles.articleMeta}>
+                        {/* <View style={styles.articleMeta}>
                           <View style={styles.metaLeft}>
                             <View style={styles.metaItem}>
                               <Eye size={14} color={colors.secondaryText} />
@@ -700,7 +700,7 @@ export default function NewsScreen() {
                               <Share2 size={20} color={colors.secondaryText} />
                             </TouchableOpacity>
                           </View>
-                        </View>
+                        </View> */}
 
                         <View style={styles.tagsContainer}>
                           {article?.tags?.map((tag: string, index: number) => (
@@ -828,7 +828,7 @@ export default function NewsScreen() {
                         {selectedNewsItem.content}
                       </Text> */}
                   </ScrollView>
-
+{/* 
                   <View
                     style={[
                       styles.modalFooter,
@@ -895,14 +895,14 @@ export default function NewsScreen() {
                         <Share2 size={20} color={colors.secondaryText} />
                       </TouchableOpacity>
                     </View>
-                  </View>
+                  </View> */}
                 </View>
               </View>
             </Modal>
           )}
 
           {/* Share Modal */}
-          {showShareModal && shareTargetNews && (
+          {/* {showShareModal && shareTargetNews && (
             <Modal
               visible={showShareModal}
               transparent
@@ -978,7 +978,7 @@ export default function NewsScreen() {
                 </View>
               </View>
             </Modal>
-          )}
+          )} */}
 
           {/* Language Modal */}
           {showLanguageModal && (

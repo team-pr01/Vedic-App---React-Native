@@ -574,7 +574,7 @@ export default function VastuPage() {
                 All
               </Text>
             </TouchableOpacity>
-            {categories.map((category) => (
+            {filteredExperts.map((category :any) => (
               <TouchableOpacity
                 key={category.id}
                 onPress={() => {
@@ -586,10 +586,6 @@ export default function VastuPage() {
                   selectedCategory === category.id && styles.categoryChipActive,
                 ]}
               >
-                {React.cloneElement(category.icon, {
-                  color:
-                    selectedCategory === category.id ? '#FFFFFF' : '#805AD5',
-                })}
                 <Text
                   style={[
                     styles.categoryText,
@@ -1211,6 +1207,7 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 500,
     maxHeight: '90%',
+    height: '90%',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.25,
