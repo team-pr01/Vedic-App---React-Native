@@ -69,10 +69,10 @@ const authApi = baseApi.injectEndpoints({
     }),
 
     forgetPassword: builder.mutation({
-      query: (email) => ({
+      query: (data) => ({
         url: `/auth/forgot-password`,
         method: 'POST',
-        body: email,
+        body: data,
       }),
       invalidatesTags: ['users'],
     }),
