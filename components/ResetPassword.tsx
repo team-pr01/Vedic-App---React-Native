@@ -138,9 +138,9 @@ export default function ResetPassword({
         </Text>
       </TouchableOpacity>
 
-      <Text style={styles.title}>{t('welcomeBack', 'Welcome Back')}</Text>
+      <Text style={styles.title}>Reset Password</Text>
       <Text style={styles.subtitle}>
-        {t('signInToContinue', 'Sign in to continue your spiritual journey')}
+        Reset your password to continue using the app.
       </Text>
 
       {error && (

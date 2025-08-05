@@ -86,19 +86,16 @@ export default function LoginPage({
  
 
   const handleSubmitForgotPassword = async () => {
-    const payload = {
-      email,
-    };
     setIsSubmitting(true);
     setError(null);
     triggerHaptic();
 
     try {
       await AsyncStorage.setItem('resetEmail', resetEmail); 
-      const res = await forgetPassword(payload).unwrap();
+      const res = await forgetPassword(email).unwrap();
       if (res.success) {
         Alert.alert(
-          t('resetPasswordSuccessTitle', 'Reset Password Success'),
+          t('resetPasswordSuccessTitle', 'Reset Request Success'),
           t(
             'resetPasswordSuccessMessage',
             'An email has been sent with instructions to reset your password.'
