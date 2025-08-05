@@ -183,7 +183,7 @@ export default function SearchBar({
               <Search size={18} color={colors.primary} />
             </TouchableOpacity>
             
-            {showFilter && (
+            {/* {showFilter && (
               <TouchableOpacity 
                 onPress={handleFilterPress}
                 style={[
@@ -193,7 +193,7 @@ export default function SearchBar({
               >
                 <Filter size={18} color={currentFilters.length > 0 ? colors.primary : colors.secondaryText} />
               </TouchableOpacity>
-            )}
+            )} */}
           </View>
         </View>
       </View>
