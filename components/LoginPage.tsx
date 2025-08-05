@@ -83,7 +83,6 @@ export default function LoginPage({
       setIsSubmitting(false);
     }
   };
- 
 
   const handleSubmitForgotPassword = async () => {
     setIsSubmitting(true);
@@ -91,8 +90,9 @@ export default function LoginPage({
     triggerHaptic();
 
     try {
-      await AsyncStorage.setItem('resetEmail', resetEmail); 
-      const res = await forgetPassword(email).unwrap();
+      const payload = { email:resetEmail };
+      await AsyncStorage.setItem('resetEmail', resetEmail);
+      const res = await forgetPassword(payload).unwrap();
       if (res.success) {
         Alert.alert(
           t('resetPasswordSuccessTitle', 'Reset Request Success'),
@@ -144,11 +144,17 @@ export default function LoginPage({
             <TextInput
               style={styles.textInput}
               value={email}
-              onChangeText={setEmail}
+              // onChangeText={setEmail}
               placeholder="you@example.com"
               placeholderTextColor="#A0AEC0"
               keyboardType="email-address"
               autoCapitalize="none"
+              onChangeText={(text) => {
+                console.log('Typed email:', text);
+                setEmail(text);
+              }}
+              editable={true}
+
             />
           </View>
         </View>
@@ -277,8 +283,9 @@ export default function LoginPage({
                 onPress={handleSubmitForgotPassword}
               >
                 <Text style={styles.modalConfirmText}>
-               {isForgotPasswordLoading
-                  ?'Please wait...':"Send Reset Email"}
+                  {isForgotPasswordLoading
+                    ? 'Please wait...'
+                    : 'Send Reset Email'}
                 </Text>
               </TouchableOpacity>
             </View>
