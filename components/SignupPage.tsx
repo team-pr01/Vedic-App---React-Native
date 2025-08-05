@@ -54,7 +54,7 @@ type SignupPageProps = {
 };
 
 export default function SignupPage({ onSwitchToLogin, onBackToMain }: SignupPageProps) {
-  const t = useTranslate();
+ 
   const [currentStep, setCurrentStep] = useState(1);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -184,8 +184,8 @@ export default function SignupPage({ onSwitchToLogin, onBackToMain }: SignupPage
         </Text>
       </TouchableOpacity>
 
-      <Text style={styles.title}>{t('createYourAccount', 'Create Your Account')}</Text>
-      <Text style={styles.subtitle}>{t('joinVedicCommunity', 'Join our community to explore Vedic wisdom.')}</Text>
+      <Text style={styles.title}>Create Your Account</Text>
+      <Text style={styles.subtitle}>Join our community to explore Vedic wisdom.</Text>
 
       {/* Progress Bar */}
       <View style={styles.progressContainer}>
@@ -292,6 +292,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F7FAFC',
     paddingHorizontal: 20,
     paddingTop: 60,
+    paddingBottom: 40,
   },
   backButton: {
     flexDirection: 'row',
