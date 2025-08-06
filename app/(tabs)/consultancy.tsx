@@ -138,10 +138,15 @@ const generateConsultationRecommendations = async (
 export default function ConsultancyPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
-  const { data, isLoading, refetch: refetchConsultancy } = useGetAllConsultancyServicesQuery({
+  const { 
+  data,
+  isFetching, 
+  isLoading, 
+  refetch: refetchConsultancy 
+} = useGetAllConsultancyServicesQuery({
     category: selectedCategory,
     keyword: searchQuery,
-  });
+});
   const { data: categoryData, refetch: refetchCategories } = useGetAllCategoriesQuery({});
   const [refreshing, setRefreshing] = useState(false);
   
@@ -381,7 +386,7 @@ export default function ConsultancyPage() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Available Experts</Text>
 
-          {isLoading ? (
+          {isLoading || isFetching ? (
             <View style={styles.loaderContainer}>
               <ActivityIndicator size="large" color="#FF6F00" />
             </View>
