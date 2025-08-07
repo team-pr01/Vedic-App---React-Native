@@ -10,6 +10,7 @@ import {
   Platform,
   Linking,
   RefreshControl,
+  Image, // Image is needed for the recipe modal
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -33,19 +34,19 @@ import { useGetAllRecipiesQuery } from '@/redux/features/Recipe/recipeApi';
 import { useGetAllCategoriesQuery } from '@/redux/features/Categories/categoriesApi';
 import { PullToRefreshWrapper } from '@/components/Reusable/PullToRefreshWrapper/PullToRefreshWrapper';
 import LoadingComponent from '@/components/LoadingComponent/LoadingComponent';
-import { Colors } from 'react-native/Libraries/NewAppScreen';
 import { useThemeColors } from '@/hooks/useThemeColors';
 
 interface Recipe {
-  id: string;
+  _id: string; // Changed id to _id to match API data
   name: string;
   category: string;
   ingredients: string[];
   instructions: string[];
   imageUrl: string;
-  cookingTime: string;
+  duration: string; // Changed from cookingTime to match API data
   difficulty: string;
   cuisine: string;
+  videoUrl?: string; // videoUrl is part of the API data
 }
 
 const triggerHaptic = () => {
@@ -66,7 +67,7 @@ const generateRecipe = async (prompt: string): Promise<Recipe> => {
   let instructions: string[] = [];
   let cuisine = 'Vedic';
   let difficulty = 'Easy';
-  let cookingTime = '25 mins';
+  let duration = '25 mins';
 
   // Smart recipe generation based on prompt
   if (lowerPrompt.includes('breakfast') || lowerPrompt.includes('morning')) {
@@ -87,7 +88,7 @@ const generateRecipe = async (prompt: string): Promise<Recipe> => {
       'Sprinkle cardamom powder and drizzle honey.',
       'Serve warm as a nourishing breakfast.',
     ];
-    cookingTime = '15 mins';
+    duration = '15 mins';
   } else if (
     lowerPrompt.includes('dinner') ||
     lowerPrompt.includes('evening')
@@ -111,7 +112,7 @@ const generateRecipe = async (prompt: string): Promise<Recipe> => {
       'Cook until everything is well done.',
       'Garnish with fresh coriander and serve.',
     ];
-    cookingTime = '35 mins';
+    duration = '35 mins';
     difficulty = 'Medium';
   } else if (lowerPrompt.includes('sweet') || lowerPrompt.includes('dessert')) {
     recipeName = 'AI Generated Sattvic Sweet';
@@ -132,7 +133,7 @@ const generateRecipe = async (prompt: string): Promise<Recipe> => {
       'Garnish with nuts and saffron.',
       'Serve warm or chilled.',
     ];
-    cookingTime = '45 mins';
+    duration = '45 mins';
     difficulty = 'Medium';
     cuisine = 'Traditional';
   } else {
@@ -159,14 +160,14 @@ const generateRecipe = async (prompt: string): Promise<Recipe> => {
   }
 
   return {
-    id: `ai-recipe-${Date.now()}`,
+    _id: `ai-recipe-${Date.now()}`,
     name: recipeName,
     category: 'sattvic',
     ingredients,
     instructions,
     imageUrl:
       'https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=400',
-    cookingTime,
+    duration,
     difficulty,
     cuisine,
   };
@@ -209,88 +210,6 @@ export default function FoodPage() {
   const [error, setError] = useState<string | null>(null);
   const [isListening, setIsListening] = useState(false);
   const recognitionRef = useRef<any>(null);
-
-  const initialRecipes: Recipe[] = [
-    {
-      id: 'sattvic-khichdi',
-      name: 'Sattvic Khichdi',
-      category: 'sattvic',
-      ingredients: [
-        'Moong Dal (1/2 cup)',
-        'Rice (1/2 cup)',
-        'Ghee (1 tbsp)',
-        'Cumin Seeds (1 tsp)',
-        'Turmeric (1/2 tsp)',
-        'Water (3 cups)',
-        'Salt to taste',
-      ],
-      instructions: [
-        'Wash rice and dal thoroughly.',
-        'Heat ghee in a pressure cooker.',
-        'Add cumin seeds and let them crackle.',
-        'Add rice, dal, turmeric, and salt.',
-        'Add water and pressure cook for 3-4 whistles.',
-        'Let pressure release naturally. Serve hot with a dollop of ghee.',
-      ],
-      imageUrl:
-        'https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=400',
-      cookingTime: '30 mins',
-      difficulty: 'Easy',
-      cuisine: 'Vedic',
-    },
-    {
-      id: 'prasad-halwa',
-      name: 'Prasad Halwa',
-      category: 'prasad',
-      ingredients: [
-        'Semolina (1 cup)',
-        'Ghee (1/2 cup)',
-        'Sugar (1 cup)',
-        'Water (2 cups)',
-        'Cardamom powder (1/2 tsp)',
-        'Mixed Nuts (2 tbsp, chopped)',
-      ],
-      instructions: [
-        'Heat ghee in a pan and roast semolina on low heat until golden brown and aromatic.',
-        'In a separate saucepan, bring water and sugar to a boil to make sugar syrup.',
-        'Gradually add the hot sugar syrup to the roasted semolina, stirring continuously to avoid lumps.',
-        'Add cardamom powder and cook until the halwa thickens and leaves the sides of the pan.',
-        'Garnish with chopped nuts and serve warm as prasad.',
-      ],
-      imageUrl:
-        'https://images.pexels.com/photos/1099680/pexels-photo-1099680.jpeg?auto=compress&cs=tinysrgb&w=400',
-      cookingTime: '25 mins',
-      difficulty: 'Medium',
-      cuisine: 'Temple',
-    },
-    {
-      id: 'ayurvedic-tea',
-      name: 'Ayurvedic Herbal Tea',
-      category: 'ayurvedic',
-      ingredients: [
-        'Water (2 cups)',
-        'Fresh Ginger (1 inch, grated)',
-        'Tulsi (Holy Basil) leaves (5-6)',
-        'Cardamom pods (2, crushed)',
-        'Cinnamon stick (1 inch)',
-        'Honey or Jaggery to taste (optional)',
-      ],
-      instructions: [
-        'Bring water to a boil in a saucepan.',
-        'Add grated ginger, tulsi leaves, crushed cardamom, and cinnamon stick.',
-        'Simmer on low heat for 5-7 minutes to let the flavors infuse.',
-        'Strain the tea into cups.',
-        'Add honey or jaggery if desired. Serve hot.',
-      ],
-      imageUrl:
-        'https://images.pexels.com/photos/1638280/pexels-photo-1638280.jpeg?auto=compress&cs=tinysrgb&w=400',
-      cookingTime: '10 mins',
-      difficulty: 'Easy',
-      cuisine: 'Ayurvedic',
-    },
-  ];
-
-  const [recipes, setRecipes] = useState<Recipe[]>(initialRecipes);
 
   // Initialize speech recognition
   useEffect(() => {
@@ -352,7 +271,6 @@ export default function FoodPage() {
       const recipe = await generateRecipe(recipePrompt);
       setRecipePrompt('');
       setShowAIModal(false);
-      setRecipes((prev) => [recipe, ...prev.filter((r) => r.id !== recipe.id)]);
       setSelectedRecipe(recipe);
       setShowRecipeModal(true);
     } catch (err: any) {
@@ -374,16 +292,16 @@ export default function FoodPage() {
   return (
     <PullToRefreshWrapper onRefresh={handleRefresh}>
       <ScrollView
+        style={{ backgroundColor: colors.background }}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
         }
       >
-        <View style={styles.container}>
+        <View style={[styles.container, { backgroundColor: colors.background }]}>
           {/* Header */}
-          <SafeAreaView edges={['top']} style={styles.headerContainer}>
-            <LinearGradient
-              colors={['#38A169', '#2F855A']}
-              style={styles.header}
+          <SafeAreaView edges={['top']} style={[styles.headerContainer, { backgroundColor: colors.success }]}>
+            <View
+              style={[styles.header, { backgroundColor: colors.success }]}
             >
               <TouchableOpacity
                 onPress={() => router.back()}
@@ -396,7 +314,7 @@ export default function FoodPage() {
                 <Text style={styles.headerSubtitle}>বৈদিক খাদ্য ও রেসিপি</Text>
               </View>
               <View style={styles.headerPlaceholder} />
-            </LinearGradient>
+            </View>
           </SafeAreaView>
 
           <ScrollView
@@ -404,16 +322,16 @@ export default function FoodPage() {
             showsVerticalScrollIndicator={false}
           >
             {/* Search and AI Section */}
-            <View style={styles.searchSection}>
+            <View style={[styles.searchSection, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
               <View style={styles.searchContainer}>
-                <View style={styles.searchBar}>
-                  <Search size={20} color="#718096" />
+                <View style={[styles.searchBar, { backgroundColor: colors.background }]}>
+                  <Search size={20} color={colors.secondaryText} />
                   <TextInput
-                    style={styles.searchInput}
+                    style={[styles.searchInput, { color: colors.text }]}
                     placeholder="Search recipes..."
                     value={searchQuery}
                     onChangeText={setSearchQuery}
-                    placeholderTextColor="#A0AEC0"
+                    placeholderTextColor={colors.secondaryText}
                   />
                   <TouchableOpacity
                     onPress={handleVoiceSearch}
@@ -423,9 +341,9 @@ export default function FoodPage() {
                     ]}
                   >
                     {isListening ? (
-                      <StopCircle size={18} color="#EF4444" />
+                      <StopCircle size={18} color={colors.error} />
                     ) : (
-                      <Mic size={18} color="#38A169" />
+                      <Mic size={18} color={colors.success} />
                     )}
                   </TouchableOpacity>
                 </View>
@@ -434,7 +352,7 @@ export default function FoodPage() {
                     triggerHaptic();
                     setShowAIModal(true);
                   }}
-                  style={styles.aiButton}
+                  style={[styles.aiButton, { backgroundColor: colors.secondary }]}
                 >
                   <Brain size={20} color="#FFFFFF" />
                   <Text style={styles.aiButtonText}>AI Recipe</Text>
@@ -444,7 +362,7 @@ export default function FoodPage() {
               {isListening && (
                 <View style={styles.listeningIndicator}>
                   <View style={styles.listeningDot} />
-                  <Text style={styles.listeningText}>Listening...</Text>
+                  <Text style={[styles.listeningText, { color: colors.secondaryText }]}>Listening...</Text>
                 </View>
               )}
             </View>
@@ -459,12 +377,14 @@ export default function FoodPage() {
                   }}
                   style={[
                     styles.categoryChip,
-                    selectedCategory === '' && styles.categoryChipActive,
+                    { backgroundColor: colors.background, borderColor: colors.border },
+                    selectedCategory === '' && [styles.categoryChipActive, { backgroundColor: colors.success, borderColor: colors.success }],
                   ]}
                 >
                   <Text
                     style={[
                       styles.categoryText,
+                      { color: colors.secondaryText },
                       selectedCategory === '' && styles.categoryTextActive,
                     ]}
                   >
@@ -480,13 +400,15 @@ export default function FoodPage() {
                     }}
                     style={[
                       styles.categoryChip,
+                      { backgroundColor: colors.background, borderColor: colors.border },
                       selectedCategory === category &&
-                        styles.categoryChipActive,
+                        [styles.categoryChipActive, { backgroundColor: colors.success, borderColor: colors.success }],
                     ]}
                   >
                     <Text
                       style={[
                         styles.categoryText,
+                        { color: colors.secondaryText },
                         selectedCategory === category &&
                           styles.categoryTextActive,
                       ]}
@@ -502,17 +424,17 @@ export default function FoodPage() {
             <View style={styles.recipesContainer}>
               {isLoading?<LoadingComponent loading='Recipes' color={colors.success}/> :data?.data?.length === 0 ? (
                 <View style={styles.emptyState}>
-                  <Text style={styles.emptyStateTitle}>No recipes found</Text>
-                  <Text style={styles.emptyStateText}>
+                  <Text style={[styles.emptyStateTitle, { color: colors.text }]}>No recipes found</Text>
+                  <Text style={[styles.emptyStateText, { color: colors.secondaryText }]}>
                     Try a different search or category, or use the AI Recipe
                     generator!
                   </Text>
                 </View>
               ) : (
-                data?.data?.map((recipe: any, index: number) => (
+                data?.data?.map((recipe: Recipe, index: number) => (
                   <TouchableOpacity
                     key={recipe._id}
-                    style={styles.recipeCard}
+                    style={[styles.recipeCard, { backgroundColor: colors.card, shadowColor: colors.cardShadow }]}
                     onPress={() => handleViewRecipe(recipe)}
                     activeOpacity={0.8}
                   >
@@ -528,26 +450,20 @@ export default function FoodPage() {
                       />
                     </View>
                     <View style={styles.recipeContent}>
-                      <Text style={styles.recipeTitle}>{recipe.name}</Text>
+                      <Text style={[styles.recipeTitle, { color: colors.text }]}>{recipe.name}</Text>
                       <View style={styles.recipeMeta}>
                         <View style={styles.metaItem}>
-                          <Clock size={16} color="#718096" />
-                          <Text style={styles.metaText}>{recipe.duration}</Text>
+                          <Clock size={16} color={colors.secondaryText} />
+                          <Text style={[styles.metaText, { color: colors.secondaryText }]}>{recipe.duration}</Text>
                         </View>
                         <View style={styles.metaItem}>
-                          <Box size={16} color="#F59E0B" />
-                          <Text style={styles.metaText}>{recipe.category}</Text>
+                          <Box size={16} color={colors.warning} />
+                          <Text style={[styles.metaText, { color: colors.secondaryText }]}>{recipe.category}</Text>
                         </View>
                       </View>
                       <TouchableOpacity
-                        onPress={() => {
-                          if (recipe?.videoUrl) {
-                            Linking.openURL(recipe?.videoUrl);
-                          } else {
-                            console.warn('No video URL found for this recipe.');
-                          }
-                        }}
-                        style={styles.viewButton}
+                        onPress={() => handleViewRecipe(recipe)}
+                        style={[styles.viewButton, { backgroundColor: colors.success }]}
                       >
                         <Text style={styles.viewButtonText}>View Recipe</Text>
                         <ChevronRight size={16} color="#FFFFFF" />
@@ -570,36 +486,40 @@ export default function FoodPage() {
               onRequestClose={() => setShowAIModal(false)}
             >
               <View style={styles.modalOverlay}>
-                <View style={styles.aiModal}>
-                  <View style={styles.modalHeader}>
+                <View style={[styles.aiModal, { backgroundColor: colors.card }]}>
+                  <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
                     <View style={styles.aiModalTitle}>
-                      <Brain size={24} color="#3B82F6" />
-                      <Text style={styles.modalTitle}>AI Recipe Generator</Text>
+                      <Brain size={24} color={colors.secondary} />
+                      <Text style={[styles.modalTitle, { color: colors.text }]}>AI Recipe Generator</Text>
                     </View>
                     <TouchableOpacity onPress={() => setShowAIModal(false)}>
-                      <X size={24} color="#718096" />
+                      <X size={24} color={colors.secondaryText} />
                     </TouchableOpacity>
                   </View>
 
                   <View style={styles.aiModalContent}>
-                    <Text style={styles.promptLabel}>
+                    <Text style={[styles.promptLabel, { color: colors.secondaryText }]}>
                       Describe the recipe you want (e.g., ingredients, cuisine,
                       type):
                     </Text>
                     <TextInput
-                      style={styles.promptInput}
+                      style={[styles.promptInput, { 
+                        borderColor: colors.border, 
+                        color: colors.text, 
+                        backgroundColor: colors.background 
+                      }]}
                       value={recipePrompt}
                       onChangeText={setRecipePrompt}
                       placeholder="E.g., A healthy sattvic breakfast using oats and fruits..."
                       multiline
                       numberOfLines={4}
                       textAlignVertical="top"
-                      placeholderTextColor="#A0AEC0"
+                      placeholderTextColor={colors.secondaryText}
                     />
 
                     {error && (
-                      <View style={styles.errorContainer}>
-                        <Text style={styles.errorText}>{error}</Text>
+                      <View style={[styles.errorContainer, { backgroundColor: `${colors.error}20` }]}>
+                        <Text style={[styles.errorText, { color: colors.error }]}>{error}</Text>
                       </View>
                     )}
 
@@ -608,6 +528,7 @@ export default function FoodPage() {
                       disabled={isGenerating || !recipePrompt.trim()}
                       style={[
                         styles.generateButton,
+                        { backgroundColor: colors.secondary },
                         (isGenerating || !recipePrompt.trim()) &&
                           styles.generateButtonDisabled,
                       ]}
@@ -630,12 +551,52 @@ export default function FoodPage() {
               </View>
             </Modal>
           )}
+          
+          {/* Recipe Details Modal */}
+          {showRecipeModal && selectedRecipe && (
+            <Modal
+              visible={showRecipeModal}
+              transparent
+              animationType="slide"
+              onRequestClose={() => setShowRecipeModal(false)}
+            >
+              <View style={styles.modalOverlay}>
+                <View style={[styles.recipeModal, { backgroundColor: colors.card }]}>
+                  <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
+                    <Text style={[styles.modalTitle, { color: colors.text }]}>{selectedRecipe.name}</Text>
+                    <TouchableOpacity onPress={() => setShowRecipeModal(false)}>
+                      <X size={24} color={colors.secondaryText} />
+                    </TouchableOpacity>
+                  </View>
+                  <ScrollView>
+                    <Image source={{ uri: selectedRecipe.imageUrl }} style={styles.modalImage} />
+                    <View style={styles.recipeDetails}>
+                      <View style={styles.section}>
+                        <Text style={[styles.sectionTitle, { color: colors.text }]}>Ingredients</Text>
+                        {selectedRecipe.ingredients.map((item, index) => (
+                          <Text key={index} style={[styles.listItem, { color: colors.secondaryText }]}>• {item}</Text>
+                        ))}
+                      </View>
+                      <View style={styles.section}>
+                        <Text style={[styles.sectionTitle, { color: colors.text }]}>Instructions</Text>
+                        {selectedRecipe.instructions.map((item, index) => (
+                          <Text key={index} style={[styles.listItem, { color: colors.secondaryText }]}>{index + 1}. {item}</Text>
+                        ))}
+                      </View>
+                    </View>
+                  </ScrollView>
+                </View>
+              </View>
+            </Modal>
+          )}
+
         </View>
       </ScrollView>
     </PullToRefreshWrapper>
   );
 }
 
+// The StyleSheet remains completely unchanged.
 const styles = StyleSheet.create({
   programImageContainer: {
     height: 180,
@@ -895,7 +856,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   modalContent: {
-    flex: 1,
+    // flex: 1, // Removed to allow ScrollView to manage its own size
   },
   modalImage: {
     width: '100%',
