@@ -717,9 +717,11 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+    gap: 12,
   },
   menuButton: {
     padding: 4,
+    
   },
   dateContainer: {
     flex: 1,
