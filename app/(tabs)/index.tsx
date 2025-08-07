@@ -23,6 +23,7 @@ import {
   TreePine,
   Calendar,
   Church as Temple,
+  Bell,
 } from 'lucide-react-native';
 import { ShoppingBag } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
@@ -188,6 +189,7 @@ export default function HomeScreen() {
   const [showNotificationModal, setShowNotificationModal] = useState(false);
   const [showShopModal, setShowShopModal] = useState(false);
   const [searchFilters, setSearchFilters] = useState<string[]>([]);
+  const [hasUnreadNotifications, setHasUnreadNotifications] = useState(true);
   const dispatch = useDispatch();
 
   const handleLogout = async () => {
@@ -319,6 +321,13 @@ export default function HomeScreen() {
     console.log('Filter button clicked');
   };
 
+  const handleNotificationPress = () => {
+    triggerHaptic();
+    setShowNotificationModal(true);
+    // When notifications are viewed, we can consider them as "read"
+    setHasUnreadNotifications(false);
+  };
+
   // const [panchangData, setPanchangData] = useState<any>(null);
   // const token = useSelector((state: RootState) => state.auth.token);
   // console.log(token, 'userData');
@@ -417,17 +426,29 @@ export default function HomeScreen() {
             </View>
 
             <View style={styles.headerActions}>
-              {/* <TouchableOpacity style={styles.headerButton} onPress={handleNotificationPress}>
-            <Bell size={20} color={colors.text} />
-            {hasUnreadNotifications && <View style={[styles.notificationBadge, { backgroundColor: colors.error }]} />}
-          </TouchableOpacity> */}
+              <TouchableOpacity
+                style={styles.headerButton}
+                onPress={handleNotificationPress}
+              >
+                <Bell size={20} color={colors.text} />
+                {hasUnreadNotifications && (
+                  <View
+                    style={[
+                      styles.notificationBadge,
+                      { backgroundColor: colors.error },
+                    ]}
+                  />
+                )}
+              </TouchableOpacity>
               <TouchableOpacity
                 style={styles.profileButton}
                 onPress={handleProfilePress}
               >
                 <Image
                   source={{
-                    uri: user?.avatar ||'https://i.ibb.co/Z6kSGkyg/user-svgrepo-com.png'
+                    uri:
+                      user?.avatar ||
+                      'https://i.ibb.co/Z6kSGkyg/user-svgrepo-com.png',
                   }}
                   style={styles.profileImage}
                 />

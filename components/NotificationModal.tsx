@@ -9,8 +9,14 @@ import {
   Image,
   Platform
 } from 'react-native';
-import { X, Bell, Calendar, Clock, ChevronRight } from 'lucide-react-native';
+import { X, Bell, Calendar, Clock, ChevronRight, Phone, Locate, LocateIcon, LocateFixed } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
+
+
+interface NotificationModalProps {
+  isVisible: boolean;
+  onClose: () => void;
+}
 
 interface Notification {
   id: string;
@@ -19,69 +25,109 @@ interface Notification {
   time: string;
   date: string;
   read: boolean;
-  image?: string;
-  type: 'event' | 'update' | 'reminder' | 'alert';
-}
-
-interface NotificationModalProps {
-  isVisible: boolean;
-  onClose: () => void;
+  name: string;
+  phoneNumber?: string;
+  location?: string;
 }
 
 const MOCK_NOTIFICATIONS: Notification[] = [
   {
     id: '1',
-    title: 'New Vedic Course Available',
-    message: 'Introduction to Bhagavad Gita course is now available. Enroll today!',
-    time: '10:30 AM',
+    title: 'Consultation Reminder',
+    message: 'Your Jyotish consultation is scheduled in 1 hour. Please be ready.',
+    time: '4:00 PM',
     date: 'Today',
     read: false,
-    image: 'https://images.pexels.com/photos/1051838/pexels-photo-1051838.jpeg?auto=compress&cs=tinysrgb&w=100',
-    type: 'update'
+    name: 'Pandit Ravi Shankar',
+    phoneNumber: '+91 12345 67890',
   },
   {
     id: '2',
-    title: 'Temple Festival Reminder',
-    message: 'The annual temple festival begins tomorrow. Don\'t miss the opening ceremony!',
-    time: '2:45 PM',
-    date: 'Yesterday',
-    read: true,
-    image: 'https://images.pexels.com/photos/3280130/pexels-photo-3280130.jpeg?auto=compress&cs=tinysrgb&w=100',
-    type: 'event'
+    title: 'Puja Booking Confirmed',
+    message: 'Your Satyanarayan Puja has been successfully booked for this Friday.',
+    time: '11:15 AM',
+    date: 'Today',
+    read: false,
+    name: 'Iskcon Temple',
+    location: 'Juhu, Mumbai',
   },
   {
     id: '3',
-    title: 'Meditation Session',
-    message: 'Your scheduled meditation session starts in 30 minutes.',
-    time: '5:15 PM',
+    title: 'Live Ganga Aarti',
+    message: 'The evening Ganga Aarti from Rishikesh is starting now. Tap to watch live.',
+    time: '6:45 PM',
     date: 'Yesterday',
     read: true,
-    type: 'reminder'
+    name: 'Vedic Stream',
   },
   {
     id: '4',
-    title: 'Donation Received',
-    message: 'Thank you for your donation to the Temple Restoration project!',
-    time: '11:20 AM',
-    date: '2 days ago',
-    read: true,
-    type: 'alert'
+    title: 'New Course: "Yoga Sutras"',
+    message: 'A new in-depth course on Patanjali\'s Yoga Sutras has been added. Enroll now!',
+    time: '9:00 AM',
+    date: 'Yesterday',
+    read: false,
+    name: 'Vedic University',
   },
   {
     id: '5',
-    title: 'New Article Published',
-    message: 'Read our latest article on "The Significance of Mantras in Daily Life"',
-    time: '9:00 AM',
+    title: 'Thank You for Your Donation',
+    message: 'We have received your generous contribution for the Gaushala Seva. May Krishna bless you.',
+    time: '1:20 PM',
+    date: '2 days ago',
+    read: true,
+    name: 'Gopal Gaushala Trust',
+  },
+  {
+    id: '6',
+    title: 'Vastu Tip of the Day',
+    message: 'Placing a Tulsi plant in the North-East corner of your home brings positivity. Learn more.',
+    time: '8:00 AM',
+    date: '2 days ago',
+    read: true,
+    name: 'Vastu Insights',
+  },
+  {
+    id: '7',
+    title: 'Community Satsang Invitation',
+    message: 'Join us for a special kirtan and satsang evening this Saturday.',
+    time: '5:30 PM',
     date: '3 days ago',
     read: true,
-    image: 'https://images.pexels.com/photos/1181772/pexels-photo-1181772.jpeg?auto=compress&cs=tinysrgb&w=100',
-    type: 'update'
-  }
+    name: 'Hari Om Community Hall',
+    location: 'Koramangala, Bengaluru',
+  },
+  {
+    id: '8',
+    title: 'Your Jyotish Report is Ready',
+    message: 'Your detailed Career Guidance reading has been generated and is ready to view.',
+    time: '10:05 AM',
+    date: '4 days ago',
+    read: true,
+    name: 'Jyotish AI Assistant',
+  },
+  {
+    id: '9',
+    title: 'New Recipe: Sattvic Paneer',
+    message: 'A delicious and easy-to-make Sattvic Paneer recipe is now available in the food section.',
+    time: '12:00 PM',
+    date: '5 days ago',
+    read: true,
+    name: 'Vedic Recipes',
+  },
+  {
+    id: '10',
+    title: 'Account Security Update',
+    message: 'Your password was successfully updated. If this wasn\'t you, please contact support immediately.',
+    time: '3:45 PM',
+    date: '5 days ago',
+    read: true,
+    name: 'System Alert',
+  },
 ];
-
 const NotificationModal: React.FC<NotificationModalProps> = ({ isVisible, onClose }) => {
   const [notifications, setNotifications] = useState<Notification[]>(MOCK_NOTIFICATIONS);
-  const [selectedTab, setSelectedTab] = useState<'all' | 'unread'>('all');
+  // const [selectedTab, setSelectedTab] = useState<'all' | 'unread'>('all');
 
   const triggerHaptic = () => {
     if (Platform.OS !== 'web') {
@@ -110,21 +156,21 @@ const NotificationModal: React.FC<NotificationModalProps> = ({ isVisible, onClos
     setNotifications([]);
   };
 
-  const filteredNotifications = selectedTab === 'all' 
-    ? notifications 
-    : notifications.filter(notif => !notif.read);
+  // const filteredNotifications = selectedTab === 'all' 
+  //   ? notifications 
+  //   : notifications.filter(notif => !notif.read);
 
   const unreadCount = notifications.filter(notif => !notif.read).length;
 
-  const getNotificationTypeColor = (type: Notification['type']) => {
-    switch (type) {
-      case 'event': return '#3B82F6';
-      case 'update': return '#10B981';
-      case 'reminder': return '#F59E0B';
-      case 'alert': return '#EF4444';
-      default: return '#718096';
-    }
-  };
+  // const getNotificationTypeColor = (type: Notification['type']) => {
+  //   switch (type) {
+  //     case 'event': return '#3B82F6';
+  //     case 'update': return '#10B981';
+  //     case 'reminder': return '#F59E0B';
+  //     case 'alert': return '#EF4444';
+  //     default: return '#718096';
+  //   }
+  // };
 
   return (
     <Modal
@@ -150,7 +196,7 @@ const NotificationModal: React.FC<NotificationModalProps> = ({ isVisible, onClos
             </TouchableOpacity>
           </View>
 
-          <View style={styles.tabsContainer}>
+          {/* <View style={styles.tabsContainer}>
             <TouchableOpacity
               style={[
                 styles.tab,
@@ -190,7 +236,7 @@ const NotificationModal: React.FC<NotificationModalProps> = ({ isVisible, onClos
                 </View>
               )}
             </TouchableOpacity>
-          </View>
+          </View> */}
 
           <View style={styles.actionsContainer}>
             <TouchableOpacity 
@@ -219,9 +265,9 @@ const NotificationModal: React.FC<NotificationModalProps> = ({ isVisible, onClos
             </TouchableOpacity>
           </View>
 
-          {filteredNotifications.length > 0 ? (
+          {MOCK_NOTIFICATIONS.length > 0 ? (
             <ScrollView style={styles.notificationsContainer}>
-              {filteredNotifications.map((notification) => (
+              {MOCK_NOTIFICATIONS.map((notification) => (
                 <TouchableOpacity
                   key={notification.id}
                   style={[
@@ -232,33 +278,24 @@ const NotificationModal: React.FC<NotificationModalProps> = ({ isVisible, onClos
                 >
                   <View style={[
                     styles.notificationTypeIndicator,
-                    { backgroundColor: getNotificationTypeColor(notification.type) }
+                   
                   ]} />
                   
-                  {notification.image ? (
-                    <Image 
-                      source={{ uri: notification.image }} 
-                      style={styles.notificationImage} 
-                    />
-                  ) : (
-                    <View style={[
-                      styles.notificationIconContainer,
-                      { backgroundColor: getNotificationTypeColor(notification.type) + '20' }
-                    ]}>
-                      <Bell size={20} color={getNotificationTypeColor(notification.type)} />
-                    </View>
-                  )}
                   
                   <View style={styles.notificationContent}>
                     <Text style={[
                       styles.notificationTitle,
                       !notification.read && styles.unreadNotificationTitle
                     ]}>
-                      {notification.title}
-                    </Text>
-                    <Text style={styles.notificationMessage} numberOfLines={2}>
                       {notification.message}
                     </Text>
+                    <Text style={styles.notificationMessage} numberOfLines={2}>
+                      {notification.name}
+                    </Text>
+                     <View style={styles.notificationTimeContainer}>
+                        <LocateFixed size={14} color="#718096" />
+                        <Text style={styles.notificationMessage}>{notification.location}</Text>
+                      </View>
                     <View style={styles.notificationMeta}>
                       <View style={styles.notificationTimeContainer}>
                         <Calendar size={12} color="#718096" />
@@ -267,6 +304,11 @@ const NotificationModal: React.FC<NotificationModalProps> = ({ isVisible, onClos
                       <View style={styles.notificationTimeContainer}>
                         <Clock size={12} color="#718096" />
                         <Text style={styles.notificationTime}>{notification.time}</Text>
+                      </View>
+                      
+                      <View style={styles.notificationTimeContainer}>
+                        <Phone size={12} color="#718096" />
+                        <Text style={styles.notificationTime}>{notification.phoneNumber}</Text>
                       </View>
                     </View>
                   </View>
@@ -280,9 +322,7 @@ const NotificationModal: React.FC<NotificationModalProps> = ({ isVisible, onClos
               <Bell size={48} color="#CBD5E0" />
               <Text style={styles.emptyTitle}>No notifications</Text>
               <Text style={styles.emptyMessage}>
-                {selectedTab === 'all' 
-                  ? "You don't have any notifications yet." 
-                  : "You don't have any unread notifications."}
+              "You don't have any notifications yet." 
               </Text>
             </View>
           )}
@@ -306,6 +346,7 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 500,
     maxHeight: '90%',
+    height: '100%',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.25,
