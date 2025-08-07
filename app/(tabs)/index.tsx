@@ -618,7 +618,7 @@ export default function HomeScreen() {
                         </Text>
 
                         <View style={styles.projectProgress}>
-                          <View style={styles.progressInfo}>
+                          {/* <View style={styles.progressInfo}>
                             <Text style={styles.progressText}>
                               Raised: ৳
                               {project.collectedAmount.toLocaleString()}
@@ -639,7 +639,7 @@ export default function HomeScreen() {
                                 },
                               ]}
                             />
-                          </View>
+                          </View> */}
                           <Text style={styles.supportersText}>
                             {project.supporters} supporters
                           </Text>

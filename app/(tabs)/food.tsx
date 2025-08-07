@@ -443,7 +443,7 @@ export default function FoodPage() {
                       <YoutubePlayer
                         height={200}
                         play={playingCardIndex === index}
-                        videoId={getYouTubeVideoId(recipe?.videoUrl) || ''}
+                        videoId={getYouTubeVideoId(recipe?.videoUrl ?? '')}
                         onChangeState={(state: any) => {
                           if (state === 'ended') setPlayingCardIndex(null);
                         }}
@@ -573,13 +573,13 @@ export default function FoodPage() {
                     <View style={styles.recipeDetails}>
                       <View style={styles.section}>
                         <Text style={[styles.sectionTitle, { color: colors.text }]}>Ingredients</Text>
-                        {selectedRecipe.ingredients.map((item, index) => (
+                        {selectedRecipe?.ingredients?.map((item, index) => (
                           <Text key={index} style={[styles.listItem, { color: colors.secondaryText }]}>• {item}</Text>
                         ))}
                       </View>
                       <View style={styles.section}>
                         <Text style={[styles.sectionTitle, { color: colors.text }]}>Instructions</Text>
-                        {selectedRecipe.instructions.map((item, index) => (
+                        {selectedRecipe?.instructions?.map((item, index) => (
                           <Text key={index} style={[styles.listItem, { color: colors.secondaryText }]}>{index + 1}. {item}</Text>
                         ))}
                       </View>

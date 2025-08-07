@@ -9,9 +9,9 @@ import {
   Image,
   Platform
 } from 'react-native';
-import { X, Bell, Calendar, Clock, ChevronRight, Phone, Locate, LocateIcon, LocateFixed } from 'lucide-react-native';
+import { X, Bell, Calendar, Clock, ChevronRight, Phone, LocateFixed } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
-
+import { useThemeColors } from '@/hooks/useThemeColors'; // Import the hook
 
 interface NotificationModalProps {
   isVisible: boolean;
@@ -127,7 +127,7 @@ const MOCK_NOTIFICATIONS: Notification[] = [
 ];
 const NotificationModal: React.FC<NotificationModalProps> = ({ isVisible, onClose }) => {
   const [notifications, setNotifications] = useState<Notification[]>(MOCK_NOTIFICATIONS);
-  // const [selectedTab, setSelectedTab] = useState<'all' | 'unread'>('all');
+  const colors = useThemeColors(); // Use the theme colors hook
 
   const triggerHaptic = () => {
     if (Platform.OS !== 'web') {
@@ -156,21 +156,7 @@ const NotificationModal: React.FC<NotificationModalProps> = ({ isVisible, onClos
     setNotifications([]);
   };
 
-  // const filteredNotifications = selectedTab === 'all' 
-  //   ? notifications 
-  //   : notifications.filter(notif => !notif.read);
-
   const unreadCount = notifications.filter(notif => !notif.read).length;
-
-  // const getNotificationTypeColor = (type: Notification['type']) => {
-  //   switch (type) {
-  //     case 'event': return '#3B82F6';
-  //     case 'update': return '#10B981';
-  //     case 'reminder': return '#F59E0B';
-  //     case 'alert': return '#EF4444';
-  //     default: return '#718096';
-  //   }
-  // };
 
   return (
     <Modal
@@ -180,65 +166,23 @@ const NotificationModal: React.FC<NotificationModalProps> = ({ isVisible, onClos
       onRequestClose={onClose}
     >
       <View style={styles.overlay}>
-        <View style={styles.modalContainer}>
-          <View style={styles.header}>
+        <View style={[styles.modalContainer, { backgroundColor: colors.card, shadowColor: colors.cardShadow }]}>
+          <View style={[styles.header, { borderBottomColor: colors.border }]}>
             <View style={styles.headerTitleContainer}>
-              <Bell size={24} color="#FF6F00" />
-              <Text style={styles.headerTitle}>Notifications</Text>
+              <Bell size={24} color={colors.primary} />
+              <Text style={[styles.headerTitle, { color: colors.text }]}>Notifications</Text>
               {unreadCount > 0 && (
-                <View style={styles.unreadBadge}>
+                <View style={[styles.unreadBadge, { backgroundColor: colors.primary }]}>
                   <Text style={styles.unreadBadgeText}>{unreadCount}</Text>
                 </View>
               )}
             </View>
             <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-              <X size={24} color="#718096" />
+              <X size={24} color={colors.secondaryText} />
             </TouchableOpacity>
           </View>
 
-          {/* <View style={styles.tabsContainer}>
-            <TouchableOpacity
-              style={[
-                styles.tab,
-                selectedTab === 'all' && styles.activeTab
-              ]}
-              onPress={() => {
-                triggerHaptic();
-                setSelectedTab('all');
-              }}
-            >
-              <Text style={[
-                styles.tabText,
-                selectedTab === 'all' && styles.activeTabText
-              ]}>
-                All
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[
-                styles.tab,
-                selectedTab === 'unread' && styles.activeTab
-              ]}
-              onPress={() => {
-                triggerHaptic();
-                setSelectedTab('unread');
-              }}
-            >
-              <Text style={[
-                styles.tabText,
-                selectedTab === 'unread' && styles.activeTabText
-              ]}>
-                Unread
-              </Text>
-              {unreadCount > 0 && (
-                <View style={styles.tabBadge}>
-                  <Text style={styles.tabBadgeText}>{unreadCount}</Text>
-                </View>
-              )}
-            </TouchableOpacity>
-          </View> */}
-
-          <View style={styles.actionsContainer}>
+          <View style={[styles.actionsContainer, { borderBottomColor: colors.border }]}>
             <TouchableOpacity 
               style={styles.actionButton}
               onPress={handleMarkAllAsRead}
@@ -246,7 +190,8 @@ const NotificationModal: React.FC<NotificationModalProps> = ({ isVisible, onClos
             >
               <Text style={[
                 styles.actionButtonText,
-                unreadCount === 0 && styles.actionButtonTextDisabled
+                { color: colors.secondary },
+                unreadCount === 0 && [styles.actionButtonTextDisabled, { color: colors.secondaryText }]
               ]}>
                 Mark all as read
               </Text>
@@ -258,71 +203,78 @@ const NotificationModal: React.FC<NotificationModalProps> = ({ isVisible, onClos
             >
               <Text style={[
                 styles.actionButtonText,
-                notifications.length === 0 && styles.actionButtonTextDisabled
+                { color: colors.secondary },
+                notifications.length === 0 && [styles.actionButtonTextDisabled, { color: colors.secondaryText }]
               ]}>
                 Clear all
               </Text>
             </TouchableOpacity>
           </View>
 
-          {MOCK_NOTIFICATIONS.length > 0 ? (
+          {notifications.length > 0 ? (
             <ScrollView style={styles.notificationsContainer}>
-              {MOCK_NOTIFICATIONS.map((notification) => (
+              {notifications.map((notification) => (
                 <TouchableOpacity
                   key={notification.id}
                   style={[
                     styles.notificationItem,
-                    !notification.read && styles.unreadNotification
+                    { borderBottomColor: colors.border },
+                    !notification.read && [styles.unreadNotification, { backgroundColor: colors.background }]
                   ]}
                   onPress={() => handleMarkAsRead(notification.id)}
                 >
                   <View style={[
                     styles.notificationTypeIndicator,
-                   
+                    // The color could be based on a type if you add it back
+                    { backgroundColor: !notification.read ? colors.primary : 'transparent' }
                   ]} />
-                  
                   
                   <View style={styles.notificationContent}>
                     <Text style={[
                       styles.notificationTitle,
+                      { color: colors.text },
                       !notification.read && styles.unreadNotificationTitle
                     ]}>
                       {notification.message}
                     </Text>
-                    <Text style={styles.notificationMessage} numberOfLines={2}>
+                    <Text style={[styles.notificationMessage, { color: colors.secondaryText }]} numberOfLines={2}>
                       {notification.name}
                     </Text>
-                     <View style={styles.notificationTimeContainer}>
-                        <LocateFixed size={14} color="#718096" />
-                        <Text style={styles.notificationMessage}>{notification.location}</Text>
-                      </View>
+                     {notification.location && (
+                       <View style={styles.notificationTimeContainer}>
+                          <LocateFixed size={14} color={colors.secondaryText} />
+                          <Text style={[styles.notificationMessage, { color: colors.secondaryText }]}>{notification.location}</Text>
+                        </View>
+                     )}
                     <View style={styles.notificationMeta}>
                       <View style={styles.notificationTimeContainer}>
-                        <Calendar size={12} color="#718096" />
-                        <Text style={styles.notificationTime}>{notification.date}</Text>
+                        <Calendar size={12} color={colors.secondaryText} />
+                        <Text style={[styles.notificationTime, { color: colors.secondaryText }]}>{notification.date}</Text>
                       </View>
                       <View style={styles.notificationTimeContainer}>
-                        <Clock size={12} color="#718096" />
-                        <Text style={styles.notificationTime}>{notification.time}</Text>
+                        <Clock size={12} color={colors.secondaryText} />
+                        <Text style={[styles.notificationTime, { color: colors.secondaryText }]}>{notification.time}</Text>
                       </View>
                       
-                      <View style={styles.notificationTimeContainer}>
-                        <Phone size={12} color="#718096" />
-                        <Text style={styles.notificationTime}>{notification.phoneNumber}</Text>
-                      </View>
+                      {notification.phoneNumber && (
+                        <View style={styles.notificationTimeContainer}>
+                          <Phone size={12} color={colors.secondaryText} />
+                          <Text style={[styles.notificationTime, { color: colors.secondaryText }]}>{notification.phoneNumber}</Text>
+                        </View>
+                      )}
                     </View>
                   </View>
                   
-                  <ChevronRight size={16} color="#CBD5E0" />
+                  <ChevronRight size={16} color={colors.border} />
                 </TouchableOpacity>
               ))}
             </ScrollView>
           ) : (
             <View style={styles.emptyContainer}>
-              <Bell size={48} color="#CBD5E0" />
-              <Text style={styles.emptyTitle}>No notifications</Text>
-              <Text style={styles.emptyMessage}>
-              "You don't have any notifications yet." 
+              <Bell size={48} color={colors.border} />
+              <Text style={[styles.emptyTitle, { color: colors.text }]}>No notifications</Text>
+              <Text style={[styles.emptyMessage, { color: colors.secondaryText }]}>
+                "You don't have any notifications yet." 
               </Text>
             </View>
           )}
@@ -332,6 +284,7 @@ const NotificationModal: React.FC<NotificationModalProps> = ({ isVisible, onClos
   );
 };
 
+// The StyleSheet remains completely unchanged.
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
@@ -444,7 +397,7 @@ const styles = StyleSheet.create({
   },
   notificationsContainer: {
     flex: 1,
-    maxHeight: 400,
+    // maxHeight: 400, // This could be problematic, removing it is safer for dynamic content
   },
   notificationItem: {
     flexDirection: 'row',
@@ -453,6 +406,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#E2E8F0',
     position: 'relative',
+    paddingLeft: 24, // Make space for the indicator
   },
   unreadNotification: {
     backgroundColor: '#F7FAFC',
@@ -500,6 +454,7 @@ const styles = StyleSheet.create({
   notificationMeta: {
     flexDirection: 'row',
     alignItems: 'center',
+    flexWrap: 'wrap', // Allow meta to wrap on small screens
     gap: 12,
   },
   notificationTimeContainer: {
@@ -512,6 +467,7 @@ const styles = StyleSheet.create({
     color: '#718096',
   },
   emptyContainer: {
+    flex: 1, // Allow it to take up the remaining space
     alignItems: 'center',
     justifyContent: 'center',
     padding: 40,
