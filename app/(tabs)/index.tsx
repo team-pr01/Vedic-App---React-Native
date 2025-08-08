@@ -43,6 +43,8 @@ import { useGetAllContentsQuery } from '@/redux/features/Content/contentApi';
 import { PullToRefreshWrapper } from '@/components/Reusable/PullToRefreshWrapper/PullToRefreshWrapper';
 import { useGetAllBooksQuery } from '@/redux/features/Book/bookApi';
 import { useGetMeQuery } from '@/redux/features/Auth/authApi';
+import LoadingComponent from '@/components/LoadingComponent/LoadingComponent';
+import { useGetAllDonationProgramsQuery } from '@/redux/features/DonationPrograms/donationProgramApi';
 
 export type TContent = {
   _id: string;
@@ -163,6 +165,13 @@ export default function HomeScreen() {
     isLoading: isBooksLoading,
     refetch: refetchBookData,
   } = useGetAllBooksQuery({});
+  const {
+    data: ProgramData,
+    isLoading: isProgramLoading,
+    refetch: refetchProgramData,
+  } = useGetAllDonationProgramsQuery({});
+  console.log(ProgramData, 'ProgramData');
+  console.log(isProgramLoading, 'loading ProgramData');
 
   const [refreshing, setRefreshing] = useState(false);
 
@@ -583,7 +592,7 @@ export default function HomeScreen() {
               <View style={styles.sectionHeader}>
                 <Text
                   style={[styles.sectionTitle, { color: colors.primary }]}
-                >{`Our Project"  ${user?.name}`}</Text>
+                >{"Our Project"}</Text>
                 <Text
                   style={[
                     styles.sectionSubtitle,
@@ -598,27 +607,37 @@ export default function HomeScreen() {
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={styles.projectsContent}
               >
-                {projects.map((project) => (
-                  <View key={project.id} style={styles.projectCard}>
-                    <Image
-                      source={{ uri: project.image }}
-                      style={styles.projectImage}
-                    />
-                    <LinearGradient
-                      colors={['transparent', 'rgba(0,0,0,0.8)']}
-                      style={styles.projectOverlay}
-                    >
-                      <View style={styles.projectContent}>
-                        <Text style={styles.projectTitle}>{project.title}</Text>
-                        <Text style={styles.projectSubtitle}>
-                          {project.subtitle}
-                        </Text>
-                        <Text style={styles.projectDescription}>
-                          {project.description}{' '}
-                        </Text>
+                {isProgramLoading ? (
+                  <LoadingComponent
+                    loading="Programs "
+                    color={colors.primary}
+                  />
+                ) : (ProgramData?.data?.length || 0) === 0 ? <Text style={{ color: colors.text }}>
+                  Projects are coming soon! Stay tuned.
+                </Text>:
+                  ProgramData?.data?.map((project: any) => (
+                    <View key={project.id} style={styles.projectCard}>
+                      <Image
+                        source={{ uri: project.image }}
+                        style={styles.projectImage}
+                      />
+                      <LinearGradient
+                        colors={['transparent', 'rgba(0,0,0,0.8)']}
+                        style={styles.projectOverlay}
+                      >
+                        <View style={styles.projectContent}>
+                          <Text style={styles.projectTitle}>
+                            {project.title}
+                          </Text>
+                          <Text style={styles.projectSubtitle}>
+                            {project.subtitle}
+                          </Text>
+                          <Text style={styles.projectDescription}>
+                            {project.description}{' '}
+                          </Text>
 
-                        <View style={styles.projectProgress}>
-                          {/* <View style={styles.progressInfo}>
+                          <View style={styles.projectProgress}>
+                            {/* <View style={styles.progressInfo}>
                             <Text style={styles.progressText}>
                               Raised: ৳
                               {project.collectedAmount.toLocaleString()}
@@ -640,22 +659,23 @@ export default function HomeScreen() {
                               ]}
                             />
                           </View> */}
-                          <Text style={styles.supportersText}>
-                            {project.supporters} supporters
-                          </Text>
-                        </View>
+                            <Text style={styles.supportersText}>
+                              {project.supporters} supporters
+                            </Text>
+                          </View>
 
-                        <TouchableOpacity
-                          style={styles.donateButton}
-                          onPress={() => handleProjectDonate(project)}
-                        >
-                          <Heart size={16} color="#FFFFFF" fill="#FFFFFF" />
-                          <Text style={styles.donateText}>Donate Now</Text>
-                        </TouchableOpacity>
-                      </View>
-                    </LinearGradient>
-                  </View>
-                ))}
+                          {/* <TouchableOpacity
+                            style={styles.donateButton}
+                            onPress={() => handleProjectDonate(project)}
+                          >
+                            <Heart size={16} color="#FFFFFF" fill="#FFFFFF" />
+                            <Text style={styles.donateText}>Donate Now</Text>
+                          </TouchableOpacity> */}
+                        </View>
+                      </LinearGradient>
+                    </View>
+                  )
+                )}
               </ScrollView>
             </View>
 
@@ -721,7 +741,6 @@ const styles = StyleSheet.create({
   },
   menuButton: {
     padding: 4,
-    
   },
   dateContainer: {
     flex: 1,
