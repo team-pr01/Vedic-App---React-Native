@@ -95,6 +95,14 @@ const authApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ['users'],
     }),
+
+    getAllPushNotificationForUser: builder.query({
+      query: (userId) => ({
+        method: 'GET',
+        url: `/pushNotification/${userId}`,
+      }),
+      providesTags: ['users'],
+    }),
   }),
 });
 
@@ -109,5 +117,6 @@ export const {
   useDeleteUserMutation,
   useForgetPasswordMutation,
   useResetPasswordMutation,
-  useSavePushNotificationTokenMutation
+  useSavePushNotificationTokenMutation,
+  useGetAllPushNotificationForUserQuery,
 } = authApi;

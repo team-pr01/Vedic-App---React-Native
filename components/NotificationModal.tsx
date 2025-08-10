@@ -6,157 +6,57 @@ import {
   TouchableOpacity,
   Modal,
   ScrollView,
-  Image,
-  Platform
+  Platform,
+  Linking,
 } from 'react-native';
-import { X, Bell, Calendar, Clock, ChevronRight, Phone, LocateFixed } from 'lucide-react-native';
+import {
+  X,
+  Bell,
+  Calendar,
+  Clock,
+  ChevronRight,
+  Phone,
+  LocateFixed,
+  CheckCircle,
+  XCircle,
+  Loader2,
+  User,
+} from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { useThemeColors } from '@/hooks/useThemeColors'; // Import the hook
+import { Circle } from 'react-native-svg';
+
+export type TPushNotification = {
+  _id: string;
+  user: string;
+  title: string;
+  message: string;
+  data?: any;
+  read: boolean;
+  deliveryStatus: 'pending' | 'sent' | 'failed';
+  expoTicket?: any;
+  createdAt: Date;
+  updatedAt: Date;
+};
 
 interface NotificationModalProps {
   isVisible: boolean;
   onClose: () => void;
+  data: TPushNotification[];
 }
-
-interface Notification {
-  id: string;
-  title: string;
-  message: string;
-  time: string;
-  date: string;
-  read: boolean;
-  name: string;
-  phoneNumber?: string;
-  location?: string;
-}
-
-const MOCK_NOTIFICATIONS: Notification[] = [
-  {
-    id: '1',
-    title: 'Consultation Reminder',
-    message: 'Your Jyotish consultation is scheduled in 1 hour. Please be ready.',
-    time: '4:00 PM',
-    date: 'Today',
-    read: false,
-    name: 'Pandit Ravi Shankar',
-    phoneNumber: '+91 12345 67890',
-  },
-  {
-    id: '2',
-    title: 'Puja Booking Confirmed',
-    message: 'Your Satyanarayan Puja has been successfully booked for this Friday.',
-    time: '11:15 AM',
-    date: 'Today',
-    read: false,
-    name: 'Iskcon Temple',
-    location: 'Juhu, Mumbai',
-  },
-  {
-    id: '3',
-    title: 'Live Ganga Aarti',
-    message: 'The evening Ganga Aarti from Rishikesh is starting now. Tap to watch live.',
-    time: '6:45 PM',
-    date: 'Yesterday',
-    read: true,
-    name: 'Vedic Stream',
-  },
-  {
-    id: '4',
-    title: 'New Course: "Yoga Sutras"',
-    message: 'A new in-depth course on Patanjali\'s Yoga Sutras has been added. Enroll now!',
-    time: '9:00 AM',
-    date: 'Yesterday',
-    read: false,
-    name: 'Vedic University',
-  },
-  {
-    id: '5',
-    title: 'Thank You for Your Donation',
-    message: 'We have received your generous contribution for the Gaushala Seva. May Krishna bless you.',
-    time: '1:20 PM',
-    date: '2 days ago',
-    read: true,
-    name: 'Gopal Gaushala Trust',
-  },
-  {
-    id: '6',
-    title: 'Vastu Tip of the Day',
-    message: 'Placing a Tulsi plant in the North-East corner of your home brings positivity. Learn more.',
-    time: '8:00 AM',
-    date: '2 days ago',
-    read: true,
-    name: 'Vastu Insights',
-  },
-  {
-    id: '7',
-    title: 'Community Satsang Invitation',
-    message: 'Join us for a special kirtan and satsang evening this Saturday.',
-    time: '5:30 PM',
-    date: '3 days ago',
-    read: true,
-    name: 'Hari Om Community Hall',
-    location: 'Koramangala, Bengaluru',
-  },
-  {
-    id: '8',
-    title: 'Your Jyotish Report is Ready',
-    message: 'Your detailed Career Guidance reading has been generated and is ready to view.',
-    time: '10:05 AM',
-    date: '4 days ago',
-    read: true,
-    name: 'Jyotish AI Assistant',
-  },
-  {
-    id: '9',
-    title: 'New Recipe: Sattvic Paneer',
-    message: 'A delicious and easy-to-make Sattvic Paneer recipe is now available in the food section.',
-    time: '12:00 PM',
-    date: '5 days ago',
-    read: true,
-    name: 'Vedic Recipes',
-  },
-  {
-    id: '10',
-    title: 'Account Security Update',
-    message: 'Your password was successfully updated. If this wasn\'t you, please contact support immediately.',
-    time: '3:45 PM',
-    date: '5 days ago',
-    read: true,
-    name: 'System Alert',
-  },
-];
-const NotificationModal: React.FC<NotificationModalProps> = ({ isVisible, onClose }) => {
-  const [notifications, setNotifications] = useState<Notification[]>(MOCK_NOTIFICATIONS);
-  const colors = useThemeColors(); // Use the theme colors hook
+const NotificationModal: React.FC<NotificationModalProps> = ({
+  isVisible,
+  onClose,
+  data,
+}) => {
+  const colors = useThemeColors();
+  console.log(data, 'text');
 
   const triggerHaptic = () => {
     if (Platform.OS !== 'web') {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
   };
-
-  const handleMarkAsRead = (id: string) => {
-    triggerHaptic();
-    setNotifications(prev => 
-      prev.map(notif => 
-        notif.id === id ? { ...notif, read: true } : notif
-      )
-    );
-  };
-
-  const handleMarkAllAsRead = () => {
-    triggerHaptic();
-    setNotifications(prev => 
-      prev.map(notif => ({ ...notif, read: true }))
-    );
-  };
-
-  const handleClearAll = () => {
-    triggerHaptic();
-    setNotifications([]);
-  };
-
-  const unreadCount = notifications.filter(notif => !notif.read).length;
 
   return (
     <Modal
@@ -166,115 +66,192 @@ const NotificationModal: React.FC<NotificationModalProps> = ({ isVisible, onClos
       onRequestClose={onClose}
     >
       <View style={styles.overlay}>
-        <View style={[styles.modalContainer, { backgroundColor: colors.card, shadowColor: colors.cardShadow }]}>
+        <View
+          style={[
+            styles.modalContainer,
+            { backgroundColor: colors.card, shadowColor: colors.cardShadow },
+          ]}
+        >
           <View style={[styles.header, { borderBottomColor: colors.border }]}>
             <View style={styles.headerTitleContainer}>
               <Bell size={24} color={colors.primary} />
-              <Text style={[styles.headerTitle, { color: colors.text }]}>Notifications</Text>
-              {unreadCount > 0 && (
-                <View style={[styles.unreadBadge, { backgroundColor: colors.primary }]}>
-                  <Text style={styles.unreadBadgeText}>{unreadCount}</Text>
-                </View>
-              )}
+              <Text style={[styles.headerTitle, { color: colors.text }]}>
+                Notifications
+              </Text>
             </View>
             <TouchableOpacity onPress={onClose} style={styles.closeButton}>
               <X size={24} color={colors.secondaryText} />
             </TouchableOpacity>
           </View>
 
-          <View style={[styles.actionsContainer, { borderBottomColor: colors.border }]}>
-            <TouchableOpacity 
-              style={styles.actionButton}
-              onPress={handleMarkAllAsRead}
-              disabled={unreadCount === 0}
-            >
-              <Text style={[
-                styles.actionButtonText,
-                { color: colors.secondary },
-                unreadCount === 0 && [styles.actionButtonTextDisabled, { color: colors.secondaryText }]
-              ]}>
-                Mark all as read
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity 
-              style={styles.actionButton}
-              onPress={handleClearAll}
-              disabled={notifications.length === 0}
-            >
-              <Text style={[
-                styles.actionButtonText,
-                { color: colors.secondary },
-                notifications.length === 0 && [styles.actionButtonTextDisabled, { color: colors.secondaryText }]
-              ]}>
-                Clear all
-              </Text>
-            </TouchableOpacity>
-          </View>
-
-          {notifications.length > 0 ? (
+          {data?.length > 0 ? (
             <ScrollView style={styles.notificationsContainer}>
-              {notifications.map((notification) => (
+              {data?.map((notification: TPushNotification) => (
                 <TouchableOpacity
-                  key={notification.id}
+                  key={notification._id}
                   style={[
                     styles.notificationItem,
                     { borderBottomColor: colors.border },
-                    !notification.read && [styles.unreadNotification, { backgroundColor: colors.background }]
+                    !notification.read && [
+                      styles.unreadNotification,
+                      { backgroundColor: colors.background },
+                    ],
                   ]}
-                  onPress={() => handleMarkAsRead(notification.id)}
                 >
-                  <View style={[
-                    styles.notificationTypeIndicator,
-                    // The color could be based on a type if you add it back
-                    { backgroundColor: !notification.read ? colors.primary : 'transparent' }
-                  ]} />
-                  
+                  <View
+                    style={[
+                      styles.notificationTypeIndicator,
+                      // The color could be based on a type if you add it back
+                      {
+                        backgroundColor: !notification.read
+                          ? colors.primary
+                          : 'transparent',
+                      },
+                    ]}
+                  />
+
                   <View style={styles.notificationContent}>
-                    <Text style={[
-                      styles.notificationTitle,
-                      { color: colors.text },
-                      !notification.read && styles.unreadNotificationTitle
-                    ]}>
-                      {notification.message}
+                    <Text
+                      style={[
+                        styles.notificationTitle,
+                        { color: colors.text },
+                        !notification.read && styles.unreadNotificationTitle,
+                      ]}
+                    >
+                      {notification?.message}
                     </Text>
-                    <Text style={[styles.notificationMessage, { color: colors.secondaryText }]} numberOfLines={2}>
-                      {notification.name}
+                    <Text
+                      style={[
+                        styles.notificationMessage,
+                        { color: colors.secondaryText },
+                      ]}
+                      numberOfLines={2}
+                    >
+                      {notification?.message}
                     </Text>
-                     {notification.location && (
-                       <View style={styles.notificationTimeContainer}>
-                          <LocateFixed size={14} color={colors.secondaryText} />
-                          <Text style={[styles.notificationMessage, { color: colors.secondaryText }]}>{notification.location}</Text>
-                        </View>
-                     )}
+                    {notification?.data?.location && (
+                      <View style={styles.notificationTimeContainer}>
+                        <LocateFixed size={14} color={colors.secondaryText} />
+                        <Text
+                          style={[
+                            styles.notificationMessage,
+                            { color: colors.secondaryText },
+                          ]}
+                        >
+                          {notification?.data?.location}
+                        </Text>
+                      </View>
+                    )}
                     <View style={styles.notificationMeta}>
                       <View style={styles.notificationTimeContainer}>
-                        <Calendar size={12} color={colors.secondaryText} />
-                        <Text style={[styles.notificationTime, { color: colors.secondaryText }]}>{notification.date}</Text>
+                        <User size={12} color={colors.secondaryText} />
+                        <Text
+                          style={[
+                            styles.notificationTime,
+                            { color: colors.secondaryText },
+                          ]}
+                        >
+                          {notification?.data?.userName || 'Unknown User'}
+                        </Text>
                       </View>
                       <View style={styles.notificationTimeContainer}>
-                        <Clock size={12} color={colors.secondaryText} />
-                        <Text style={[styles.notificationTime, { color: colors.secondaryText }]}>{notification.time}</Text>
+                        <Calendar size={12} color={colors.secondaryText} />
+                        <Text
+                          style={[
+                            styles.notificationTime,
+                            { color: colors.secondaryText },
+                          ]}
+                        >
+                          {new Date(notification.createdAt).toLocaleString(
+                            'en-US',
+                            {
+                              day: '2-digit',
+                              month: 'short',
+                              year: 'numeric',
+                              hour: 'numeric',
+                              minute: '2-digit',
+                              hour12: true,
+                            }
+                          )}
+                        </Text>
                       </View>
-                      
-                      {notification.phoneNumber && (
-                        <View style={styles.notificationTimeContainer}>
+
+                      <View style={styles.notificationTimeContainer}>
+                        {/* Status icon */}
+                        {notification?.data?.status === 'resolved' && (
+                          <CheckCircle
+                            size={12}
+                            color="green"
+                            style={{ marginLeft: 4 }}
+                          />
+                        )}
+                        {notification?.data?.status === 'rejected' && (
+                          <XCircle
+                            size={12}
+                            color="red"
+                            style={{ marginLeft: 4 }}
+                          />
+                        )}
+                        {notification?.data?.status === 'pending' && (
+                          <Circle
+                            size={12}
+                            color="orange"
+                            style={{ marginLeft: 4 }}
+                          />
+                        )}
+                        {notification?.data?.status === 'processing' && (
+                          <Loader2
+                            size={12}
+                            color="blue"
+                            style={{ marginLeft: 4 }}
+                          />
+                        )}
+
+                        <Text
+                          style={[
+                            styles.notificationTime,
+                            { color: colors.secondaryText, marginLeft: 4 },
+                          ]}
+                        >
+                          {notification?.data?.status}
+                        </Text>
+                      </View>
+
+                      {notification?.data?.phoneNumber && (
+                        <TouchableOpacity
+                          style={styles.notificationTimeContainer}
+                          onPress={() =>
+                            Linking.openURL(
+                              `tel:${notification.data.phoneNumber}`
+                            )
+                          }
+                        >
                           <Phone size={12} color={colors.secondaryText} />
-                          <Text style={[styles.notificationTime, { color: colors.secondaryText }]}>{notification.phoneNumber}</Text>
-                        </View>
+                          <Text
+                            style={[
+                              styles.notificationTime,
+                              { color: colors.secondaryText },
+                            ]}
+                          >
+                            {notification.data.phoneNumber}
+                          </Text>
+                        </TouchableOpacity>
                       )}
                     </View>
                   </View>
-                  
-                  <ChevronRight size={16} color={colors.border} />
                 </TouchableOpacity>
               ))}
             </ScrollView>
           ) : (
             <View style={styles.emptyContainer}>
               <Bell size={48} color={colors.border} />
-              <Text style={[styles.emptyTitle, { color: colors.text }]}>No notifications</Text>
-              <Text style={[styles.emptyMessage, { color: colors.secondaryText }]}>
-                "You don't have any notifications yet." 
+              <Text style={[styles.emptyTitle, { color: colors.text }]}>
+                No notifications
+              </Text>
+              <Text
+                style={[styles.emptyMessage, { color: colors.secondaryText }]}
+              >
+                "You don't have any notifications yet."
               </Text>
             </View>
           )}
@@ -460,7 +437,7 @@ const styles = StyleSheet.create({
   notificationTimeContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 2,
   },
   notificationTime: {
     fontSize: 10,

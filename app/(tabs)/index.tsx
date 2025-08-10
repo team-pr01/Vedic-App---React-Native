@@ -8,15 +8,12 @@ import {
   Image,
   Dimensions,
   Platform,
-  NativeSyntheticEvent,
-  NativeScrollEvent,
   RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
   Star,
-  Heart,
   Menu,
   Utensils,
   Sparkles,
@@ -42,19 +39,17 @@ import { useThemeColors } from '@/hooks/useThemeColors';
 import { useGetAllContentsQuery } from '@/redux/features/Content/contentApi';
 import { PullToRefreshWrapper } from '@/components/Reusable/PullToRefreshWrapper/PullToRefreshWrapper';
 import { useGetAllBooksQuery } from '@/redux/features/Book/bookApi';
-import { useGetMeQuery } from '@/redux/features/Auth/authApi';
-import { setupNotification, showLocalNotification } from '@/components/notificationHelper';
+import { useGetAllPushNotificationForUserQuery } from '@/redux/features/Auth/authApi';
 import { socket } from '@/utils/socket';
 import LoadingComponent from '@/components/LoadingComponent/LoadingComponent';
 import { useGetAllDonationProgramsQuery } from '@/redux/features/DonationPrograms/donationProgramApi';
-
+import YoutubePlayer from 'react-native-youtube-iframe';
+import { getYouTubeVideoId } from '@/utils/getYouTubeVideoId';
 
 export type TContent = {
   _id: string;
-  title: string;
-  subtitle: string;
-  description: string;
-  imageUrl: string;
+  imageUrl?: string;
+  videoUrl?: string;
 };
 
 const width = Dimensions.get('window').width;
@@ -118,46 +113,9 @@ const services = [
   },
 ];
 
-const projects = [
-  {
-    id: 1,
-    title: 'Community Kitchen Initiative',
-    subtitle: 'সম্প্রদায়িক রান্নাঘর উদ্যোগ',
-    description: 'Providing nutritious meals to those in need.',
-    image:
-      'https://images.pexels.com/photos/6646918/pexels-photo-6646918.jpeg?auto=compress&cs=tinysrgb&w=400',
-    collectedAmount: 250000,
-    budget: 500000,
-    supporters: 1250,
-    deadlineDays: 30,
-  },
-  {
-    id: 2,
-    title: 'Vedic Library Center',
-    subtitle: 'বৈদিক গ্রন্থাগার কেন্দ্র',
-    description: 'A serene space for exploration of ancient wisdom.',
-    image:
-      'https://images.pexels.com/photos/481516/pexels-photo-481516.jpeg?auto=compress&cs=tinysrgb&w=400',
-    collectedAmount: 175000,
-    budget: 300000,
-    supporters: 890,
-    deadlineDays: 45,
-  },
-  {
-    id: 3,
-    title: 'Temple Restoration',
-    subtitle: 'মন্দির পুনরুদ্ধার',
-    description: 'Preserving our sacred heritage for future generations.',
-    image:
-      'https://images.pexels.com/photos/3280130/pexels-photo-3280130.jpeg?auto=compress&cs=tinysrgb&w=400',
-    collectedAmount: 420000,
-    budget: 800000,
-    supporters: 2100,
-    deadlineDays: 60,
-  },
-];
-
 export default function HomeScreen() {
+  const user = useSelector(useCurrentUser);
+
   const {
     data,
     isLoading,
@@ -173,8 +131,9 @@ export default function HomeScreen() {
     isLoading: isProgramLoading,
     refetch: refetchProgramData,
   } = useGetAllDonationProgramsQuery({});
-  console.log(ProgramData, 'ProgramData');
-  console.log(isProgramLoading, 'loading ProgramData');
+
+  const { data: allPushNotifications, refetch: refetchAllPushNotifications } =
+    useGetAllPushNotificationForUserQuery(user?._id);
 
   const [refreshing, setRefreshing] = useState(false);
 
@@ -182,7 +141,12 @@ export default function HomeScreen() {
     setRefreshing(true);
 
     try {
-      await Promise.all([refetchContent(), refetchBookData()]);
+      await Promise.all([
+        refetchContent(),
+        refetchBookData(),
+        refetchProgramData(),
+        refetchAllPushNotifications(),
+      ]);
     } catch (error) {
       console.error('Error while refreshing:', error);
     } finally {
@@ -195,24 +159,18 @@ export default function HomeScreen() {
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showUserProfileModal, setShowUserProfileModal] = useState(false);
   const [showDonationModal, setShowDonationModal] = useState(false);
-  const [selectedProject, setSelectedProject] = useState<
-    (typeof projects)[0] | null
-  >(null);
   const [showNotificationModal, setShowNotificationModal] = useState(false);
   const [showShopModal, setShowShopModal] = useState(false);
   const [searchFilters, setSearchFilters] = useState<string[]>([]);
-  const [hasUnreadNotifications, setHasUnreadNotifications] = useState(true);
   const dispatch = useDispatch();
 
   const handleLogout = async () => {
     await AsyncStorage.clear();
     dispatch(logout());
     setShowSettingsModal(false);
-    console.log('logout called');
     router.push('/');
   };
 
-  const user = useSelector(useCurrentUser);
   const triggerHaptic = () => {
     if (Platform.OS !== 'web') {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -269,13 +227,6 @@ export default function HomeScreen() {
 
   const handleTextPress = (textId: string) => {
     triggerHaptic();
-    console.log(`Sacred text pressed: ${textId}`);
-  };
-
-  const handleProjectDonate = (project: (typeof projects)[0]) => {
-    triggerHaptic();
-    setSelectedProject(project);
-    setShowDonationModal(true);
   };
 
   const handleMenuPress = () => {
@@ -294,12 +245,10 @@ export default function HomeScreen() {
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
-    console.log('Searching for:', query);
 
     // Filter content based on search query and active filters
     if (query.trim() || searchFilters.length > 0) {
       console.log('Search query:', query);
-      console.log('Active filters:', searchFilters);
 
       // Here you can implement actual search logic
       // For example, filter services, texts, projects based on query and filters
@@ -308,7 +257,6 @@ export default function HomeScreen() {
 
   const handleApplyFilters = (filters: string[]) => {
     setSearchFilters(filters);
-    console.log('Applied filters:', filters);
 
     // Re-run search with new filters
     handleSearch(searchQuery);
@@ -330,19 +278,10 @@ export default function HomeScreen() {
 
   const handleFilterClick = () => {
     triggerHaptic();
-    console.log('Filter button clicked');
-  };
-
-  const handleNotificationPress = () => {
-    triggerHaptic();
-    setShowNotificationModal(true);
-    // When notifications are viewed, we can consider them as "read"
-    setHasUnreadNotifications(false);
   };
 
   // const [panchangData, setPanchangData] = useState<any>(null);
   // const token = useSelector((state: RootState) => state.auth.token);
-  // console.log(token, 'userData');
 
   // useEffect(() => {
   //   const fetchPanchang = async () => {
@@ -373,28 +312,54 @@ export default function HomeScreen() {
   const [isManualScrolling, setIsManualScrolling] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
 
-  // Auto-slide effect
+  // Socket io connection for notifications
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [notifications, setNotifications] = useState<any[]>([]);
+  // console.log(notifications, "real time notification");
   useEffect(() => {
-    // Don't auto-slide if user is manually scrolling
-    if (isManualScrolling) return;
+    socket.on('connect', () => {
+      console.log('Connected to socket:', socket.id);
+    });
 
-    const interval = setInterval(() => {
-      const nextIndex = (currentHeroIndex + 1) % data?.data?.length;
-      setCurrentHeroIndex(nextIndex);
-      scrollViewRef.current?.scrollTo({
-        x: nextIndex * width,
-        animated: true,
-      });
-    }, 5000);
+    socket.on('new-push-notification', (data) => {
+      setNotifications((prev) => [data, ...prev]);
+      setUnreadCount((prev) => prev + 1);
+    });
 
-    return () => clearInterval(interval);
-  }, [currentHeroIndex, isManualScrolling, data?.data?.length]);
+    return () => {
+      socket.off('new-push-notification');
+      socket.off('connect');
+    };
+  }, []);
 
-  // Handle manual scroll events
-  const handleScrollEnd = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const index = Math.round(event.nativeEvent.contentOffset.x / width);
-    setCurrentHeroIndex(index);
-    setIsManualScrolling(false); // Re-enable auto-sliding after scroll ends
+  useEffect(() => {
+    if (allPushNotifications?.data) {
+      // Merge backend notifications with real-time ones, newest first
+      const combined = [...notifications, ...allPushNotifications.data];
+
+      // Optional: Deduplicate if needed by filtering based on createdAt + message or _id
+      const unique = Array.from(
+        new Map(
+          combined.map((n) => [n._id || n.createdAt + n.message, n])
+        ).values()
+      );
+
+      // Sort descending by createdAt
+      const sorted = unique.sort(
+        (a: any, b: any) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
+
+      setNotifications(sorted);
+    }
+  }, [allPushNotifications?.data]);
+
+  const handleNotificationPress = () => {
+    triggerHaptic();
+    setShowNotificationModal(true);
+    if (!showNotificationModal) {
+      setUnreadCount(0); // ✅ Reset unread count when opening dropdown
+    }
   };
 
   return (
@@ -443,7 +408,7 @@ export default function HomeScreen() {
                 onPress={handleNotificationPress}
               >
                 <Bell size={20} color={colors.text} />
-                {hasUnreadNotifications && (
+                {unreadCount > 0 && (
                   <View
                     style={[
                       styles.notificationBadge,
@@ -484,28 +449,26 @@ export default function HomeScreen() {
                     event.nativeEvent.contentOffset.x / width
                   );
                   setCurrentHeroIndex(index);
+                  setIsManualScrolling(false);
+                }}
+                onScrollBeginDrag={() => {
+                  setIsManualScrolling(true);
                 }}
               >
                 {data?.data?.map((hero: TContent, index: number) => (
                   <View key={index} style={styles.heroSlide}>
-                    <Image
-                      source={{ uri: hero.imageUrl }}
-                      style={styles.heroImage}
-                    />
-                    <LinearGradient
-                      colors={['transparent', 'rgba(0,0,0,0.7)']}
-                      style={styles.heroOverlay}
-                    >
-                      <View style={styles.heroContent}>
-                        <Text style={styles.heroTitle}>{hero?.title}</Text>
-                        <Text style={styles.heroSubtitle}>
-                          {hero?.subtitle}
-                        </Text>
-                        <Text style={styles.heroDescription}>
-                          {hero?.description}
-                        </Text>
-                      </View>
-                    </LinearGradient>
+                    {hero.videoUrl ? (
+                      <YoutubePlayer
+                        height={240}
+                        play={false}
+                        videoId={getYouTubeVideoId(hero.videoUrl)}
+                      />
+                    ) : (
+                      <Image
+                        source={{ uri: hero.imageUrl }}
+                        style={styles.heroImage}
+                      />
+                    )}
                   </View>
                 ))}
               </ScrollView>
@@ -519,7 +482,7 @@ export default function HomeScreen() {
                       styles.indicator,
                       index === currentHeroIndex && [
                         styles.activeIndicator,
-                        { backgroundColor: colors.info },
+                        { backgroundColor: colors.primary },
                       ],
                     ]}
                     onPress={() => {
@@ -593,9 +556,9 @@ export default function HomeScreen() {
             {/* Our Project Section */}
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
-                <Text
-                  style={[styles.sectionTitle, { color: colors.primary }]}
-                >{"Our Project"}</Text>
+                <Text style={[styles.sectionTitle, { color: colors.primary }]}>
+                  {'Our Project'}
+                </Text>
                 <Text
                   style={[
                     styles.sectionSubtitle,
@@ -615,13 +578,15 @@ export default function HomeScreen() {
                     loading="Programs "
                     color={colors.primary}
                   />
-                ) : (ProgramData?.data?.length || 0) === 0 ? <Text style={{ color: colors.text }}>
-                  Projects are coming soon! Stay tuned.
-                </Text>:
+                ) : (ProgramData?.data?.length || 0) === 0 ? (
+                  <Text style={{ color: colors.text }}>
+                    Projects are coming soon! Stay tuned.
+                  </Text>
+                ) : (
                   ProgramData?.data?.map((project: any) => (
                     <View key={project.id} style={styles.projectCard}>
                       <Image
-                        source={{ uri: project.image }}
+                        source={{ uri: project.imageUrl }}
                         style={styles.projectImage}
                       />
                       <LinearGradient
@@ -631,9 +596,6 @@ export default function HomeScreen() {
                         <View style={styles.projectContent}>
                           <Text style={styles.projectTitle}>
                             {project.title}
-                          </Text>
-                          <Text style={styles.projectSubtitle}>
-                            {project.subtitle}
                           </Text>
                           <Text style={styles.projectDescription}>
                             {project.description}{' '}
@@ -662,9 +624,9 @@ export default function HomeScreen() {
                               ]}
                             />
                           </View> */}
-                            <Text style={styles.supportersText}>
+                            {/* <Text style={styles.supportersText}>
                               {project.supporters} supporters
-                            </Text>
+                            </Text> */}
                           </View>
 
                           {/* <TouchableOpacity
@@ -677,7 +639,7 @@ export default function HomeScreen() {
                         </View>
                       </LinearGradient>
                     </View>
-                  )
+                  ))
                 )}
               </ScrollView>
             </View>
@@ -703,11 +665,12 @@ export default function HomeScreen() {
           <DonationModal
             isVisible={showDonationModal}
             onClose={() => setShowDonationModal(false)}
-            project={selectedProject}
+            project={null}
           />
 
           {/* Notification Modal */}
           <NotificationModal
+            data={allPushNotifications?.data}
             isVisible={showNotificationModal}
             onClose={() => setShowNotificationModal(false)}
           />
@@ -805,31 +768,10 @@ const styles = StyleSheet.create({
     height: '100%',
     resizeMode: 'cover',
   },
-  heroOverlay: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: '60%',
-    justifyContent: 'flex-end',
-  },
-  heroContent: {
-    padding: 20,
-  },
-  heroTitle: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    marginBottom: 4,
-  },
-  heroSubtitle: {
-    fontSize: 16,
-    color: '#E2E8F0',
-    marginBottom: 4,
-  },
-  heroDescription: {
-    fontSize: 14,
-    color: '#CBD5E0',
+  heroVideo: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
   },
   heroIndicators: {
     position: 'absolute',
@@ -922,7 +864,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   projectContent: {
-    padding: 16,
+    paddingHorizontal: 16,
   },
   projectTitle: {
     fontSize: 18,
