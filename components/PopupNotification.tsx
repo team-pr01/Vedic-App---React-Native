@@ -7,18 +7,24 @@ interface PopupNotificationProps {
   title: string;
   message: string;
   onClose: () => void;
+  onClick?: () => void;
   isVisible: boolean;
   imageUrl?: string;
   imageHeight?: number;
+  btnText?: string;
+  btnUrl?: string;
 }
 
 const PopupNotification: React.FC<PopupNotificationProps> = ({ 
   title, 
   message, 
   onClose, 
+  onClick,
   isVisible, 
   imageUrl,
-  imageHeight = 120
+  imageHeight = 120,
+  btnText = 'Got it!',
+  btnUrl = '#'
 }) => {
   const colors = useThemeColors();
 
@@ -55,10 +61,10 @@ const PopupNotification: React.FC<PopupNotificationProps> = ({
             <Text style={[styles.title, { color: colors.primary }]}>{title}</Text>
             <Text style={[styles.message, { color: colors.text }]}>{message}</Text>
             <TouchableOpacity
-              onPress={onClose}
+              onPress={onClick}
               style={[styles.button, { backgroundColor: colors.primary }]}
             >
-              <Text style={styles.buttonText}>Got it!</Text>
+              <Text style={styles.buttonText}>{btnText}</Text>
             </TouchableOpacity>
           </View>
         </View>

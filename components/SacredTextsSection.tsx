@@ -5,6 +5,7 @@ import { router } from 'expo-router';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { useGetAllBooksQuery } from '@/redux/features/Book/bookApi';
 import { VedicText } from '@/types';
+import LoadingComponent from './LoadingComponent/LoadingComponent';
 
 interface SacredTextsSectionProps {
   data: any;
@@ -39,9 +40,10 @@ export default function SacredTextsSection({ data, isLoading, onTextClick }: Sac
   // Loading state
   if (isLoading) {
     return (
-      <View style={[styles.centeredContainer, { backgroundColor: colors.background }]}>
-        <Text style={{ color: colors.text }}>Loading...</Text>
-      </View>
+      <LoadingComponent
+                    loading="Programs "
+                    color={colors.primary}
+                  />
     );
   }
 
