@@ -14,15 +14,15 @@ import {
   Inter_600SemiBold,
   Inter_700Bold,
 } from '@expo-google-fonts/inter';
-import { StatusBar } from 'react-native';
+import { Linking, StatusBar } from 'react-native';
 import PopupNotification from '@/components/PopupNotification';
-import { useGetAllPopUpsQuery } from '@/redux/features/Popup/popupApi';
+import { useGetAllPopUpsQuery } from '@/redux/features/Popup/popUpApi';
 
 SplashScreen.preventAutoHideAsync();
 
 function RootLayoutNav() {
-  const {data,isLoading}= useGetAllPopUpsQuery({});
-  console.log(data," Popups Data");
+  const { data, isLoading } = useGetAllPopUpsQuery({});
+  console.log(data, ' Popups Data');
   const token = useSelector((state: RootState) => state.auth.token);
   const isAuthLoading = useSelector(
     (state: RootState) => state._persist.rehydrated
@@ -35,10 +35,10 @@ function RootLayoutNav() {
     'Inter-Bold': Inter_700Bold,
   });
   useEffect(() => {
-  // if (data || data.length > 0) {
+    // if (data || data.length > 0) {
     setShowWelcomePopup(true);
-  // }
-}, [data]);
+    // }
+  }, [data]);
   useEffect(() => {
     // Wait for fonts and redux-persist to be ready
     if (!fontsLoaded && !fontError) return;
@@ -65,12 +65,11 @@ function RootLayoutNav() {
   // The logic in useEffect will handle which one is shown.
   return (
     <>
-    <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="(tabs)" />
-      <Stack.Screen name="auth" />
-      
-    </Stack>
-    <StatusBar barStyle="default" />
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="auth" />
+      </Stack>
+      <StatusBar barStyle="default" />
       <PopupNotification
         isVisible={showWelcomePopup}
         title={data?.data?.[0]?.title}
@@ -78,6 +77,18 @@ function RootLayoutNav() {
         imageUrl={data?.data?.[0]?.imageUrl}
         imageHeight={150}
         onClose={() => setShowWelcomePopup(false)}
+        onClick={() => {
+          setShowWelcomePopup(false);
+          const btnLink = data?.data?.[0]?.btnLink;
+          if (btnLink) {
+            Linking.openURL(btnLink).catch((err) =>
+              console.error('Failed to open link', err)
+            );
+          } else {
+            router.push('/(tabs)'); 
+          }
+        }}
+        btnText={data?.data?.[0]?.btnText || 'Got it!'}
       />
     </>
   );
