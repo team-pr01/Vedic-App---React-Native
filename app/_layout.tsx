@@ -2,7 +2,7 @@
 
 import { Stack, router, SplashScreen } from 'expo-router';
 import { useFonts } from 'expo-font';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Provider, useSelector } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
 import { persistor, store, RootState } from '@/redux/store';
@@ -14,22 +14,31 @@ import {
   Inter_600SemiBold,
   Inter_700Bold,
 } from '@expo-google-fonts/inter';
+import { StatusBar } from 'react-native';
+import PopupNotification from '@/components/PopupNotification';
+import { useGetAllPopUpsQuery } from '@/redux/features/Popup/popupApi';
 
 SplashScreen.preventAutoHideAsync();
 
 function RootLayoutNav() {
+  const {data,isLoading}= useGetAllPopUpsQuery({});
+  console.log(data," Popups Data");
   const token = useSelector((state: RootState) => state.auth.token);
   const isAuthLoading = useSelector(
     (state: RootState) => state._persist.rehydrated
   ); // Check if redux-persist is done
-
+  const [showWelcomePopup, setShowWelcomePopup] = useState(false);
   const [fontsLoaded, fontError] = useFonts({
     'Inter-Regular': Inter_400Regular,
     'Inter-Medium': Inter_500Medium,
     'Inter-SemiBold': Inter_600SemiBold,
     'Inter-Bold': Inter_700Bold,
   });
-
+  useEffect(() => {
+  // if (data || data.length > 0) {
+    setShowWelcomePopup(true);
+  // }
+}, [data]);
   useEffect(() => {
     // Wait for fonts and redux-persist to be ready
     if (!fontsLoaded && !fontError) return;
@@ -55,10 +64,22 @@ function RootLayoutNav() {
   // Define the routes that the gatekeeper can navigate to.
   // The logic in useEffect will handle which one is shown.
   return (
+    <>
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="auth" />
+      
     </Stack>
+    <StatusBar barStyle="default" />
+      <PopupNotification
+        isVisible={showWelcomePopup}
+        title={data?.data?.[0]?.title}
+        message="Explore spiritual knowledge and connect with tradition."
+        imageUrl={data?.data?.[0]?.imageUrl}
+        imageHeight={150}
+        onClose={() => setShowWelcomePopup(false)}
+      />
+    </>
   );
 }
 
