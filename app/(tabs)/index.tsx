@@ -153,6 +153,8 @@ export default function HomeScreen() {
       setRefreshing(false);
     }
   };
+  const width = Dimensions.get('window').width;
+const HERO_HEIGHT = 240;
   const colors = useThemeColors();
   const [searchQuery, setSearchQuery] = useState('');
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -454,12 +456,13 @@ export default function HomeScreen() {
                 onScrollBeginDrag={() => {
                   setIsManualScrolling(true);
                 }}
+
               >
                 {data?.data?.map((hero: TContent, index: number) => (
                   <View key={index} style={styles.heroSlide}>
                     {hero.videoUrl ? (
                       <YoutubePlayer
-                        height={240}
+                        height={280}
                         play={false}
                         videoId={getYouTubeVideoId(hero.videoUrl)}
                       />
@@ -482,7 +485,7 @@ export default function HomeScreen() {
                       styles.indicator,
                       index === currentHeroIndex && [
                         styles.activeIndicator,
-                        { backgroundColor: colors.primary },
+                        { backgroundColor: colors.info },
                       ],
                     ]}
                     onPress={() => {
@@ -699,11 +702,13 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#E2E8F0',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 2
+
+     },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
-    gap: 12,
+    gap: 8,
   },
   menuButton: {
     padding: 4,
@@ -715,13 +720,13 @@ const styles = StyleSheet.create({
   dateWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 12,
+    paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 16,
     borderWidth: 1,
   },
   dateText: {
-    fontSize: 11,
+    fontSize: 9,
     fontWeight: '600',
     marginLeft: 4,
   },
@@ -765,7 +770,7 @@ const styles = StyleSheet.create({
   },
   heroImage: {
     width: '100%',
-    height: '100%',
+    height: 280,
     resizeMode: 'cover',
   },
   heroVideo: {
