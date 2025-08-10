@@ -85,6 +85,16 @@ const authApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ['users'],
     }),
+
+    
+    savePushNotificationToken: builder.mutation({
+      query: (profileUpdatedData) => ({
+        method: 'POST',
+        url: `/auth/save-push-notification-token`,
+        body: profileUpdatedData,
+      }),
+      invalidatesTags: ['users'],
+    }),
   }),
 });
 
@@ -99,4 +109,5 @@ export const {
   useDeleteUserMutation,
   useForgetPasswordMutation,
   useResetPasswordMutation,
+  useSavePushNotificationTokenMutation
 } = authApi;
