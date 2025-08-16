@@ -161,7 +161,7 @@ export default function TabLayout() {
 const styles = StyleSheet.create({
   tabBar: {
     height: 85,
-    paddingBottom: 25,
+    paddingBottom: 0,
     paddingTop: 15,
     borderTopWidth: 1,
     shadowColor: '#000',
@@ -170,7 +170,6 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 20,
     width: '100%',
-    marginBottom: 50,
   },
   tabBarItem: {
     paddingTop: 5,

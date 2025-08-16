@@ -32,6 +32,7 @@ Notifications.setNotificationHandler({
   }),
 });
 
+
 function RootLayoutNav() {
   const user = useSelector(useCurrentUser);
   const [savePushNotificationToken] = useSavePushNotificationTokenMutation();
@@ -59,11 +60,11 @@ function RootLayoutNav() {
     const registerAndSendToken = async () => {
       try {
         if (expoPushToken) {
-          if (user._id && expoPushToken) {
+          if (user && user._id && expoPushToken) {
             const payload = {
               userId: user._id,
-              expoPushToken
-            }
+              expoPushToken,
+            };
             await savePushNotificationToken(payload).unwrap();
             console.log('Push token saved successfully');
           }
@@ -74,7 +75,7 @@ function RootLayoutNav() {
     };
 
     registerAndSendToken();
-  }, [user?._id]);
+  }, [user, expoPushToken]);
 
   // Notification listeners refs
   const notificationListener = useRef<Notifications.Subscription | null>(null);
@@ -95,15 +96,20 @@ function RootLayoutNav() {
         console.log('Notification received:', notification);
       });
 
-    // Listen for user interaction with notification
     responseListener.current =
       Notifications.addNotificationResponseReceivedListener((response) => {
         console.log('Notification clicked:', response);
       });
 
     // Cleanup listeners on unmount
-    Notifications.removeNotificationSubscription(notificationListener.current);
-    Notifications.removeNotificationSubscription(responseListener.current);
+  return () => {
+    if (notificationListener.current) {
+      Notifications.removeNotificationSubscription(notificationListener.current);
+    }
+    if (responseListener.current) {
+      Notifications.removeNotificationSubscription(responseListener.current);
+    }
+  };
   }, []);
 
   // 2️⃣ Handle splash screen and routing based on auth & fonts
@@ -152,7 +158,7 @@ function RootLayoutNav() {
               console.error('Failed to open link', err)
             );
           } else {
-            router.push('/(tabs)'); 
+            router.push('/(tabs)');
           }
         }}
         btnText={data?.data?.[0]?.btnText || 'Got it!'}
