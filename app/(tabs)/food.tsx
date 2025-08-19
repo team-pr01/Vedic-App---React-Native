@@ -34,146 +34,79 @@ import { useGetAllCategoriesQuery } from '@/redux/features/Categories/categories
 import { PullToRefreshWrapper } from '@/components/Reusable/PullToRefreshWrapper/PullToRefreshWrapper';
 import LoadingComponent from '@/components/LoadingComponent/LoadingComponent';
 import { useThemeColors } from '@/hooks/useThemeColors';
+import { useGenerateRecipeMutation } from '@/redux/features/AI/aiApi';
 
-interface Recipe {
-  name: string;
-  category: string;
-  ingredients: string[];
-  instructions: string[];
-  imageUrl: string;
-  cookingTime: string;
-  difficulty: string;
-  cuisine: string;
-  _id?: string;
-}
+// *** FIX 1: The AiRecipeParser component is defined OUTSIDE the main component ***
+// This component parses and renders the formatted text from the AI
+const AiRecipeParser = ({ content }: { content: string | null }) => {
+  if (!content) return null;
 
-const triggerHaptic = () => {
-  if (Platform.OS !== 'web') {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-  }
-};
+  const lines = content.split('\n');
 
-// Mock AI Recipe Service
-const generateRecipe = async (prompt: string): Promise<Recipe> => {
-  // Enhanced AI Recipe Generation with better logic
-  await new Promise((resolve) => setTimeout(resolve, 1500));
-
-  // Analyze prompt for better recipe generation
-  const lowerPrompt = prompt.toLowerCase();
-  let recipeName = 'AI Generated Recipe';
-  let ingredients: string[] = [];
-  let instructions: string[] = [];
-  let cuisine = 'Vedic';
-  let difficulty = 'Easy';
-  let cookingTime = '25 mins';
-
-  // Smart recipe generation based on prompt
-  if (lowerPrompt.includes('breakfast') || lowerPrompt.includes('morning')) {
-    recipeName = 'AI Generated Morning Sattvic Bowl';
-    ingredients = [
-      'Oats (1 cup)',
-      'Fresh fruits (1 cup)',
-      'Nuts and seeds (2 tbsp)',
-      'Honey (1 tbsp)',
-      'Milk or plant milk (1/2 cup)',
-      'Cardamom powder (pinch)',
-      'Ghee (1 tsp)',
-    ];
-    instructions = [
-      'Soak oats in milk for 10 minutes.',
-      'Heat ghee in a pan and lightly roast the oats.',
-      'Add chopped fruits and nuts.',
-      'Sprinkle cardamom powder and drizzle honey.',
-      'Serve warm as a nourishing breakfast.',
-    ];
-    cookingTime = '15 mins';
-  } else if (
-    lowerPrompt.includes('dinner') ||
-    lowerPrompt.includes('evening')
-  ) {
-    recipeName = 'AI Generated Evening Sattvic Meal';
-    ingredients = [
-      'Basmati rice (1 cup)',
-      'Mixed vegetables (2 cups)',
-      'Moong dal (1/2 cup)',
-      'Ghee (2 tbsp)',
-      'Cumin seeds (1 tsp)',
-      'Turmeric (1/2 tsp)',
-      'Fresh coriander (2 tbsp)',
-      'Salt to taste',
-    ];
-    instructions = [
-      'Wash rice and dal thoroughly.',
-      'Heat ghee and add cumin seeds.',
-      'Add vegetables and sauté until tender.',
-      'Add rice, dal, turmeric, and water.',
-      'Cook until everything is well done.',
-      'Garnish with fresh coriander and serve.',
-    ];
-    cookingTime = '35 mins';
-    difficulty = 'Medium';
-  } else if (lowerPrompt.includes('sweet') || lowerPrompt.includes('dessert')) {
-    recipeName = 'AI Generated Sattvic Sweet';
-    ingredients = [
-      'Kheer rice (1/2 cup)',
-      'Full-fat milk (4 cups)',
-      'Jaggery or sugar (1/2 cup)',
-      'Cardamom powder (1/2 tsp)',
-      'Almonds and pistachios (2 tbsp)',
-      'Ghee (1 tbsp)',
-      'Saffron (few strands)',
-    ];
-    instructions = [
-      'Boil milk in a heavy-bottomed pan.',
-      'Add washed rice and cook on low heat.',
-      'Stir occasionally until rice is soft.',
-      'Add jaggery and cardamom powder.',
-      'Garnish with nuts and saffron.',
-      'Serve warm or chilled.',
-    ];
-    cookingTime = '45 mins';
-    difficulty = 'Medium';
-    cuisine = 'Traditional';
-  } else {
-    // Default sattvic recipe
-    ingredients = [
-      'Quinoa (1 cup)',
-      'Mixed vegetables (2 cups)',
-      'Ghee (2 tbsp)',
-      'Turmeric (1/2 tsp)',
-      'Cumin seeds (1 tsp)',
-      'Fresh herbs (mint, cilantro)',
-      'Lemon juice (1 tbsp)',
-      'Salt to taste',
-    ];
-    instructions = [
-      'Rinse quinoa thoroughly and cook with 2 cups water until fluffy.',
-      'Heat ghee in a pan and add cumin seeds.',
-      'Add mixed vegetables and sauté until tender.',
-      'Add turmeric and salt, mix well.',
-      'Combine cooked quinoa with vegetables.',
-      'Garnish with fresh herbs and lemon juice.',
-      'Serve warm as a complete sattvic meal.',
-    ];
-  }
-
-  return {
-    _id: `ai-recipe-${Date.now()}`,
-    name: recipeName,
-    category: 'sattvic',
-    ingredients,
-    instructions,
-    imageUrl:
-      'https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=400',
-    cookingTime,
-    difficulty,
-    cuisine,
+  const renderLine = (line: string, index: number) => {
+    // ### Heading
+    if (line.startsWith('### ')) {
+      return (
+        <Text key={index} style={styles.aiHeading}>
+          {line.replace('### ', '')}
+        </Text>
+      );
+    }
+    // **Bold Text:** followed by content
+    if (line.includes('**')) {
+      const parts = line.split('**');
+      return (
+        <Text key={index} style={styles.aiParagraph}>
+          <Text style={{ fontWeight: 'bold' }}>{parts[0].trim()}</Text>
+          {parts.slice(1).join('')}
+        </Text>
+      );
+    }
+    // - List Item
+    if (line.trim().startsWith('- ')) {
+      return (
+        <View key={index} style={styles.aiListItemContainer}>
+          <Text style={styles.aiListItem}>•</Text>
+          <Text style={styles.aiListItemText}>{line.trim().substring(2)}</Text>
+        </View>
+      );
+    }
+    // Numbered List Item (e.g., "1. ")
+    if (/^\d+\.\s/.test(line.trim())) {
+      return (
+        <View key={index} style={styles.aiListItemContainer}>
+          <Text style={styles.aiListItemText}>{line.trim()}</Text>
+        </View>
+      );
+    }
+    // Regular paragraph
+    if (line.trim().length > 0) {
+      return (
+        <Text key={index} style={styles.aiParagraph}>
+          {line}
+        </Text>
+      );
+    }
+    // Return null for empty lines to create spacing
+    return null;
   };
+
+  return <View style={styles.aiContentContainer}>{lines.map(renderLine)}</View>;
 };
 
 export default function FoodPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
+  
+  // *** FIX 2: Correct state variables for the AI modals and content ***
+  const [showAIGeneratedModal, setShowAIGeneratedModal] = useState(false);
+  const [aiGeneratedContent, setAiGeneratedContent] = useState<string | null>(null);
+
+  const [
+    generateRecipe,
+    { data: recipeData, isLoading: isRecipeLoading, error: recipeError },
+  ] = useGenerateRecipeMutation();
+  
   const {
     data,
     isLoading,
@@ -182,13 +115,14 @@ export default function FoodPage() {
     category: selectedCategory,
     keyword: searchQuery,
   });
-  const { data: categoryData, refetch: refetchCategories } =
-    useGetAllCategoriesQuery({});
+
+  const { data: categoryData, refetch: refetchCategories } = useGetAllCategoriesQuery({});
+  
   const [refreshing, setRefreshing] = useState(false);
   const colors = useThemeColors();
+  
   const handleRefresh = async () => {
     setRefreshing(true);
-
     try {
       await Promise.all([refetchCategories(), refetchRecipe()]);
     } catch (error) {
@@ -202,132 +136,47 @@ export default function FoodPage() {
     (category: any) => category.areaName === 'recipe'
   );
 
-  const allCategories = filteredCategory?.map(
-    (category: any) => category.category
-  );
+  const allCategories = filteredCategory?.map((category: any) => category.category);
+  
   const [showAIModal, setShowAIModal] = useState(false);
-  const [showRecipeModal, setShowRecipeModal] = useState(false);
-  const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
   const [recipePrompt, setRecipePrompt] = useState('');
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [isListening, setIsListening] = useState(false);
   const recognitionRef = useRef<any>(null);
 
-  const initialRecipes: Recipe[] = [
-    {
-      _id: 'sattvic-khichdi',
-      name: 'Sattvic Khichdi',
-      category: 'sattvic',
-      ingredients: [
-        'Moong Dal (1/2 cup)',
-        'Rice (1/2 cup)',
-        'Ghee (1 tbsp)',
-        'Cumin Seeds (1 tsp)',
-        'Turmeric (1/2 tsp)',
-        'Water (3 cups)',
-        'Salt to taste',
-      ],
-      instructions: [
-        'Wash rice and dal thoroughly.',
-        'Heat ghee in a pressure cooker.',
-        'Add cumin seeds and let them crackle.',
-        'Add rice, dal, turmeric, and salt.',
-        'Add water and pressure cook for 3-4 whistles.',
-        'Let pressure release naturally. Serve hot with a dollop of ghee.',
-      ],
-      imageUrl:
-        'https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=400',
-      cookingTime: '30 mins',
-      difficulty: 'Easy',
-      cuisine: 'Vedic',
-    },
-    {
-      _id: 'prasad-halwa',
-      name: 'Prasad Halwa',
-      category: 'prasad',
-      ingredients: [
-        'Semolina (1 cup)',
-        'Ghee (1/2 cup)',
-        'Sugar (1 cup)',
-        'Water (2 cups)',
-        'Cardamom powder (1/2 tsp)',
-        'Mixed Nuts (2 tbsp, chopped)',
-      ],
-      instructions: [
-        'Heat ghee in a pan and roast semolina on low heat until golden brown and aromatic.',
-        'In a separate saucepan, bring water and sugar to a boil to make sugar syrup.',
-        'Gradually add the hot sugar syrup to the roasted semolina, stirring continuously to avoid lumps.',
-        'Add cardamom powder and cook until the halwa thickens and leaves the sides of the pan.',
-        'Garnish with chopped nuts and serve warm as prasad.',
-      ],
-      imageUrl:
-        'https://images.pexels.com/photos/1099680/pexels-photo-1099680.jpeg?auto=compress&cs=tinysrgb&w=400',
-      cookingTime: '25 mins',
-      difficulty: 'Medium',
-      cuisine: 'Temple',
-    },
-    {
-      _id: 'ayurvedic-tea',
-      name: 'Ayurvedic Herbal Tea',
-      category: 'ayurvedic',
-      ingredients: [
-        'Water (2 cups)',
-        'Fresh Ginger (1 inch, grated)',
-        'Tulsi (Holy Basil) leaves (5-6)',
-        'Cardamom pods (2, crushed)',
-        'Cinnamon stick (1 inch)',
-        'Honey or Jaggery to taste (optional)',
-      ],
-      instructions: [
-        'Bring water to a boil in a saucepan.',
-        'Add grated ginger, tulsi leaves, crushed cardamom, and cinnamon stick.',
-        'Simmer on low heat for 5-7 minutes to let the flavors infuse.',
-        'Strain the tea into cups.',
-        'Add honey or jaggery if desired. Serve hot.',
-      ],
-      imageUrl:
-        'https://images.pexels.com/photos/1638280/pexels-photo-1638280.jpeg?auto=compress&cs=tinysrgb&w=400',
-      cookingTime: '10 mins',
-      difficulty: 'Easy',
-      cuisine: 'Ayurvedic',
-    },
-  ];
-
-  const [recipes, setRecipes] = useState<Recipe[]>(initialRecipes);
+  // *** FIX 3: Single, correct useEffect to handle the AI recipe response ***
+  useEffect(() => {
+    // Check if the API response exists and the 'data' property is a string
+    if (recipeData && typeof recipeData.data === 'string') {
+      setAiGeneratedContent(recipeData.data);  // Store the recipe string
+      setShowAIGeneratedModal(true);           // Show the result modal
+      setShowAIModal(false);                   // Hide the prompt modal
+      setRecipePrompt('');                     // Clear the input field
+    }
+  }, [recipeData]);
 
   // Initialize speech recognition
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const SpeechRecognition =
-        (window as any).SpeechRecognition ||
-        (window as any).webkitSpeechRecognition;
+        (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
       if (SpeechRecognition) {
         const recognition = new SpeechRecognition();
         recognition.continuous = false;
         recognition.interimResults = false;
         recognition.lang = 'en-US';
-
         recognition.onresult = (event: any) => {
           const transcript = event.results[0][0].transcript;
           setSearchQuery(transcript);
         };
-
-        recognition.onerror = () => {
-          setIsListening(false);
-        };
-
-        recognition.onend = () => {
-          setIsListening(false);
-        };
-
+        recognition.onerror = () => setIsListening(false);
+        recognition.onend = () => setIsListening(false);
         recognitionRef.current = recognition;
       }
     }
   }, []);
 
   const handleVoiceSearch = () => {
-    triggerHaptic();
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (!recognitionRef.current) {
       alert('Speech recognition is not supported in this browser.');
       return;
@@ -345,41 +194,15 @@ export default function FoodPage() {
     }
   };
 
-  const handleGenerateRecipe = async () => {
+  const handleGenerate = () => {
     if (!recipePrompt.trim()) return;
-
-    setIsGenerating(true);
-    setError(null);
-    triggerHaptic();
-
-    try {
-      const recipe = await generateRecipe(recipePrompt);
-      setRecipePrompt('');
-      setShowAIModal(false);
-      setRecipes((prev) => [
-        recipe,
-        ...prev.filter((r) => r._id !== recipe._id),
-      ]);
-      setSelectedRecipe(recipe);
-      setShowRecipeModal(true);
-    } catch (err: any) {
-      console.error('Error generating recipe:', err);
-      setError(err.message || 'Failed to generate recipe. Please try again.');
-    } finally {
-      setIsGenerating(false);
-    }
-  };
-
-  const handleViewRecipe = (recipe: Recipe) => {
-    triggerHaptic();
-    setSelectedRecipe(recipe);
-    setShowRecipeModal(true);
+    generateRecipe(recipePrompt);
   };
 
   const [playingCardIndex, setPlayingCardIndex] = useState<number | null>(null);
 
   return (
-    <PullToRefreshWrapper onRefresh={handleRefresh} >
+    <PullToRefreshWrapper onRefresh={handleRefresh}>
       <ScrollView
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
@@ -438,7 +261,7 @@ export default function FoodPage() {
                 </View>
                 <TouchableOpacity
                   onPress={() => {
-                    triggerHaptic();
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                     setShowAIModal(true);
                   }}
                   style={styles.aiButton}
@@ -447,7 +270,6 @@ export default function FoodPage() {
                   <Text style={styles.aiButtonText}>AI Recipe</Text>
                 </TouchableOpacity>
               </View>
-
               {isListening && (
                 <View style={styles.listeningIndicator}>
                   <View style={styles.listeningDot} />
@@ -461,7 +283,7 @@ export default function FoodPage() {
               <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                 <TouchableOpacity
                   onPress={() => {
-                    triggerHaptic();
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                     setSelectedCategory('');
                   }}
                   style={[
@@ -484,22 +306,20 @@ export default function FoodPage() {
                   <TouchableOpacity
                     key={category}
                     onPress={() => {
-                      triggerHaptic();
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                       setSelectedCategory(category);
                     }}
                     style={[
                       styles.categoryChip,
                       { backgroundColor: colors.background, borderColor: colors.border },
-                      selectedCategory === category &&
-                        styles.categoryChipActive,
+                      selectedCategory === category && styles.categoryChipActive,
                     ]}
                   >
                     <Text
                       style={[
                         styles.categoryText,
-                         { color: colors.secondaryText },
-                        selectedCategory === category &&
-                          styles.categoryTextActive,
+                        { color: colors.secondaryText },
+                        selectedCategory === category && styles.categoryTextActive,
                       ]}
                     >
                       {category}
@@ -517,19 +337,19 @@ export default function FoodPage() {
                 <View style={styles.emptyState}>
                   <Text style={styles.emptyStateTitle}>No recipes found</Text>
                   <Text style={styles.emptyStateText}>
-                    Try a different search or category, or use the AI Recipe
-                    generator!
+                    Try a different search or category.
                   </Text>
                 </View>
               ) : (
                 data?.data?.map((recipe: any, index: number) => (
                   <TouchableOpacity
                     key={recipe._id}
-                    style={[styles.recipeCard,{backgroundColor: colors.card}]}
-                    onPress={() => handleViewRecipe(recipe)}
+                    style={[styles.recipeCard, { backgroundColor: colors.card }]}
+                    onPress={() => {
+                      if (recipe?.videoUrl) Linking.openURL(recipe?.videoUrl);
+                    }}
                     activeOpacity={0.8}
                   >
-                    {/* --- Video Player Section --- */}
                     <View style={styles.programImageContainer}>
                       <YoutubePlayer
                         height={200}
@@ -541,7 +361,7 @@ export default function FoodPage() {
                       />
                     </View>
                     <View style={styles.recipeContent}>
-                      <Text style={styles.recipeTitle}>{recipe.name}</Text>
+                      <Text style={[styles.recipeTitle, { color: colors.text }]}>{recipe.name}</Text>
                       <View style={styles.recipeMeta}>
                         <View style={styles.metaItem}>
                           <Clock size={16} color="#718096" />
@@ -554,11 +374,7 @@ export default function FoodPage() {
                       </View>
                       <TouchableOpacity
                         onPress={() => {
-                          if (recipe?.videoUrl) {
-                            Linking.openURL(recipe?.videoUrl);
-                          } else {
-                            console.warn('No video URL found for this recipe.');
-                          }
+                          if (recipe?.videoUrl) Linking.openURL(recipe?.videoUrl);
                         }}
                         style={styles.viewButton}
                       >
@@ -574,75 +390,91 @@ export default function FoodPage() {
             <View style={styles.bottomSpacing} />
           </ScrollView>
 
-          {/* AI Modal */}
-          {showAIModal && (
-            <Modal
-              visible={showAIModal}
-              transparent
-              animationType="slide"
-              onRequestClose={() => setShowAIModal(false)}
-            >
-              <View style={styles.modalOverlay}>
-                <View style={styles.aiModal}>
-                  <View style={styles.modalHeader}>
-                    <View style={styles.aiModalTitle}>
-                      <Brain size={24} color="#3B82F6" />
-                      <Text style={styles.modalTitle}>AI Recipe Generator</Text>
+          {/* AI Prompt Modal */}
+          <Modal
+            visible={showAIModal}
+            transparent
+            animationType="slide"
+            onRequestClose={() => setShowAIModal(false)}
+          >
+            <View style={styles.modalOverlay}>
+              <View style={[styles.aiModal, { backgroundColor: colors.card }]}>
+                <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
+                  <View style={styles.aiModalTitle}>
+                    <Brain size={24} color="#3B82F6" />
+                    <Text style={[styles.modalTitle, { color: colors.text }]}>AI Recipe Generator</Text>
+                  </View>
+                  <TouchableOpacity onPress={() => setShowAIModal(false)}>
+                    <X size={24} color="#718096" />
+                  </TouchableOpacity>
+                </View>
+                
+                {/* *** FIX 4: Removed the faulty logic that caused the "Objects are not valid" error *** */}
+                <View style={styles.aiModalContent}>
+                  <Text style={[styles.promptLabel, { color: colors.secondaryText }]}>
+                    Describe the recipe you want:
+                  </Text>
+                  <TextInput
+                    style={[styles.promptInput, { borderColor: colors.border, color: colors.text }]}
+                    value={recipePrompt}
+                    onChangeText={setRecipePrompt}
+                    placeholder="E.g., A healthy sattvic breakfast..."
+                    multiline
+                    numberOfLines={4}
+                    textAlignVertical="top"
+                    placeholderTextColor="#A0AEC0"
+                  />
+                  {recipeError && (
+                    <View style={styles.errorContainer}>
+                      <Text style={styles.errorText}>Failed to generate recipe.</Text>
                     </View>
-                    <TouchableOpacity onPress={() => setShowAIModal(false)}>
-                      <X size={24} color="#718096" />
-                    </TouchableOpacity>
-                  </View>
-
-                  <View style={styles.aiModalContent}>
-                    <Text style={styles.promptLabel}>
-                      Describe the recipe you want (e.g., ingredients, cuisine,
-                      type):
-                    </Text>
-                    <TextInput
-                      style={styles.promptInput}
-                      value={recipePrompt}
-                      onChangeText={setRecipePrompt}
-                      placeholder="E.g., A healthy sattvic breakfast using oats and fruits..."
-                      multiline
-                      numberOfLines={4}
-                      textAlignVertical="top"
-                      placeholderTextColor="#A0AEC0"
-                    />
-
-                    {error && (
-                      <View style={styles.errorContainer}>
-                        <Text style={styles.errorText}>{error}</Text>
-                      </View>
+                  )}
+                  <TouchableOpacity
+                    onPress={handleGenerate}
+                    disabled={isRecipeLoading || !recipePrompt.trim()}
+                    style={[
+                      styles.generateButton,
+                      (isRecipeLoading || !recipePrompt.trim()) && styles.generateButtonDisabled,
+                    ]}
+                  >
+                    {isRecipeLoading ? (
+                      <>
+                        <Loader size={20} color="#FFFFFF" />
+                        <Text style={styles.generateButtonText}>Generating...</Text>
+                      </>
+                    ) : (
+                      <Text style={styles.generateButtonText}>Generate Recipe</Text>
                     )}
-
-                    <TouchableOpacity
-                      onPress={handleGenerateRecipe}
-                      disabled={isGenerating || !recipePrompt.trim()}
-                      style={[
-                        styles.generateButton,
-                        (isGenerating || !recipePrompt.trim()) &&
-                          styles.generateButtonDisabled,
-                      ]}
-                    >
-                      {isGenerating ? (
-                        <>
-                          <Loader size={20} color="#FFFFFF" />
-                          <Text style={styles.generateButtonText}>
-                            Generating...
-                          </Text>
-                        </>
-                      ) : (
-                        <Text style={styles.generateButtonText}>
-                          Generate Recipe
-                        </Text>
-                      )}
-                    </TouchableOpacity>
-                  </View>
+                  </TouchableOpacity>
                 </View>
               </View>
-            </Modal>
-          )}
+            </View>
+          </Modal>
+
+          {/* *** FIX 5: ADDED the modal to DISPLAY the AI-generated recipe text *** */}
+          <Modal
+            visible={showAIGeneratedModal}
+            transparent
+            animationType="slide"
+            onRequestClose={() => setShowAIGeneratedModal(false)}
+          >
+            <View style={styles.modalOverlay}>
+              <View style={[styles.recipeModal, { backgroundColor: colors.card }]}>
+                <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
+                  <Text style={[styles.modalTitle, { color: colors.text, flex: 1 }]} numberOfLines={1}>
+                    AI Generated Recipe
+                  </Text>
+                  <TouchableOpacity onPress={() => setShowAIGeneratedModal(false)}>
+                    <X size={24} color="#718096" />
+                  </TouchableOpacity>
+                </View>
+                <ScrollView>
+                  <AiRecipeParser content={aiGeneratedContent} />
+                </ScrollView>
+              </View>
+            </View>
+          </Modal>
+
         </View>
       </ScrollView>
     </PullToRefreshWrapper>
@@ -650,8 +482,10 @@ export default function FoodPage() {
 }
 
 const styles = StyleSheet.create({
+  // ... All previous styles are kept ...
   programImageContainer: {
     height: 180,
+    backgroundColor: '#000000',
   },
   container: {
     flex: 1,
@@ -692,7 +526,6 @@ const styles = StyleSheet.create({
   searchSection: {
     paddingHorizontal: 16,
     paddingVertical: 16,
-    backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
     borderBottomColor: '#E2E8F0',
   },
@@ -704,16 +537,16 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F7FAFC',
     borderRadius: 25,
     paddingHorizontal: 16,
     paddingVertical: 12,
     gap: 12,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
   },
   searchInput: {
     flex: 1,
     fontSize: 16,
-    color: '#2D3748',
   },
   voiceButton: {
     padding: 4,
@@ -760,26 +593,20 @@ const styles = StyleSheet.create({
   categoryChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F7FAFC',
     borderRadius: 20,
     paddingHorizontal: 16,
     paddingVertical: 8,
     marginRight: 12,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
     gap: 8,
   },
   categoryChipActive: {
     backgroundColor: '#38A169',
     borderColor: '#38A169',
   },
-  categoryIcon: {
-    fontSize: 16,
-  },
   categoryText: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#718096',
   },
   categoryTextActive: {
     color: '#FFFFFF',
@@ -804,7 +631,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   recipeCard: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
@@ -813,11 +639,6 @@ const styles = StyleSheet.create({
     elevation: 6,
     overflow: 'hidden',
   },
-  recipeImage: {
-    width: '100%',
-    height: 180,
-    resizeMode: 'cover',
-  },
   recipeContent: {
     padding: 16,
   },
@@ -825,7 +646,6 @@ const styles = StyleSheet.create({
     marginTop: 10,
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#2D3748',
     marginBottom: 8,
   },
   recipeMeta: {
@@ -867,7 +687,6 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   recipeModal: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 16,
     width: '100%',
     maxWidth: 500,
@@ -879,7 +698,6 @@ const styles = StyleSheet.create({
     elevation: 10,
   },
   aiModal: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 16,
     width: '100%',
     maxWidth: 400,
@@ -895,87 +713,28 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
   },
   modalTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#2D3748',
   },
   aiModalTitle: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
   },
-  modalContent: {
-    flex: 1,
-  },
-  modalImage: {
-    width: '100%',
-    height: 200,
-    resizeMode: 'cover',
-  },
-  recipeDetails: {
-    padding: 16,
-  },
-  recipeInfo: {
-    marginBottom: 16,
-  },
-  infoLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#2D3748',
-    marginBottom: 4,
-  },
-  infoValue: {
-    fontWeight: 'normal',
-    color: '#718096',
-  },
-  section: {
-    marginBottom: 16,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#2D3748',
-    marginBottom: 8,
-  },
-  listItem: {
-    fontSize: 14,
-    color: '#4A5568',
-    marginBottom: 4,
-    lineHeight: 20,
-  },
-  saveButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#FEF2F2',
-    borderRadius: 8,
-    paddingVertical: 12,
-    gap: 8,
-    marginTop: 16,
-  },
-  saveButtonText: {
-    color: '#EF4444',
-    fontSize: 14,
-    fontWeight: '600',
-  },
   aiModalContent: {
     padding: 16,
   },
   promptLabel: {
     fontSize: 14,
-    color: '#4A5568',
     marginBottom: 8,
   },
   promptInput: {
     borderWidth: 1,
-    borderColor: '#E2E8F0',
     borderRadius: 8,
     padding: 12,
     fontSize: 14,
-    color: '#2D3748',
     marginBottom: 16,
     minHeight: 100,
   },
@@ -1005,5 +764,44 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
+  },
+
+  // *** FIX 6: ADDED the necessary styles for the AiRecipeParser ***
+  aiContentContainer: {
+    padding: 16,
+  },
+  aiHeading: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#2D3748',
+    marginTop: 20,
+    marginBottom: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E2E8F0',
+    paddingBottom: 5,
+  },
+  aiParagraph: {
+    fontSize: 15,
+    color: '#4A5568',
+    lineHeight: 22,
+    marginBottom: 10,
+  },
+  aiListItemContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 8,
+    paddingLeft: 10,
+  },
+  aiListItem: {
+    fontSize: 15,
+    color: '#4A5568',
+    marginRight: 8,
+    lineHeight: 22,
+  },
+  aiListItemText: {
+    fontSize: 15,
+    color: '#4A5568',
+    lineHeight: 22,
+    flex: 1,
   },
 });
