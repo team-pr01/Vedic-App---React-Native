@@ -115,3 +115,14 @@ export type TYoga = {
   updatedAt: string; // ISO date string
   __v: number;
 };
+export interface TranslateShlokaArgs {
+  text: string;
+  targetLang: string;
+}
+
+// Define the expected shape of a successful response (adjust if needed)
+export interface TranslateShlokaResponse {
+  success: boolean;
+  message: string;
+  data: string; // Assuming the translation comes back as a string in the data property
+}

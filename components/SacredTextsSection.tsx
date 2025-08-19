@@ -1,5 +1,12 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Image,
+} from 'react-native';
 import { BookOpen } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { useThemeColors } from '@/hooks/useThemeColors';
@@ -13,9 +20,12 @@ interface SacredTextsSectionProps {
   onTextClick: (textId: string) => void;
 }
 
-export default function SacredTextsSection({ data, isLoading, onTextClick }: SacredTextsSectionProps) {
+export default function SacredTextsSection({
+  data,
+  isLoading,
+  onTextClick,
+}: SacredTextsSectionProps) {
   const colors = useThemeColors();
-
 
   const handleTextPress = (textId: string) => {
     onTextClick(textId);
@@ -39,18 +49,18 @@ export default function SacredTextsSection({ data, isLoading, onTextClick }: Sac
 
   // Loading state
   if (isLoading) {
-    return (
-      <LoadingComponent
-                    loading="Programs "
-                    color={colors.primary}
-                  />
-    );
+    return <LoadingComponent loading="Programs " color={colors.primary} />;
   }
 
   // Empty state
   if (!data?.data?.length) {
     return (
-      <View style={[styles.centeredContainer, { backgroundColor: colors.background }]}>
+      <View
+        style={[
+          styles.centeredContainer,
+          { backgroundColor: colors.background },
+        ]}
+      >
         <Text style={{ color: colors.text }}>No sacred texts found</Text>
       </View>
     );
@@ -58,8 +68,12 @@ export default function SacredTextsSection({ data, isLoading, onTextClick }: Sac
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <Text style={[styles.sectionTitle, { color: colors.primary }]}>Sacred Texts</Text>
-      <Text style={[styles.sectionSubtitle, { color: colors.secondaryText }]}>পবিত্র গ্রন্থসমূহ</Text>
+      <Text style={[styles.sectionTitle, { color: colors.primary }]}>
+        Sacred Texts
+      </Text>
+      <Text style={[styles.sectionSubtitle, { color: colors.secondaryText }]}>
+        পবিত্র গ্রন্থসমূহ
+      </Text>
 
       <ScrollView
         horizontal

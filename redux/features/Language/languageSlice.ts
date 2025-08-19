@@ -28,7 +28,6 @@ export const allLanguages: TLanguage[] = [
     { code: 'ar', name: 'العربية (Arabic)' },
     { code: 'bn', name: 'বাংলা (Bengali)' },
     { code: 'ru', name: 'Русский (Russian)' },
-    // ... all other languages from your context file
     { code: 'pt', name: 'Português (Portuguese)' },
     { code: 'id', name: 'Bahasa Indonesia (Indonesian)' },
     { code: 'ur', name: 'اردو (Urdu)' },

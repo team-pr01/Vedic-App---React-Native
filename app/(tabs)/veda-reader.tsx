@@ -53,6 +53,7 @@ import { RootState } from '@/redux/store';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { useGetSingleBookQuery } from '@/redux/features/Book/bookApi';
 import LoadingComponent from '@/components/LoadingComponent/LoadingComponent';
+import { useTranslateShlokaMutation } from '@/redux/features/AI/aiApi';
 
 function VedaReaderContent() {
   const { vedaId } = useLocalSearchParams<{ vedaId: string }>();
@@ -60,6 +61,9 @@ function VedaReaderContent() {
   const colors = useThemeColors();
   const { data: vedaData, isLoading } = useGetSingleBookQuery(vedaId);
   const veda = vedaData?.data as VedicText | null;
+  const [translateShloka, { isLoading: isShlokaTranslating }] =
+    useTranslateShlokaMutation();
+
   const [selectedSectionId, setSelectedSectionId] = useState<string | null>(
     null
   );
@@ -75,9 +79,9 @@ function VedaReaderContent() {
   const [showLanguageModal, setShowLanguageModal] = useState(false);
   const [languageSearchTerm, setLanguageSearchTerm] = useState('');
 
-  const [currentTranslation, setCurrentTranslation] =
-    useState<VerseTranslation | null>(null);
-  const [isTranslating, setIsTranslating] = useState(false);
+  const [currentTranslation, setCurrentTranslation] = useState<string | null>(
+    null
+  );
   const [translationError, setTranslationError] = useState<string | null>(null);
 
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
@@ -130,17 +134,18 @@ function VedaReaderContent() {
     [flattenedVerses, currentVerseIndex]
   );
   const availableLanguageCodes = useMemo(() => {
-  if (!currentVerse?.translations) return [];
-  return currentVerse.translations.map((t) => t.language.toLowerCase());
-}, [currentVerse]);
+    if (!allLanguages) return [];
 
-const filteredLanguages = useMemo(() => {
-  return allLanguages
-    .filter((lang) =>
-      availableLanguageCodes.includes(lang.code.toLowerCase()) &&
-      lang.name.toLowerCase().includes(languageSearchTerm.toLowerCase())
+    return allLanguages.map((lang) => lang.code.toLowerCase());
+  }, [allLanguages]); // This will only re-calculate if the master list of languages ever changes.
+
+  const filteredLanguages = useMemo(() => {
+    return allLanguages.filter(
+      (lang) =>
+        availableLanguageCodes.includes(lang.code.toLowerCase()) &&
+        lang.name.toLowerCase().includes(languageSearchTerm.toLowerCase())
     );
-}, [allLanguages, availableLanguageCodes, languageSearchTerm]);
+  }, [allLanguages, availableLanguageCodes, languageSearchTerm]);
 
   const updateSelections = useCallback(
     (sectionId: string, subsectionId: string, verseId: string) => {
@@ -170,60 +175,42 @@ const filteredLanguages = useMemo(() => {
     }
   }, [flattenedVerses, updateSelections, selectedVerseId]);
 
-  const handleTranslate = useCallback(async () => {
-    if (!currentVerse || !targetLanguage || isTranslating) return;
+// THE FIX: Remove isShlokaTranslating from the dependency array
+const handleTranslate = useCallback(async () => {
+  if (!currentVerse || !targetLanguage || isShlokaTranslating) return;
 
-    setIsTranslating(true);
-    setTranslationError(null);
-    setCurrentTranslation(null);
+  setTranslationError(null);
+  setCurrentTranslation(null);
 
-    try {
-      // Handle both string & array cases
-      const sanskritText = Array.isArray(currentVerse.originalText)
-        ? currentVerse.originalText.join('\n')
-        : currentVerse.originalText || '';
+  try {
+    const sanskritText = Array.isArray(currentVerse.originalText)
+      ? currentVerse.originalText.join('\n')
+      : currentVerse.originalText || '';
 
-      console.log(
-        'Starting translation for:',
-        sanskritText,
-        'to',
-        targetLanguage.name
-      );
-
-      const translationResult =
-        await VedicTranslationService.translateVerseDetails(
-          sanskritText,
-          targetLanguage.code,
-          targetLanguage.name
-        );
-
-      console.log('Translation result:', translationResult);
-      setCurrentTranslation(translationResult);
-    } catch (error: any) {
-      console.error('Translation error:', error);
-      setTranslationError(
-        error.message || 'Failed to translate. Please try again.'
-      );
-
-      // Fallback translations if available
-      // if (targetLanguage.code === 'en' && currentVerse.englishTranslation) {
-      //   setCurrentTranslation({ bhavartha: currentVerse.englishTranslation });
-      // } else if (
-      //   targetLanguage.code === 'bn' &&
-      //   currentVerse.bengaliTranslation
-      // ) {
-      //   setCurrentTranslation({ bhavartha: currentVerse.bengaliTranslation });
-      // }
-    } finally {
-      setIsTranslating(false);
+    if (!sanskritText.trim()) {
+      setTranslationError('Original text is empty.');
+      return;
     }
-  }, [currentVerse, targetLanguage, isTranslating]);
+
+    const response = await translateShloka({
+      text: sanskritText,
+      targetLang: targetLanguage.name,
+    }).unwrap();
+
+    setCurrentTranslation(response.data);
+  } catch (error: any) {
+    console.error('Translation error:', error);
+    setTranslationError(
+      error.data?.message || 'Failed to translate. Please try again.'
+    );
+  }
+}, [currentVerse, targetLanguage, translateShloka]); // <-- CORRECTED DEPENDENCY ARRAY
 
   useEffect(() => {
     if (currentVerse && targetLanguage) {
       handleTranslate();
     }
-  }, [currentVerse, targetLanguage]);
+  }, [currentVerse, targetLanguage, handleTranslate]);
 
   const handleSectionSelect = (sectionId: string) => {
     triggerHaptic();
@@ -301,8 +288,8 @@ const filteredLanguages = useMemo(() => {
   //   targetLanguage.code
   // ) ||false;
 
-  if(isLoading) {
-    return(<LoadingComponent loading="Vedic Text..."  color={colors.primary}/>);
+  if (isLoading) {
+    return <LoadingComponent loading="Vedic Text..." color={colors.primary} />;
   }
 
   if (!veda) {
@@ -630,7 +617,7 @@ const filteredLanguages = useMemo(() => {
               </TouchableOpacity>
             </View>
 
-            {isTranslating && (
+            {isShlokaTranslating && (
               <View
                 style={[
                   styles.statusContainer,
@@ -659,23 +646,25 @@ const filteredLanguages = useMemo(() => {
               </View>
             )}
 
-            {currentTranslation && !isTranslating && !translationError && (
-              <View
-                style={[
-                  styles.translationContainer,
-                  { borderTopColor: colors.border },
-                ]}
-              >
-                <View style={styles.translationHeader}>
-                  <Text
-                    style={[
-                      styles.translationLabel,
-                      { color: colors.secondaryText },
-                    ]}
-                  >
-                    {t('translationByAI', 'Translation by AI')}
-                  </Text>
-                  {/* {isHumanVerified && (
+            {currentTranslation &&
+              !isShlokaTranslating &&
+              !translationError && (
+                <View
+                  style={[
+                    styles.translationContainer,
+                    { borderTopColor: colors.border },
+                  ]}
+                >
+                  <View style={styles.translationHeader}>
+                    <Text
+                      style={[
+                        styles.translationLabel,
+                        { color: colors.secondaryText },
+                      ]}
+                    >
+                      {t('translationByAI', 'Translation by AI')}
+                    </Text>
+                    {/* {isHumanVerified && (
                     <View
                       style={[
                         styles.verifiedBadge,
@@ -689,8 +678,8 @@ const filteredLanguages = useMemo(() => {
                       </Text>
                     </View>
                   )} */}
-                </View>
-
+                  </View>
+                  {/* 
                 {currentTranslation.pada && (
                   <View style={styles.translationSection}>
                     <Text
@@ -743,9 +732,16 @@ const filteredLanguages = useMemo(() => {
                       {currentTranslation.bhavartha}
                     </Text>
                   </View>
-                )}
-              </View>
-            )}
+                )} */}
+                  <View style={styles.translationSection}>
+                    <Text
+                      style={[styles.translationText, { color: colors.text }]}
+                    >
+                      {currentTranslation}
+                    </Text>
+                  </View>
+                </View>
+              )}
 
             <View style={styles.navigationContainer}>
               <TouchableOpacity
