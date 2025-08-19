@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -12,6 +12,7 @@ import {
   Linking,
   ActivityIndicator,
   RefreshControl,
+  KeyboardAvoidingView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -35,10 +36,13 @@ import { router } from 'expo-router';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { useGetAlCoursesQuery } from '@/redux/features/Course/courseApi';
 import { useGetAllReelsQuery } from '@/redux/features/Reels/reelsApi';
+// --- (1) IMPORT THE CHAT MUTATION HOOK ---
+// Note: Adjust the import path if it's different in your project structure.;
 import YoutubePlayer from 'react-native-youtube-iframe';
 import { getYouTubeVideoId } from '@/utils/getYouTubeVideoId';
 import LoadingComponent from '@/components/LoadingComponent/LoadingComponent';
 import { PullToRefreshWrapper } from '@/components/Reusable/PullToRefreshWrapper/PullToRefreshWrapper';
+import { useChatMutation } from '@/redux/features/AI/aiApi';
 
 interface Course {
   title: string;
@@ -76,39 +80,6 @@ interface QuizQuestion {
   options: string[];
   correctAnswer: number;
 }
-
-const realVideos: RealVideo[] = [
-  {
-    title: 'Morning Vedic Chants for Positive Energy',
-    duration: '15 min',
-    instructor: 'Pandit Sharma',
-    views: '12K',
-    thumbnail:
-      'https://images.pexels.com/photos/3280130/pexels-photo-3280130.jpeg?auto=compress&cs=tinysrgb&w=400',
-    videoUrl:
-      'https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/360/Big_Buck_Bunny_360_10s_1MB.mp4',
-  },
-  {
-    title: 'Discourse on Bhagavad Gita - Chapter 2',
-    duration: '45 min',
-    instructor: 'Swami Ramdev',
-    views: '25K',
-    thumbnail:
-      'https://images.pexels.com/photos/1051838/pexels-photo-1051838.jpeg?auto=compress&cs=tinysrgb&w=400',
-    videoUrl:
-      'https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/360/Big_Buck_Bunny_360_10s_1MB.mp4',
-  },
-  {
-    title: 'Sanskrit Pronunciation Guide for Beginners',
-    duration: '30 min',
-    instructor: 'Dr. Patel',
-    views: '8K',
-    thumbnail:
-      'https://images.pexels.com/photos/1181772/pexels-photo-1181772.jpeg?auto=compress&cs=tinysrgb&w=400',
-    videoUrl:
-      'https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/360/Big_Buck_Bunny_360_10s_1MB.mp4',
-  },
-];
 
 export type TCourse = {
   _id: string;
@@ -435,7 +406,6 @@ const QuizModal: React.FC<{
 };
 
 export default function LearnScreen() {
-  //   Get all Courses
   const {
     data,
     isLoading: isCourseLoading,
@@ -448,21 +418,9 @@ export default function LearnScreen() {
     refetch: refetchReels,
   } = useGetAllReelsQuery({});
 
+  const [chat, { isLoading: isSendingMessage }] = useChatMutation();
+
   const [refreshing, setRefreshing] = useState(false);
-
-  const handleRefresh = async () => {
-    console.log('🔄 Refreshing both courses and reels...');
-    setRefreshing(true);
-
-    try {
-      await Promise.all([refetchCourses(), refetchReels()]);
-    } catch (error) {
-      console.error('Error while refreshing:', error);
-    } finally {
-      setRefreshing(false);
-    }
-  };
-
   const colors = useThemeColors();
   const [activeTab, setActiveTab] = useState<
     'courses' | 'videos' | 'ai' | 'quiz'
@@ -475,15 +433,32 @@ export default function LearnScreen() {
   const [showChatModal, setShowChatModal] = useState(false);
   const [chatMessage, setChatMessage] = useState('');
   const [chatHistory, setChatHistory] = useState<
-    { role: 'user' | 'assistant'; content: string }[]
+    { role: 'user' | 'assistant'; content: string; id: string }[]
   >([
     {
       role: 'assistant',
       content:
         "Hello! I'm your AI learning assistant. How can I help you with your Vedic studies today?",
+      id: `initial-${Date.now()}`,
     },
   ]);
-  const [isSendingMessage, setIsSendingMessage] = useState(false);
+
+  const chatScrollViewRef = useRef<ScrollView>(null);
+
+  useEffect(() => {
+    chatScrollViewRef.current?.scrollToEnd({ animated: true });
+  }, [chatHistory]);
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await Promise.all([refetchCourses(), refetchReels()]);
+    } catch (error) {
+      console.error('Error while refreshing:', error);
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   const triggerHaptic = () => {
     if (Platform.OS !== 'web') {
@@ -522,36 +497,54 @@ export default function LearnScreen() {
     triggerHaptic();
     setShowChatModal(true);
   };
+ const handleSendMessage = async () => {
+    // Prevent sending empty or while another message is in flight
+    if (!chatMessage.trim() || isSendingMessage) return;
 
-  const handleSendMessage = async () => {
-    if (!chatMessage.trim()) return;
+    // Hold the current message in a variable before clearing the state
+    const messageToSend = chatMessage;
 
-    const userMessage = { role: 'user' as const, content: chatMessage };
+    // Create the user's message object for optimistic UI update
+    const userMessage = {
+      role: 'user' as const,
+      content: messageToSend,
+      id: `user-${Date.now()}`,
+    };
+
+    // Optimistically add the user's message to the history and clear the input
     setChatHistory((prev) => [...prev, userMessage]);
     setChatMessage('');
-    setIsSendingMessage(true);
 
-    // Simulate AI response
-    setTimeout(() => {
-      const responses = [
-        'The Vedas are the oldest scriptures of Hinduism. They are divided into four main texts: Rigveda, Samaveda, Yajurveda, and Atharvaveda.',
-        "In Sanskrit, 'yoga' means 'union', referring to the union of individual consciousness with universal consciousness.",
-        "The Bhagavad Gita consists of 700 verses and is part of the epic Mahabharata. It's structured as a dialogue between Prince Arjuna and Lord Krishna.",
-        'Meditation techniques in Vedic traditions include focusing on breath (pranayama), mantras, or specific objects of concentration.',
-        "The concept of 'dharma' refers to the moral order that sustains the cosmos, society, and the individual. It can be understood as righteous duty or virtuous conduct.",
-      ];
+    try {
+      // Call the API
+      const response = await chat(messageToSend).unwrap();
 
-      const randomResponse =
-        responses[Math.floor(Math.random() * responses.length)];
-      const aiResponse = {
+      // Create the AI's response message object
+      const aiMessage = {
         role: 'assistant' as const,
-        content: randomResponse,
+        // Ensure you access the correct property from your API response
+        content:
+          response?.data || "Sorry, I couldn't process that request.",
+        id: `ai-${Date.now()}`,
       };
 
-      setChatHistory((prev) => [...prev, aiResponse]);
-      setIsSendingMessage(false);
-    }, 1500);
+      // Add the AI's message to the history
+      setChatHistory((prev) => [...prev, aiMessage]);
+    } catch (error) {
+      console.error('Failed to send message:', error);
+
+      // Create an error message object to display in the chat
+      const errorMessage = {
+        role: 'assistant' as const,
+        content: 'Sorry, there was an error. Please try again.',
+        id: `error-${Date.now()}`,
+      };
+
+      // Add the error message to the history
+      setChatHistory((prev) => [...prev, errorMessage]);
+    }
   };
+
   const [playingCardIndex, setPlayingCardIndex] = useState<number | null>(null);
 
   const renderTabContent = () => {
@@ -635,7 +628,6 @@ export default function LearnScreen() {
                     },
                   ]}
                 >
-                  {/* --- Video Player Section --- */}
                   <View style={styles.programImageContainer}>
                     <YoutubePlayer
                       height={200}
@@ -855,18 +847,22 @@ export default function LearnScreen() {
 
   return (
     <PullToRefreshWrapper onRefresh={handleRefresh}>
-      <ScrollView
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
-        }
+      <SafeAreaView
+        edges={['top', 'left', 'right']}
+        style={[styles.container, { backgroundColor: colors.background }]}
       >
-        <SafeAreaView
-          edges={['top', 'left', 'right']}
-          style={[styles.container, { backgroundColor: colors.background }]}
+        <ScrollView
+          style={{ flex: 1 }}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+          }
         >
           {/* Header */}
           <LinearGradient colors={['#FF6F00', '#FF8F00']} style={styles.header}>
-            <TouchableOpacity onPress={triggerHaptic}>
+            <TouchableOpacity
+              onPress={() => router.back()}
+              style={styles.backButton}
+            >
               <ArrowLeft size={24} color="#FFFFFF" />
             </TouchableOpacity>
             <View style={styles.headerContent}>
@@ -921,58 +917,61 @@ export default function LearnScreen() {
           </View>
 
           {/* Content */}
-          <ScrollView
-            style={[styles.content, { backgroundColor: colors.background }]}
-            showsVerticalScrollIndicator={false}
-          >
+          <View style={[styles.content, { backgroundColor: colors.background }]}>
             {renderTabContent()}
-          </ScrollView>
+          </View>
+        </ScrollView>
 
-          {/* Quiz Modal */}
-          {currentQuiz && (
-            <QuizModal
-              quiz={currentQuiz}
-              onClose={() => setCurrentQuiz(null)}
-              onComplete={handleQuizComplete}
-            />
-          )}
+        {/* Quiz Modal */}
+        {currentQuiz && (
+          <QuizModal
+            quiz={currentQuiz}
+            onClose={() => setCurrentQuiz(null)}
+            onComplete={handleQuizComplete}
+          />
+        )}
 
-          {/* Video Modal */}
-          {showVideoModal && selectedVideo && (
-            <Modal
-              visible={true}
-              animationType="slide"
-              presentationStyle="pageSheet"
-            >
-              <SafeAreaView style={styles.videoModalContainer}>
-                <View style={styles.videoModalHeader}>
-                  <Text style={styles.videoModalTitle}>Video Player</Text>
-                  <TouchableOpacity onPress={() => setShowVideoModal(false)}>
-                    <X size={24} color="#2D3748" />
-                  </TouchableOpacity>
+        {/* Video Modal */}
+        {showVideoModal && selectedVideo && (
+          <Modal
+            visible={true}
+            animationType="slide"
+            presentationStyle="pageSheet"
+          >
+            <SafeAreaView style={styles.videoModalContainer}>
+              <View style={styles.videoModalHeader}>
+                <Text style={styles.videoModalTitle}>Video Player</Text>
+                <TouchableOpacity onPress={() => setShowVideoModal(false)}>
+                  <X size={24} color="#2D3748" />
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.videoPlayerContainer}>
+                <View style={styles.videoPlaceholder}>
+                  <Video size={64} color="#718096" />
+                  <Text style={styles.videoPlaceholderText}>
+                    Video: {selectedVideo.title}
+                  </Text>
+                  <Text style={styles.videoPlaceholderSubtext}>
+                    By {selectedVideo.instructor}
+                  </Text>
                 </View>
+              </View>
+            </SafeAreaView>
+          </Modal>
+        )}
 
-                <View style={styles.videoPlayerContainer}>
-                  <View style={styles.videoPlaceholder}>
-                    <Video size={64} color="#718096" />
-                    <Text style={styles.videoPlaceholderText}>
-                      Video: {selectedVideo.title}
-                    </Text>
-                    <Text style={styles.videoPlaceholderSubtext}>
-                      By {selectedVideo.instructor}
-                    </Text>
-                  </View>
-                </View>
-              </SafeAreaView>
-            </Modal>
-          )}
-
-          {/* AI Chat Modal */}
-          {showChatModal && (
-            <Modal
-              visible={true}
-              animationType="slide"
-              presentationStyle="pageSheet"
+        {/* AI Chat Modal */}
+        {showChatModal && (
+          <Modal
+            visible={true}
+            animationType="slide"
+            presentationStyle="pageSheet"
+            onRequestClose={() => setShowChatModal(false)}
+          >
+            <KeyboardAvoidingView
+              behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+              style={{ flex: 1 }}
             >
               <SafeAreaView
                 style={[
@@ -998,34 +997,43 @@ export default function LearnScreen() {
                 </View>
 
                 <ScrollView
+                  ref={chatScrollViewRef}
                   style={[
                     styles.chatMessages,
                     { backgroundColor: colors.background },
                   ]}
+                  contentContainerStyle={{ paddingBottom: 10 }}
                 >
-                  {chatHistory.map((message, index) => (
-                    <View
-                      key={index}
+                   {/* --- MODIFICATION 3: Use message.id for the key prop --- */}
+                {chatHistory.map((message) => (
+                  <View
+                    key={message.id} // Use the unique ID for the key
+                    style={[
+                      styles.chatBubble,
+                      message.role === 'user'
+                        ? styles.userBubble
+                        : styles.aiBubble,
+                    ]}
+                  >
+                    <Text
                       style={[
-                        styles.chatBubble,
+                        styles.chatText,
                         message.role === 'user'
-                          ? styles.userBubble
-                          : styles.aiBubble,
+                          ? styles.userText
+                          : [styles.aiText, { color: colors.text }],
                       ]}
                     >
-                      <Text
-                        style={[
-                          styles.chatText,
-                          message.role === 'user'
-                            ? styles.userText
-                            : [styles.aiText, { color: colors.text }],
-                        ]}
-                      >
-                        {message.content}
-                      </Text>
-                    </View>
-                  ))}
-                </ScrollView>
+                      {message.content}
+                    </Text>
+                  </View>
+                ))}
+                {/* A loading indicator can still be shown while waiting for the response */}
+                {isSendingMessage && (
+                  <View style={[styles.chatBubble, styles.aiBubble]}>
+                    <ActivityIndicator size="small" color={colors.primary} />
+                  </View>
+                )}
+              </ScrollView>
 
                 <View
                   style={[
@@ -1068,15 +1076,16 @@ export default function LearnScreen() {
                   </TouchableOpacity>
                 </View>
               </SafeAreaView>
-            </Modal>
-          )}
-        </SafeAreaView>
-      </ScrollView>
+            </KeyboardAvoidingView>
+          </Modal>
+        )}
+      </SafeAreaView>
     </PullToRefreshWrapper>
   );
 }
 
 const styles = StyleSheet.create({
+  // ... (All your existing styles remain unchanged)
   container: {
     flex: 1,
     backgroundColor: '#F7FAFC',
@@ -1088,9 +1097,13 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 16,
     paddingTop: 20,
+  },
+  backButton: {
+    width: 24, // to balance the placeholder
   },
   headerContent: {
     flex: 1,
@@ -1140,11 +1153,12 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   content: {
-    flex: 1,
     padding: 16,
+    paddingBottom: 0, // content itself shouldn't have bottom padding if it's inside a ScrollView
   },
   tabContent: {
     gap: 16,
+    paddingBottom: 16, // Add padding here so last item has space
   },
   courseCard: {
     backgroundColor: '#FFFFFF',
@@ -1378,6 +1392,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingHorizontal: 8,
     paddingVertical: 4,
+    alignSelf: 'flex-start',
   },
   difficultyText: {
     fontSize: 12,
@@ -1588,7 +1603,6 @@ const styles = StyleSheet.create({
     marginTop: 8,
     textAlign: 'center',
   },
-  // Chat modal styles
   chatModalContainer: {
     flex: 1,
     backgroundColor: '#F7FAFC',

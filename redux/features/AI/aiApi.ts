@@ -9,6 +9,19 @@ const aiApi = baseApi.injectEndpoints({
         body: { query: queryText },
       }),
     }),
+
+    chat: builder.mutation({
+      query: (messageText: string) => ({ 
+        url: "/ai/chat",
+        method: "POST",
+        body: { message: messageText }, 
+        credentials:"include"
+      }),
+      invalidatesTags:["users"]
+    }),
+
   }),
 });
-export const { useGenerateRecipeMutation } = aiApi;
+export const { useGenerateRecipeMutation,
+  useChatMutation
+ } = aiApi;
