@@ -175,36 +175,36 @@ function VedaReaderContent() {
     }
   }, [flattenedVerses, updateSelections, selectedVerseId]);
 
-// THE FIX: Remove isShlokaTranslating from the dependency array
-const handleTranslate = useCallback(async () => {
-  if (!currentVerse || !targetLanguage || isShlokaTranslating) return;
+  // THE FIX: Remove isShlokaTranslating from the dependency array
+  const handleTranslate = useCallback(async () => {
+    if (!currentVerse || !targetLanguage || isShlokaTranslating) return;
 
-  setTranslationError(null);
-  setCurrentTranslation(null);
+    setTranslationError(null);
+    setCurrentTranslation(null);
 
-  try {
-    const sanskritText = Array.isArray(currentVerse.originalText)
-      ? currentVerse.originalText.join('\n')
-      : currentVerse.originalText || '';
+    try {
+      const sanskritText = Array.isArray(currentVerse.originalText)
+        ? currentVerse.originalText.join('\n')
+        : currentVerse.originalText || '';
 
-    if (!sanskritText.trim()) {
-      setTranslationError('Original text is empty.');
-      return;
+      if (!sanskritText.trim()) {
+        setTranslationError('Original text is empty.');
+        return;
+      }
+
+      const response = await translateShloka({
+        text: sanskritText,
+        targetLang: targetLanguage.name,
+      }).unwrap();
+
+      setCurrentTranslation(response.data);
+    } catch (error: any) {
+      console.error('Translation error:', error);
+      setTranslationError(
+        error.data?.message || 'Failed to translate. Please try again.'
+      );
     }
-
-    const response = await translateShloka({
-      text: sanskritText,
-      targetLang: targetLanguage.name,
-    }).unwrap();
-
-    setCurrentTranslation(response.data);
-  } catch (error: any) {
-    console.error('Translation error:', error);
-    setTranslationError(
-      error.data?.message || 'Failed to translate. Please try again.'
-    );
-  }
-}, [currentVerse, targetLanguage, translateShloka]); // <-- CORRECTED DEPENDENCY ARRAY
+  }, [currentVerse, targetLanguage, translateShloka]); // <-- CORRECTED DEPENDENCY ARRAY
 
   useEffect(() => {
     if (currentVerse && targetLanguage) {
@@ -609,12 +609,12 @@ const handleTranslate = useCallback(async () => {
                 <ChevronRight size={16} color="#FFFFFF" />
               </TouchableOpacity>
 
-              <TouchableOpacity
+              {/* <TouchableOpacity
                 style={styles.reportButton}
                 onPress={() => handleOpenReportModal(currentVerse)}
               >
                 <Flag size={16} color="#EF4444" />
-              </TouchableOpacity>
+              </TouchableOpacity> */}
             </View>
 
             {isShlokaTranslating && (
