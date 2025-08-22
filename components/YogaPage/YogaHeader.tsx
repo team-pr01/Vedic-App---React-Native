@@ -13,8 +13,7 @@ const YogaHeader = () => {
   return (
     <SafeAreaView edges={['top']} style={styles.headerContainer}>
       <LinearGradient colors={['#10B981', '#059669']} style={styles.header}>
-        <TouchableOpacity
-          onPress={() => router.back()}
+       <TouchableOpacity onPress={() => router.push('/(tabs)')}
           style={styles.headerButton}
         >
           <ArrowLeft size={24} color="#FFFFFF" />

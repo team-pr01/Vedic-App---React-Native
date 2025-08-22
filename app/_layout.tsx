@@ -41,7 +41,6 @@ function RootLayoutNav() {
     (state: RootState) => state._persist.rehydrated
   );
   const { data, isLoading } = useGetAllPopUpsQuery({});
-  console.log(data, ' Popups Data');
   const [showWelcomePopup, setShowWelcomePopup] = useState(false);
 
   const [fontsLoaded, fontError] = useFonts({
@@ -115,10 +114,10 @@ function RootLayoutNav() {
   // 2️⃣ Handle splash screen and routing based on auth & fonts
 
   useEffect(() => {
-    // if (data || data.length > 0) {
+    if (data) {
     setShowWelcomePopup(true);
-    // }
-  }, [data]);
+    }
+  },[data]);
   useEffect(() => {
     if (!fontsLoaded && !fontError) return;
     if (!isAuthLoading) return;

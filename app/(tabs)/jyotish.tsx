@@ -322,8 +322,7 @@ export default function JyotishPage() {
       {/* Header */}
       <SafeAreaView edges={['top']} style={[styles.headerContainer, { backgroundColor: colors.primary }]}>
         <LinearGradient colors={colors.headerBackground} style={styles.header}>
-          <TouchableOpacity
-            onPress={() => router.back()}
+         <TouchableOpacity onPress={() => router.push('/(tabs)')}
             style={styles.headerButton}
           >
             <ArrowLeft size={24} color="#FFFFFF" />

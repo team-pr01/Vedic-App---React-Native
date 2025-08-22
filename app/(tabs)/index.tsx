@@ -13,11 +13,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
-  Star,
   Menu,
-  Utensils,
-  Sparkles,
-  TreePine,
   Calendar,
   Church as Temple,
   Bell,
@@ -45,6 +41,14 @@ import LoadingComponent from '@/components/LoadingComponent/LoadingComponent';
 import { useGetAllDonationProgramsQuery } from '@/redux/features/DonationPrograms/donationProgramApi';
 import YoutubePlayer from 'react-native-youtube-iframe';
 import { getYouTubeVideoId } from '@/utils/getYouTubeVideoId';
+import YogaIcon from '@/assets/icons/yoga.svg';
+import TempleIcon from '@/assets/icons/temple.svg';
+import VastuIcon from '@/assets/icons/house.svg';
+import JyotishIcon from '@/assets/icons/astrology.svg';
+import ConsultancyIcon from '@/assets/icons/expert.svg';
+import Food from '@/assets/icons/food.svg';
+import ShopIcon from '@/assets/icons/shop.svg';
+
 
 export type TContent = {
   _id: string;
@@ -58,7 +62,7 @@ const services = [
   {
     id: 'yoga',
     name: 'Yoga',
-    icon: TreePine,
+    icon: YogaIcon,
     color: '#E53E3E',
     gradient: ['#E53E3E', '#C53030'],
     route: '/yoga',
@@ -66,7 +70,7 @@ const services = [
   {
     id: 'sanatan',
     name: 'Sanatan Sthal',
-    icon: Temple,
+    icon: TempleIcon,
     color: '#3182CE',
     gradient: ['#3182CE', '#2C5282'],
     route: '/sanatan-sthal',
@@ -74,7 +78,7 @@ const services = [
   {
     id: 'food',
     name: 'Food',
-    icon: Utensils,
+    icon: Food,
     color: '#38A169',
     gradient: ['#38A169', '#2F855A'],
     route: '/food',
@@ -82,15 +86,15 @@ const services = [
   {
     id: 'shop',
     name: 'Shop',
-    icon: ShoppingBag,
+    icon: ShopIcon,
     color: '#8B5CF6',
     gradient: ['#8B5CF6', '#7C3AED'],
-    route: null, // Special handling for shop
+    route: null,
   },
   {
     id: 'vastu',
     name: 'Vastu',
-    icon: Star,
+    icon: VastuIcon,
     color: '#805AD5',
     gradient: ['#805AD5', '#6B46C1'],
     route: '/vastu',
@@ -98,7 +102,7 @@ const services = [
   {
     id: 'jyotish',
     name: 'Jyotish',
-    icon: Star,
+    icon: JyotishIcon,
     color: '#D53F8C',
     gradient: ['#D53F8C', '#B83280'],
     route: '/jyotish',
@@ -106,12 +110,13 @@ const services = [
   {
     id: 'consultancy',
     name: 'Consultancy',
-    icon: Sparkles,
+    icon: ConsultancyIcon,
     color: '#DD6B20',
     gradient: ['#DD6B20', '#C05621'],
     route: '/consultancy',
   },
 ];
+
 
 export default function HomeScreen() {
   const user = useSelector(useCurrentUser);
@@ -539,7 +544,7 @@ const HERO_HEIGHT = 240;
                       colors={service.gradient}
                       style={styles.serviceIcon}
                     >
-                      <service.icon size={24} color="#FFFFFF" />
+                      <service.icon width={24} height={24} fill="#FFFFFF" />
                     </LinearGradient>
                     <Text style={[styles.serviceName, { color: colors.text }]}>
                       {service.name}

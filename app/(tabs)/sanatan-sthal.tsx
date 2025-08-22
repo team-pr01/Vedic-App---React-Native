@@ -171,8 +171,7 @@ export default function SanatanSthalPage() {
               colors={['#00BCD4', '#00ACC1']}
               style={styles.header}
             >
-              <TouchableOpacity
-                onPress={() => router.back()}
+             <TouchableOpacity onPress={() => router.push('/(tabs)')}
                 style={styles.headerButton}
               >
                 <ArrowLeft size={24} color="#FFFFFF" />

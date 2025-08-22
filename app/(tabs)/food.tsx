@@ -215,8 +215,7 @@ export default function FoodPage() {
               colors={['#38A169', '#2F855A']}
               style={styles.header}
             >
-              <TouchableOpacity
-                onPress={() => router.back()}
+              <TouchableOpacity onPress={() => router.push('/(tabs)')}
                 style={styles.headerButton}
               >
                 <ArrowLeft size={24} color="#FFFFFF" />

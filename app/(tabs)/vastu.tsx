@@ -134,7 +134,7 @@ const generateVastuAnalysis = async (
 export default function VastuPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
-  const { data: vastu, isLoading: isVastuLoading, refetch: refetchVastu } = useGetAllVastuQuery({
+  const { data: vastu, isLoading: isVastuLoading, isFetching:isRefetchingVastu  ,refetch: refetchVastu } = useGetAllVastuQuery({
     keyword: searchQuery,
     category: selectedCategory,
   });
@@ -399,8 +399,7 @@ export default function VastuPage() {
       {/* Header */}
       <SafeAreaView edges={['top']} style={[styles.headerContainer, { backgroundColor: colors.primary }]}>
         <LinearGradient colors={colors.headerBackground} style={styles.header}>
-          <TouchableOpacity
-            onPress={() => router.back()}
+        <TouchableOpacity onPress={() => router.push('/(tabs)')}
             style={styles.headerButton}
           >
             <ArrowLeft size={24} color="#FFFFFF" />
@@ -512,7 +511,7 @@ export default function VastuPage() {
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>Vastu Videos</Text>
 
-          {isVastuLoading ? (
+          {isVastuLoading  || isRefetchingVastu? (
             <LoadingComponent loading="Vastu Videos" color={colors.primary} />
           ) : vastu?.data?.length > 0 ? (
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
