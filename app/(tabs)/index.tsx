@@ -159,7 +159,6 @@ export default function HomeScreen() {
     }
   };
   const width = Dimensions.get('window').width;
-const HERO_HEIGHT = 240;
   const colors = useThemeColors();
   const [searchQuery, setSearchQuery] = useState('');
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -765,23 +764,23 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   heroContainer: {
-    height: 240,
+    height: 230,
     position: 'relative',
   },
   heroSlide: {
     width: width,
-    height: 240,
+    height: 230,
     position: 'relative',
   },
   heroImage: {
     width: '100%',
-    height: 280,
-    resizeMode: 'cover',
+    height: 220,
+    resizeMode:"stretch",
   },
   heroVideo: {
     width: '100%',
-    height: '100%',
-    resizeMode: 'cover',
+    height: 230,
+    resizeMode:"stretch",
   },
   heroIndicators: {
     position: 'absolute',
