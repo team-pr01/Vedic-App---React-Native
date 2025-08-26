@@ -860,7 +860,7 @@ export default function LearnScreen() {
           {/* Header */}
           <LinearGradient colors={['#FF6F00', '#FF8F00']} style={styles.header}>
             <TouchableOpacity
-              onPress={() => router.back()}
+           onPress={() => router.push('/(tabs)')}
               style={styles.backButton}
             >
               <ArrowLeft size={24} color="#FFFFFF" />

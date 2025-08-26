@@ -401,7 +401,7 @@ export default function NewsScreen() {
             colors={colors.headerBackground}
             style={styles.header}
           >
-            <TouchableOpacity onPress={() => router.back()}>
+             <TouchableOpacity onPress={() => router.push('/(tabs)')}>
               <ArrowLeft size={24} color="#FFFFFF" />
             </TouchableOpacity>
             <View style={styles.headerContent}>

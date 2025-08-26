@@ -12,12 +12,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import {
-  Menu,
-  Calendar,
-  Church as Temple,
-  Bell,
-} from 'lucide-react-native';
+import { Menu, Calendar, Church as Temple, Bell, AlertTriangle, Newspaper } from 'lucide-react-native';
 import { ShoppingBag } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
@@ -48,7 +43,6 @@ import JyotishIcon from '@/assets/icons/astrology.svg';
 import ConsultancyIcon from '@/assets/icons/expert.svg';
 import Food from '@/assets/icons/food.svg';
 import ShopIcon from '@/assets/icons/shop.svg';
-
 
 export type TContent = {
   _id: string;
@@ -116,10 +110,96 @@ const services = [
     route: '/consultancy',
   },
 ];
-
+const searchServices = [
+  {
+    id: 'yoga',
+    name: 'Yoga',
+    icon: YogaIcon,
+    color: '#E53E3E',
+    gradient: ['#E53E3E', '#C53030'],
+    route: '/yoga',
+  },
+  {
+    id: 'sanatan',
+    name: 'Sanatan Sthal',
+    icon: TempleIcon,
+    color: '#3182CE',
+    gradient: ['#3182CE', '#2C5282'],
+    route: '/sanatan-sthal',
+  },
+  {
+    id: 'food',
+    name: 'Food',
+    icon: Food,
+    color: '#38A169',
+    gradient: ['#38A169', '#2F855A'],
+    route: '/food',
+  },
+  {
+    id: 'shop',
+    name: 'Shop',
+    icon: ShopIcon,
+    color: '#8B5CF6',
+    gradient: ['#8B5CF6', '#7C3AED'],
+    route: null,
+  },
+  {
+    id: 'vastu',
+    name: 'Vastu',
+    icon: VastuIcon,
+    color: '#805AD5',
+    gradient: ['#805AD5', '#6B46C1'],
+    route: '/vastu',
+  },
+  {
+    id: 'jyotish',
+    name: 'Jyotish',
+    icon: JyotishIcon,
+    color: '#D53F8C',
+    gradient: ['#D53F8C', '#B83280'],
+    route: '/jyotish',
+  },
+  {
+    id: 'consultancy',
+    name: 'Consultancy',
+    icon: ConsultancyIcon,
+    color: '#DD6B20',
+    gradient: ['#DD6B20', '#C05621'],
+    route: '/consultancy',
+  },
+  {
+    id: 'emergency',
+    name: 'Emergency',
+    icon: AlertTriangle,
+    color: '#DD6B20',
+    gradient: ['#DD6B20', '#C05621'],
+    route: '/profile',
+  },
+  {
+    id: 'news',
+    name: 'News',
+    icon: Newspaper,
+    color: '#DD6B20',
+    gradient: ['#DD6B20', '#C05621'],
+    route: '/meditation',
+  },
+];
 
 export default function HomeScreen() {
   const user = useSelector(useCurrentUser);
+  const [filteredServices, setFilteredServices] = useState(searchServices);
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+
+    if (query.trim() === '') {
+      setFilteredServices(searchServices); // reset
+    } else {
+      const results = searchServices.filter((service) =>
+        service.name.toLowerCase().includes(query.toLowerCase())
+      );
+      setFilteredServices(results);
+    }
+  };
 
   const {
     data,
@@ -247,18 +327,6 @@ export default function HomeScreen() {
 
   const handleNavigateToSettings = () => {
     setShowSettingsModal(true);
-  };
-
-  const handleSearch = (query: string) => {
-    setSearchQuery(query);
-
-    // Filter content based on search query and active filters
-    if (query.trim() || searchFilters.length > 0) {
-      console.log('Search query:', query);
-
-      // Here you can implement actual search logic
-      // For example, filter services, texts, projects based on query and filters
-    }
   };
 
   const handleApplyFilters = (filters: string[]) => {
@@ -460,7 +528,6 @@ export default function HomeScreen() {
                 onScrollBeginDrag={() => {
                   setIsManualScrolling(true);
                 }}
-
               >
                 {data?.data?.map((hero: TContent, index: number) => (
                   <View key={index} style={styles.heroSlide}>
@@ -523,6 +590,47 @@ export default function HomeScreen() {
               currentFilters={searchFilters}
               onApplyFilters={handleApplyFilters}
             />
+            {/* Search Results */}
+            {searchQuery.length > 0 && (
+              <View style={{ marginVertical: 12, marginHorizontal: 10 }}>
+                {filteredServices.length > 0 ? (
+                  filteredServices.map((service) => (
+                    <TouchableOpacity
+                      key={service.id}
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        padding: 10,
+                        borderBottomWidth: 1,
+                        borderBottomColor: '#eee',
+                      }}
+                      onPress={() =>
+                        handleServicePress(service.id, service.route)
+                      }
+                    >
+                      <LinearGradient
+                        colors={service.gradient}
+                        style={{
+                          width: 32,
+                          height: 32,
+                          borderRadius: 16,
+                          justifyContent: 'center',
+                          alignItems: 'center',
+                          marginRight: 10,
+                        }}
+                      >
+                        <service.icon width={18} height={18} fill="#FFF" />
+                      </LinearGradient>
+                      <Text style={{ fontSize: 16 }}>{service.name}</Text>
+                    </TouchableOpacity>
+                  ))
+                ) : (
+                  <Text style={{ color: 'gray', padding: 10 }}>
+                    No results found.
+                  </Text>
+                )}
+              </View>
+            )}
 
             {/* Service Icons */}
             <View style={styles.servicesContainer}>
@@ -677,7 +785,7 @@ export default function HomeScreen() {
 
           {/* Notification Modal */}
           <NotificationModal
-            data={allPushNotifications?.data}
+            data={notifications}
             isVisible={showNotificationModal}
             onClose={() => setShowNotificationModal(false)}
           />
@@ -706,9 +814,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#E2E8F0',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2
-
-     },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
@@ -775,12 +881,12 @@ const styles = StyleSheet.create({
   heroImage: {
     width: '100%',
     height: 220,
-    resizeMode:"stretch",
+    resizeMode: 'stretch',
   },
   heroVideo: {
     width: '100%',
     height: 230,
-    resizeMode:"stretch",
+    resizeMode: 'stretch',
   },
   heroIndicators: {
     position: 'absolute',

@@ -119,7 +119,7 @@ export default function EmergencyScreen() {
     >
       {/* Header */}
       <LinearGradient colors={['#EF4444', '#DC2626']} style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
+        <TouchableOpacity onPress={() => router.push('/(tabs)')}>
           <ArrowLeft size={24} color="#FFFFFF" />
         </TouchableOpacity>
         <View style={styles.headerContent}>
