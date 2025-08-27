@@ -39,8 +39,8 @@ export async function registerForPushNotificationsAsync(): Promise<string | unde
     }
     return token;
   } catch (error) {
-    console.error('Error getting push token:', error);
-    alert('Error getting push token, check console');
+    // console.error('Error getting push token:', error);
+    // alert('Error getting push token, check console');
   }
 }
 

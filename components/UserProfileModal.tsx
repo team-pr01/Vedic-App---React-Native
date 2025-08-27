@@ -8,7 +8,7 @@ import {
   ScrollView,
   Image,
 } from 'react-native';
-import { X, CreditCard as Edit, Settings, ChevronRight, BookOpen, Award, Newspaper, Heart, Flag, ListChecks, Utensils, MessageSquare } from 'lucide-react-native';
+import { X, CreditCard as Edit, Settings, ChevronRight, BookOpen, Award, Newspaper, Heart, Flag, ListChecks, Utensils, MessageSquare, AwardIcon } from 'lucide-react-native';
 import { useSelector, useDispatch } from 'react-redux';
 import { logout, useCurrentUser } from '@/redux/features/Auth/authSlice';
 import { useTranslate } from '@/hooks/useTranslate';
@@ -22,7 +22,8 @@ interface UserProfileModalProps {
 
 export default function UserProfileModal({ visible, onClose, onNavigateToSettings }: UserProfileModalProps) {
  
-  const currentUser = useSelector(useCurrentUser);
+  const user = useSelector(useCurrentUser);
+  console.log(user)
     const t = useTranslate();
   const colors = useThemeColors();
 
@@ -53,7 +54,7 @@ export default function UserProfileModal({ visible, onClose, onNavigateToSetting
     </View>
   );
 
-  if (!currentUser) {
+  if (!user) {
     return null;
   }
 
@@ -77,16 +78,16 @@ export default function UserProfileModal({ visible, onClose, onNavigateToSetting
           {/* Profile Section */}
           <View style={[styles.profileSection, { backgroundColor: colors.card, shadowColor: colors.cardShadow }]}>
             <Image 
-              source={{ uri: currentUser.avatar || 'https://i.ibb.co/Z6kSGkyg/user-svgrepo-com.png'}} 
+              source={{ uri: user.avatar || 'https://i.ibb.co/Z6kSGkyg/user-svgrepo-com.png'}} 
               style={styles.avatar}
             />
-            <Text style={[styles.name, { color: colors.text }]}>{currentUser.name}</Text>
-            <Text style={[styles.email, { color: colors.secondaryText }]}>{currentUser.email}</Text>
+            <Text style={[styles.name, { color: colors.text }]}>{user.name}</Text>
+            <Text style={[styles.email, { color: colors.secondaryText }]}>{user.email}</Text>
             <Text style={[styles.joinDate, { color: colors.secondaryText }]}>
-              {t('joinedDateLabel', 'Joined')}: {currentUser.joinDate || 'Recently'}
+              {t('joinedDateLabel', 'Joined')}: {user.joinDate || 'Recently'}
             </Text>
-            {currentUser.bio && (
-              <Text style={[styles.bio, { color: colors.text }]}>{currentUser.bio}</Text>
+            {user.bio && (
+              <Text style={[styles.bio, { color: colors.text }]}>{user.bio}</Text>
             )}
             <TouchableOpacity 
               style={[styles.editButton, { backgroundColor: `${colors.primary}20` }]}
@@ -109,46 +110,50 @@ export default function UserProfileModal({ visible, onClose, onNavigateToSetting
               <StatItem 
                 icon={<BookOpen size={24} color={colors.primary} />} 
                 label={t('mantrasSavedLabel', 'Mantras Saved')} 
-                value={currentUser.stats?.mantrasSaved || 0} 
+                value={user.stats?.mantrasSaved || 0} 
               />
               <StatItem 
                 icon={<Award size={24} color={colors.primary} />} 
                 label={t('quizzesTakenLabel', 'Quizzes Taken')} 
-                value={currentUser.stats?.quizzesTaken || 0} 
+                value={user.stats?.quizzesTaken || 0} 
               />
               <StatItem 
                 icon={<Newspaper size={24} color={colors.primary} />} 
                 label={t('articlesReadLabel', 'Articles Read')} 
-                value={currentUser.stats?.articlesRead || 0} 
+                value={user.stats?.articlesRead || 0} 
               />
               <StatItem 
                 icon={<Heart size={24} color={colors.primary} />} 
                 label={t('newsLikedLabel', 'News Liked')} 
-                value={currentUser.stats?.newsLiked || 0} 
+                value={user.stats?.newsLiked || 0} 
               />
               <StatItem 
                 icon={<Flag size={24} color={colors.primary} />} 
                 label={t('mantrasReportedLabel', 'Mantras Reported')} 
-                value={currentUser.stats?.mantrasReported || 0} 
+                value={user.stats?.mantrasReported || 0} 
               />
               <StatItem 
                 icon={<ListChecks size={24} color={colors.primary} />} 
                 label={t('totalActivitiesLabel', 'Total Activities')} 
-                value={currentUser.stats?.totalActivities || 0} 
+                value={user.stats?.totalActivities || 0} 
               />
               <StatItem 
                 icon={<Utensils size={24} color={colors.primary} />} 
                 label={t('recipesGeneratedLabel', 'Recipes Generated')} 
-                value={currentUser.stats?.recipesGenerated || 0} 
+                value={user.stats?.recipesGenerated || 0} 
               />
               <StatItem 
                 icon={<MessageSquare size={24} color={colors.primary} />} 
                 label={t('consultanciesHiredLabel', 'Consultancies Hired')} 
-                value={currentUser.stats?.consultanciesHired || 0} 
+                value={user.stats?.consultanciesHired || 0} 
               />
             </View>
           </View> */}
-
+<StatItem
+                icon={<AwardIcon />}
+                label="Quizzes Taken"
+                value={user.totalQuizTaken || 0}
+              />
           {/* Account & App Settings */}
           <View style={styles.section}>
             {/* <Text style={[styles.sectionTitle, { color: colors.secondaryText }]}>

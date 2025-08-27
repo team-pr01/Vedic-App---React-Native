@@ -68,8 +68,8 @@ function RootLayoutNav() {
             console.log('Push token saved successfully');
           }
         }
-      } catch (error) {
-        console.error('Error saving push token:', error);
+      } catch (error) { 
+        // console.error('Error saving push token:', error);
       }
     };
 

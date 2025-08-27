@@ -43,15 +43,10 @@ import { getYouTubeVideoId } from '@/utils/getYouTubeVideoId';
 import LoadingComponent from '@/components/LoadingComponent/LoadingComponent';
 import { PullToRefreshWrapper } from '@/components/Reusable/PullToRefreshWrapper/PullToRefreshWrapper';
 import { useChatMutation } from '@/redux/features/AI/aiApi';
+import { useAttendOnQuizMutation, useGetAllQuizzesQuery } from '@/redux/features/Quiz/quizApi';
+import { useSelector } from 'react-redux';
+import { useCurrentUser } from '@/redux/features/Auth/authSlice';
 
-interface Course {
-  title: string;
-  description: string;
-  duration: string;
-  progress: number;
-  image: string;
-  lastLesson: string;
-}
 
 interface RealVideo {
   title: string;
@@ -60,18 +55,6 @@ interface RealVideo {
   views: string;
   thumbnail: string;
   videoUrl: string;
-}
-
-interface QuizTopic {
-  title: string;
-  difficulty: 'Beginner' | 'Intermediate' | 'Advanced';
-}
-
-interface Quiz {
-  id: string;
-  title: string;
-  difficulty: 'Beginner' | 'Intermediate' | 'Advanced';
-  questions: QuizQuestion[];
 }
 
 interface QuizQuestion {
@@ -105,216 +88,81 @@ export type TReels = {
   updatedAt?: Date;
 };
 
-const quizTopics: QuizTopic[] = [
-  { title: 'Rigveda Basics', difficulty: 'Beginner' },
-  { title: 'Sanskrit Grammar Fundamentals', difficulty: 'Intermediate' },
-  { title: 'Core Vedic Philosophy', difficulty: 'Advanced' },
-  { title: 'Introduction to Upanishads', difficulty: 'Intermediate' },
-];
 
-// Mock Quiz Service
-const QuizService = {
-  generateQuiz: async (topic: string, difficulty: string): Promise<Quiz> => {
-    // Enhanced AI Quiz Generation
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-
-    let questions: QuizQuestion[] = [];
-
-    // Generate questions based on topic and difficulty
-    if (topic.includes('Rigveda')) {
-      if (difficulty === 'Beginner') {
-        questions = [
-          {
-            id: '1',
-            question: 'What is the oldest of the four Vedas?',
-            options: ['Rigveda', 'Samaveda', 'Yajurveda', 'Atharvaveda'],
-            correctAnswer: 0,
-          },
-          {
-            id: '2',
-            question: 'How many mandalas (books) are there in the Rigveda?',
-            options: ['8', '10', '12', '16'],
-            correctAnswer: 1,
-          },
-          {
-            id: '3',
-            question:
-              'Which deity is most frequently mentioned in the Rigveda?',
-            options: ['Vishnu', 'Shiva', 'Indra', 'Brahma'],
-            correctAnswer: 2,
-          },
-        ];
-      } else if (difficulty === 'Intermediate') {
-        questions = [
-          {
-            id: '1',
-            question: 'The Rigveda contains approximately how many hymns?',
-            options: ['1028', '1017', '1875', '731'],
-            correctAnswer: 0,
-          },
-          {
-            id: '2',
-            question:
-              'Which mandala of Rigveda is known as the "Family Books"?',
-            options: [
-              'Mandala 1-2',
-              'Mandala 2-7',
-              'Mandala 8-9',
-              'Mandala 9-10',
-            ],
-            correctAnswer: 1,
-          },
-        ];
-      } else {
-        questions = [
-          {
-            id: '1',
-            question:
-              'The Rigvedic meter "Gayatri" consists of how many syllables?',
-            options: ['24', '32', '44', '48'],
-            correctAnswer: 0,
-          },
-          {
-            id: '2',
-            question: 'Which Rigvedic hymn is known as the "Nasadiya Sukta"?',
-            options: ['RV 1.1.1', 'RV 10.129', 'RV 3.62.10', 'RV 7.59.12'],
-            correctAnswer: 1,
-          },
-        ];
-      }
-    } else if (topic.includes('Sanskrit')) {
-      if (difficulty === 'Beginner') {
-        questions = [
-          {
-            id: '1',
-            question: 'How many letters are there in the Sanskrit alphabet?',
-            options: ['48', '50', '52', '54'],
-            correctAnswer: 1,
-          },
-          {
-            id: '2',
-            question: 'What does "Namaste" literally mean?',
-            options: ['Hello', 'Goodbye', 'I bow to you', 'Thank you'],
-            correctAnswer: 2,
-          },
-        ];
-      } else {
-        questions = [
-          {
-            id: '1',
-            question:
-              'Which Sanskrit grammar text is considered most authoritative?',
-            options: [
-              'Ashtadhyayi',
-              'Mahabhashya',
-              'Vakyapadiya',
-              'Siddhanta Kaumudi',
-            ],
-            correctAnswer: 0,
-          },
-          {
-            id: '2',
-            question: 'The Sanskrit word "Yoga" is derived from which root?',
-            options: ['Yuj', 'Yog', 'Yuga', 'Yukti'],
-            correctAnswer: 0,
-          },
-        ];
-      }
-    } else if (topic.includes('Philosophy')) {
-      questions = [
-        {
-          id: '1',
-          question:
-            'How many schools of Indian philosophy are traditionally recognized?',
-          options: ['4', '6', '8', '10'],
-          correctAnswer: 1,
-        },
-        {
-          id: '2',
-          question: 'Which concept is central to Advaita Vedanta?',
-          options: ['Duality', 'Non-duality', 'Plurality', 'Materialism'],
-          correctAnswer: 1,
-        },
-        {
-          id: '3',
-          question: 'The concept of "Maya" in Vedantic philosophy refers to:',
-          options: ['Reality', 'Illusion', 'Knowledge', 'Liberation'],
-          correctAnswer: 1,
-        },
-      ];
-    } else {
-      // Default Upanishads questions
-      questions = [
-        {
-          id: '1',
-          question:
-            'How many principal Upanishads are traditionally recognized?',
-          options: ['10', '12', '13', '15'],
-          correctAnswer: 2,
-        },
-        {
-          id: '2',
-          question:
-            'Which Upanishad contains the famous "Tat tvam asi" statement?',
-          options: ['Isha', 'Kena', 'Chandogya', 'Mundaka'],
-          correctAnswer: 2,
-        },
-        {
-          id: '3',
-          question: 'The word "Upanishad" literally means:',
-          options: [
-            'Sacred text',
-            'Sitting near',
-            'Divine knowledge',
-            'Ancient wisdom',
-          ],
-          correctAnswer: 1,
-        },
-      ];
-    }
-
-    return {
-      id: `quiz_${Date.now()}`,
-      title: topic,
-      difficulty: difficulty as 'Beginner' | 'Intermediate' | 'Advanced',
-      questions,
-    };
-  },
-};
 
 // Quiz Modal Component
 const QuizModal: React.FC<{
-  quiz: Quiz;
+  quiz: any;
   onClose: () => void;
   onComplete: (score: number, total: number) => void;
 }> = ({ quiz, onClose, onComplete }) => {
+    const user = useSelector(useCurrentUser);
   const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
+  const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [score, setScore] = useState(0);
   const [showResult, setShowResult] = useState(false);
-
-  const handleAnswerSelect = (answerIndex: number) => {
-    setSelectedAnswer(answerIndex);
+    const [answers, setAnswers] = useState<
+    { questionId: string; selectedAnswer: string }[]
+  >([]);
+  const [attendOnQuiz, { isLoading: isSubmitting }] = useAttendOnQuizMutation();
+ 
+  const handleSelectAnswer = (questionId: string, selectedAnswer: string) => {
+    setSelectedAnswer(selectedAnswer)
+    setAnswers((prev) => {
+      const existing = prev.find((a) => a.questionId === questionId);
+      if (existing) {
+        return prev.map((a) =>
+          a.questionId === questionId ? { ...a, selectedAnswer } : a
+        );
+      }
+      return [...prev, { questionId, selectedAnswer }];
+    });
   };
+ 
+  
+  console.log(answers)
+  const handleSubmitQuiz = async () => {
+    try {
+      const payload = {
+        quizId: quiz?._id,
+        userId: user?._id,
+        answers,
+      };
 
-  const handleNext = () => {
-    if (selectedAnswer === quiz.questions[currentQuestion].correctAnswer) {
-      setScore(score + 1);
+      const response = await attendOnQuiz({
+        data: payload,
+        id: quiz?._id,
+      }).unwrap();
+       if(response?.success){
+        setShowResult(true);
+        setScore(response?.data?.score)
+       }
+
+      // if (response?.success) {
+      //   navigate("/quiz-result", {
+      //     state: {
+      //       userName: user?.name || "User",
+      //       quizTitle: data?.data?.title || "Quiz",
+      //       quizDescription: data?.data?.description || "",
+      //       score: response?.data?.score,
+      //       totalQuestions:
+      //         response?.data?.totalQuestions || 0,
+      //       percentage: response?.data?.percentage || 0,
+      //     },
+      //   });
+      // }
+    } catch (error) {
+      console.error("Error submitting quiz:", error);
     }
-
+  };
+  const handleNext = () => {
     if (currentQuestion < quiz.questions.length - 1) {
       setCurrentQuestion(currentQuestion + 1);
-      setSelectedAnswer(null);
-    } else {
-      setShowResult(true);
-      onComplete(
-        score +
-          (selectedAnswer === quiz.questions[currentQuestion].correctAnswer
-            ? 1
-            : 0),
-        quiz.questions.length
-      );
-    }
+      setSelectedAnswer(null)
+     } 
+     else{
+      handleSubmitQuiz()
+     }
   };
 
   return (
@@ -352,19 +200,19 @@ const QuizModal: React.FC<{
             </Text>
 
             <View style={styles.optionsContainer}>
-              {quiz.questions[currentQuestion].options.map((option, index) => (
+              {quiz.questions[currentQuestion].options.map((option:any, index:string) => (
                 <TouchableOpacity
                   key={index}
                   style={[
                     styles.optionButton,
-                    selectedAnswer === index && styles.selectedOption,
+                   selectedAnswer === String(index + 1) && styles.selectedOption,
                   ]}
-                  onPress={() => handleAnswerSelect(index)}
+                  onPress={() => handleSelectAnswer(quiz.questions[currentQuestion]._id, String(index+1))}
                 >
                   <Text
                     style={[
                       styles.optionText,
-                      selectedAnswer === index && styles.selectedOptionText,
+                      selectedAnswer === String(index + 1) && styles.selectedOption,
                     ]}
                   >
                     {option}
@@ -379,7 +227,7 @@ const QuizModal: React.FC<{
                 selectedAnswer === null && styles.nextButtonDisabled,
               ]}
               onPress={handleNext}
-              disabled={selectedAnswer === null}
+              // disabled={selectedAnswer === null}
             >
               <Text style={styles.nextButtonText}>
                 {currentQuestion < quiz.questions.length - 1
@@ -419,14 +267,18 @@ export default function LearnScreen() {
   } = useGetAllReelsQuery({});
 
   const [chat, { isLoading: isSendingMessage }] = useChatMutation();
-
+  const {
+    data: quizData,
+    isLoading,
+    refetch: refetchQuiz,
+  } = useGetAllQuizzesQuery({});
   const [refreshing, setRefreshing] = useState(false);
   const colors = useThemeColors();
   const [activeTab, setActiveTab] = useState<
     'courses' | 'videos' | 'ai' | 'quiz'
   >('courses');
   const [isGeneratingQuiz, setIsGeneratingQuiz] = useState(false);
-  const [currentQuiz, setCurrentQuiz] = useState<Quiz | null>(null);
+  const [currentQuiz, setCurrentQuiz] = useState<any|null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showVideoModal, setShowVideoModal] = useState(false);
   const [selectedVideo, setSelectedVideo] = useState<RealVideo | null>(null);
@@ -468,13 +320,13 @@ export default function LearnScreen() {
 
   const handleGenerateQuiz = async (
     topic: string,
-    difficulty: 'Beginner' | 'Intermediate' | 'Advanced'
+    questions: any // This parameter should probably be 'quiz' or 'quizObject'
   ) => {
     try {
       setIsGeneratingQuiz(true);
       setError(null);
-      const quiz = await QuizService.generateQuiz(topic, difficulty);
-      setCurrentQuiz(quiz);
+      setCurrentQuiz(questions);
+      console.log(currentQuiz, 'question');
     } catch (err: any) {
       console.error('Error generating quiz:', err);
       setError(err.message || 'Failed to generate quiz. Please try again.');
@@ -497,7 +349,7 @@ export default function LearnScreen() {
     triggerHaptic();
     setShowChatModal(true);
   };
- const handleSendMessage = async () => {
+  const handleSendMessage = async () => {
     // Prevent sending empty or while another message is in flight
     if (!chatMessage.trim() || isSendingMessage) return;
 
@@ -523,8 +375,7 @@ export default function LearnScreen() {
       const aiMessage = {
         role: 'assistant' as const,
         // Ensure you access the correct property from your API response
-        content:
-          response?.data || "Sorry, I couldn't process that request.",
+        content: response?.data || "Sorry, I couldn't process that request.",
         id: `ai-${Date.now()}`,
       };
 
@@ -760,7 +611,7 @@ export default function LearnScreen() {
               </View>
             ) : (
               <>
-                {quizTopics.map((topic, index) => (
+                {quizData?.data?.map((topic:any, index:number) => (
                   <View
                     key={index}
                     style={[
@@ -793,8 +644,9 @@ export default function LearnScreen() {
                               { color: colors.secondaryText },
                             ]}
                           >
-                            {topic.difficulty}
-                          </Text>
+                            {topic.questions.length} Questions
+                          </Text>{' '}
+                          fix it
                         </View>
                       </View>
                       <Award size={24} color="#F59E0B" />
@@ -802,8 +654,8 @@ export default function LearnScreen() {
 
                     <TouchableOpacity
                       style={styles.startQuizButton}
-                      onPress={() =>
-                        handleGenerateQuiz(topic.title, topic.difficulty)
+                      onPress={
+                        () => handleGenerateQuiz(topic?.title, topic) // You're passing the whole 'topic' object here
                       }
                     >
                       <BookOpen size={16} color="#FFFFFF" />
@@ -860,7 +712,7 @@ export default function LearnScreen() {
           {/* Header */}
           <LinearGradient colors={['#FF6F00', '#FF8F00']} style={styles.header}>
             <TouchableOpacity
-           onPress={() => router.push('/(tabs)')}
+              onPress={() => router.push('/(tabs)')}
               style={styles.backButton}
             >
               <ArrowLeft size={24} color="#FFFFFF" />
@@ -917,7 +769,9 @@ export default function LearnScreen() {
           </View>
 
           {/* Content */}
-          <View style={[styles.content, { backgroundColor: colors.background }]}>
+          <View
+            style={[styles.content, { backgroundColor: colors.background }]}
+          >
             {renderTabContent()}
           </View>
         </ScrollView>
@@ -1004,36 +858,36 @@ export default function LearnScreen() {
                   ]}
                   contentContainerStyle={{ paddingBottom: 10 }}
                 >
-                   {/* --- MODIFICATION 3: Use message.id for the key prop --- */}
-                {chatHistory.map((message) => (
-                  <View
-                    key={message.id} // Use the unique ID for the key
-                    style={[
-                      styles.chatBubble,
-                      message.role === 'user'
-                        ? styles.userBubble
-                        : styles.aiBubble,
-                    ]}
-                  >
-                    <Text
+                  {/* --- MODIFICATION 3: Use message.id for the key prop --- */}
+                  {chatHistory.map((message) => (
+                    <View
+                      key={message.id} // Use the unique ID for the key
                       style={[
-                        styles.chatText,
+                        styles.chatBubble,
                         message.role === 'user'
-                          ? styles.userText
-                          : [styles.aiText, { color: colors.text }],
+                          ? styles.userBubble
+                          : styles.aiBubble,
                       ]}
                     >
-                      {message.content}
-                    </Text>
-                  </View>
-                ))}
-                {/* A loading indicator can still be shown while waiting for the response */}
-                {isSendingMessage && (
-                  <View style={[styles.chatBubble, styles.aiBubble]}>
-                    <ActivityIndicator size="small" color={colors.primary} />
-                  </View>
-                )}
-              </ScrollView>
+                      <Text
+                        style={[
+                          styles.chatText,
+                          message.role === 'user'
+                            ? styles.userText
+                            : [styles.aiText, { color: colors.text }],
+                        ]}
+                      >
+                        {message.content}
+                      </Text>
+                    </View>
+                  ))}
+                  {/* A loading indicator can still be shown while waiting for the response */}
+                  {isSendingMessage && (
+                    <View style={[styles.chatBubble, styles.aiBubble]}>
+                      <ActivityIndicator size="small" color={colors.primary} />
+                    </View>
+                  )}
+                </ScrollView>
 
                 <View
                   style={[
