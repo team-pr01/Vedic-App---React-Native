@@ -222,7 +222,6 @@ export default function FoodPage() {
               </TouchableOpacity>
               <View style={styles.headerContent}>
                 <Text style={styles.headerTitle}>Vedic Food & Recipes</Text>
-                <Text style={styles.headerSubtitle}>বৈদিক খাদ্য ও রেসিপি</Text>
               </View>
               <View style={styles.headerPlaceholder} />
             </LinearGradient>
@@ -538,7 +537,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: 25,
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 0,
     gap: 12,
     borderWidth: 1,
     borderColor: '#E2E8F0',

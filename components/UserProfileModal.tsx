@@ -13,6 +13,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { logout, useCurrentUser } from '@/redux/features/Auth/authSlice';
 import { useTranslate } from '@/hooks/useTranslate';
 import { useThemeColors } from '@/hooks/useThemeColors';
+import DefaultAvatar from "../assets/images/user.svg"
 
 interface UserProfileModalProps {
   visible: boolean;
@@ -77,10 +78,12 @@ export default function UserProfileModal({ visible, onClose, onNavigateToSetting
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
           {/* Profile Section */}
           <View style={[styles.profileSection, { backgroundColor: colors.card, shadowColor: colors.cardShadow }]}>
-            <Image 
-              source={{ uri: user.avatar || 'https://i.ibb.co/Z6kSGkyg/user-svgrepo-com.png'}} 
-              style={styles.avatar}
-            />
+         
+{user.avatar ? (
+  <Image source={{ uri: user.avatar }} style={styles.avatar} />
+) : (
+  <DefaultAvatar width={100} height={100} style={styles.avatar} />
+)}
             <Text style={[styles.name, { color: colors.text }]}>{user.name}</Text>
             <Text style={[styles.email, { color: colors.secondaryText }]}>{user.email}</Text>
             <Text style={[styles.joinDate, { color: colors.secondaryText }]}>

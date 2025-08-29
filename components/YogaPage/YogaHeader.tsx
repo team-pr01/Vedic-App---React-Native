@@ -22,9 +22,9 @@ const YogaHeader = () => {
           <Text style={styles.headerTitle}>Yoga Programs</Text>
           <Text style={styles.headerSubtitle}>যোগ প্রোগ্রাম</Text>
         </View>
-        <TouchableOpacity style={styles.headerButton}>
+        {/* <TouchableOpacity style={styles.headerButton}>
           <Filter size={24} color="#FFFFFF" />
-        </TouchableOpacity>
+        </TouchableOpacity> */}
       </LinearGradient>
     </SafeAreaView>
   );

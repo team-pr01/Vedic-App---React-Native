@@ -719,7 +719,6 @@ export default function LearnScreen() {
             </TouchableOpacity>
             <View style={styles.headerContent}>
               <Text style={styles.headerTitle}>Learn & Explore</Text>
-              <Text style={styles.headerSubtitle}>শিখুন ও অন্বেষণ করুন</Text>
             </View>
             <View style={styles.headerPlaceholder} />
           </LinearGradient>

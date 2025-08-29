@@ -71,9 +71,6 @@ export default function SacredTextsSection({
       <Text style={[styles.sectionTitle, { color: colors.primary }]}>
         Sacred Texts
       </Text>
-      <Text style={[styles.sectionSubtitle, { color: colors.secondaryText }]}>
-        পবিত্র গ্রন্থসমূহ
-      </Text>
 
       <ScrollView
         horizontal

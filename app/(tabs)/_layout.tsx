@@ -14,6 +14,9 @@ import { useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
 import { useRouter } from 'expo-router';
 import { useThemeColors } from '@/hooks/useThemeColors';
+import Logo from "../../assets/icons/logo.png"
+import { Image } from 'react-native';
+
 
 export default function TabLayout() {
   const colors = useThemeColors();
@@ -26,7 +29,7 @@ export default function TabLayout() {
         headerShown: false,
         tabBarStyle: {
           ...styles.tabBar,
-          borderTopColor: colors.border,
+          // borderTopColor: colors.border,
           backgroundColor: 'transparent',
         },
         tabBarActiveTintColor: colors.primary,
@@ -89,19 +92,19 @@ export default function TabLayout() {
               style={[
                 styles.akfIcon,
                 {
-                  backgroundColor: colors.info,
+                  backgroundColor: colors.primary,
                   transform: [{ scale: focused ? 1.1 : 1 }],
                   borderColor: colors.card,
                 },
               ]}
             >
-              <Star size={size * 0.8} color="#FFFFFF" fill="#FFFFFF" />
+              <Image source={Logo} style={{ width: 44, height: 44, tintColor: '#FFFFFF' }} />
             </View>
           ),
           tabBarLabelStyle: [
             styles.tabBarLabel,
             styles.akfLabel,
-            { color: colors.info },
+            { color: colors.primary },
           ],
         }}
       />
@@ -138,10 +141,10 @@ export default function TabLayout() {
                 },
               ]}
             >
-              <AlertTriangle size={size} color={colors.warning} />
+              <AlertTriangle size={size} color={colors.error} />
             </View>
           ),
-          tabBarLabelStyle: [styles.tabBarLabel, { color: colors.warning }],
+          tabBarLabelStyle: [styles.tabBarLabel, { color: colors.error }],
         }}
       />
 
@@ -160,9 +163,9 @@ export default function TabLayout() {
 
 const styles = StyleSheet.create({
   tabBar: {
-    height: 85,
+    height: 60,
     paddingBottom: 0,
-    paddingTop: 15,
+    paddingTop: 0,
     borderTopWidth: 1,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -4 },
@@ -193,18 +196,19 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 4,
-    elevation: 4,
+    // elevation: 4,
   },
   akfIcon: {
-    width: 50,
-    height: 50,
+    width: 52,
+    height: 52,
     borderRadius: 25,
     alignItems: 'center',
     justifyContent: 'center',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
+    shadowOpacity: 0.5,
     shadowRadius: 8,
     elevation: 8,
-    borderWidth: 3,
+    borderWidth: 1,
+    marginBottom:20
   },
 });

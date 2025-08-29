@@ -124,7 +124,6 @@ export default function EmergencyScreen() {
         </TouchableOpacity>
         <View style={styles.headerContent}>
           <Text style={styles.headerTitle}>Emergency</Text>
-          <Text style={styles.headerSubtitle}>Emergency Service</Text>
         </View>
         <View style={styles.headerPlaceholder} />
       </LinearGradient>

@@ -21,16 +21,10 @@ import {
   Star,
   ChevronRight,
   X,
-  Loader,
-  MessageSquare,
-  Phone,
-  Video,
-  CreditCard,
   CircleCheck as CheckCircle,
   TriangleAlert as AlertTriangle,
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
-import { router } from 'expo-router';
 import { useGetAllConsultancyServicesQuery } from '@/redux/features/Consultancy/consultancyApi';
 import { TConsultancyService } from '@/types';
 import { useGetAllCategoriesQuery } from '@/redux/features/Categories/categoriesApi';
@@ -320,7 +314,7 @@ export default function ConsultancyPage() {
                     )}
                   </TouchableOpacity>
                 </View>
-                <TouchableOpacity
+                {/* <TouchableOpacity
                   onPress={() => {
                     triggerHaptic();
                     setShowAIModal(true);
@@ -329,7 +323,7 @@ export default function ConsultancyPage() {
                 >
                   <Brain size={20} color="#FFFFFF" />
                   <Text style={styles.aiButtonText}>AI Assistant</Text>
-                </TouchableOpacity>
+                </TouchableOpacity> */}
               </View>
 
               {isListening && (
@@ -823,7 +817,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F7FAFC',
     borderRadius: 25,
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 0,
     gap: 12,
   },
   searchInput: {

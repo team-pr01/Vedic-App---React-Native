@@ -12,7 +12,14 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Menu, Calendar, Church as Temple, Bell, AlertTriangle, Newspaper } from 'lucide-react-native';
+import {
+  Menu,
+  Calendar,
+  Church as Temple,
+  Bell,
+  AlertTriangle,
+  Newspaper,
+} from 'lucide-react-native';
 import { ShoppingBag } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
@@ -43,6 +50,7 @@ import JyotishIcon from '@/assets/icons/astrology.svg';
 import ConsultancyIcon from '@/assets/icons/expert.svg';
 import Food from '@/assets/icons/food.svg';
 import ShopIcon from '@/assets/icons/shop.svg';
+import DefaultAvatar from '../../assets/images/user.svg';
 
 export type TContent = {
   _id: string;
@@ -269,35 +277,36 @@ export default function HomeScreen() {
     }, 60000); // Update every minute
     return () => clearInterval(timer);
   }, []);
-
-  const formatBengaliDate = () => {
-    const bengaliMonths = [
-      'বৈশাখ',
-      'জ্যৈষ্ঠ',
-      'আষাঢ়',
-      'শ্রাবণ',
-      'ভাদ্র',
-      'আশ্বিন',
-      'কার্তিক',
-      'অগ্রহায়ণ',
-      'পৌষ',
-      'মাঘ',
-      'ফাল্গুন',
-      'চৈত্র',
-    ];
-    const bengaliDays = [
-      'রবি',
-      'সোম',
-      'মঙ্গল',
-      'বুধ',
-      'বৃহস্পতি',
-      'শুক্র',
-      'শনি',
+  const now = new Date();
+  const formatHinduDate = (currentTime: Date) => {
+    const hinduMonths = [
+      'Chaitra',
+      'Vaishakha',
+      'Jyeshtha',
+      'Ashadha',
+      'Shravana',
+      'Bhadrapada',
+      'Ashwin',
+      'Kartika',
+      'Margashirsha',
+      'Pausha',
+      'Magha',
+      'Phalguna',
     ];
 
-    return `তিথি: ${bengaliDays[currentTime.getDay()]} ১৫, ${
-      bengaliMonths[currentTime.getMonth()]
-    } পক্ষ... | মাস: ${bengaliMonths[currentTime.getMonth()]}...`;
+    const hinduDays = [
+      'Ravivara', // Sunday
+      'Somavara', // Monday
+      'Mangalavara', // Tuesday
+      'Budhavara', // Wednesday
+      'Guruvara', // Thursday
+      'Shukravara', // Friday
+      'Shanivara', // Saturday
+    ];
+
+    return `Tithi: ${hinduDays[currentTime.getDay()]} 15, ${
+      hinduMonths[currentTime.getMonth()]
+    } Paksha | ${hinduMonths[currentTime.getMonth()]}`;
   };
 
   const handleServicePress = (serviceId: string, route?: string) => {
@@ -471,7 +480,7 @@ export default function HomeScreen() {
               >
                 <Calendar size={14} color={colors.primary} />
                 <Text style={[styles.dateText, { color: colors.primary }]}>
-                  {formatBengaliDate()}
+                  {formatHinduDate(now)}
                 </Text>
               </View>
             </View>
@@ -495,14 +504,18 @@ export default function HomeScreen() {
                 style={styles.profileButton}
                 onPress={handleProfilePress}
               >
-                <Image
-                  source={{
-                    uri:
-                      user?.avatar ||
-                      'https://i.ibb.co/Z6kSGkyg/user-svgrepo-com.png',
-                  }}
-                  style={styles.profileImage}
-                />
+                {user.avatar ? (
+                  <Image
+                    source={{ uri: user.avatar }}
+                    style={styles.profileImage}
+                  />
+                ) : (
+                  <DefaultAvatar
+                    width={32}
+                    height={32}
+                    style={styles.profileImage}
+                  />
+                )}
               </TouchableOpacity>
             </View>
           </LinearGradient>
@@ -581,7 +594,7 @@ export default function HomeScreen() {
 
             {/* Search Bar */}
             <SearchBar
-              placeholderText="বৈদিক জ্ঞান, মন্দির, সংবাদ অনুসন্ধান করুন..."
+              placeholderText="Search "
               onSearch={handleSearch}
               onFilterClick={handleFilterClick}
               initialQuery={searchQuery}
@@ -673,14 +686,6 @@ export default function HomeScreen() {
               <View style={styles.sectionHeader}>
                 <Text style={[styles.sectionTitle, { color: colors.primary }]}>
                   {'Our Project'}
-                </Text>
-                <Text
-                  style={[
-                    styles.sectionSubtitle,
-                    { color: colors.secondaryText },
-                  ]}
-                >
-                  আমাদের প্রকল্প
                 </Text>
               </View>
               <ScrollView
@@ -826,15 +831,17 @@ const styles = StyleSheet.create({
   dateContainer: {
     flex: 1,
     alignItems: 'center',
+    width:"100%"
   },
   dateWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 16,
-    borderWidth: 1,
-  },
+  flexDirection: 'row',
+  alignItems: 'center',
+  paddingHorizontal: 10,
+  paddingVertical: 6,
+  borderRadius: 16,
+  borderWidth: 1,
+  width: "100%",   // ⬅️ fill parent width
+},
   dateText: {
     fontSize: 9,
     fontWeight: '600',
@@ -907,14 +914,14 @@ const styles = StyleSheet.create({
     width: 24,
   },
   servicesContainer: {
-    marginBottom: 32,
+    marginBottom: 10,
   },
   servicesContent: {
     paddingHorizontal: 16,
   },
   serviceItem: {
     alignItems: 'center',
-    marginRight: 20,
+    marginRight: 5,
     width: 70,
   },
   serviceIcon: {

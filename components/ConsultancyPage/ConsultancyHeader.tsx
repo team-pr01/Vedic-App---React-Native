@@ -14,7 +14,6 @@ const ConsultancyHeader = () => {
         </TouchableOpacity>
         <View style={styles.headerContent}>
           <Text style={styles.headerTitle}>Consultancy Services</Text>
-          <Text style={styles.headerSubtitle}>পরামর্শ সেবা</Text>
         </View>
         <View style={styles.headerPlaceholder} />
       </LinearGradient>

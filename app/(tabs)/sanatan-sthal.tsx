@@ -178,7 +178,6 @@ export default function SanatanSthalPage() {
               </TouchableOpacity>
               <View style={styles.headerContent}>
                 <Text style={styles.headerTitle}>Sanatan Sthal</Text>
-                <Text style={styles.headerSubtitle}>সনাতন স্থল</Text>
               </View>
               <View style={styles.headerPlaceholder} />
             </LinearGradient>
@@ -436,7 +435,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 25,
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 0,
     gap: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },

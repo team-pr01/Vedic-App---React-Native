@@ -406,7 +406,6 @@ export default function VastuPage() {
           </TouchableOpacity>
           <View style={styles.headerContent}>
             <Text style={styles.headerTitle}>Vastu Shastra</Text>
-            <Text style={styles.headerSubtitle}>বাস্তু শাস্ত্র</Text>
           </View>
           <View style={styles.headerPlaceholder} />
         </LinearGradient>
@@ -849,7 +848,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F7FAFC',
     borderRadius: 25,
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 0,
     gap: 12,
   },
   searchInput: {

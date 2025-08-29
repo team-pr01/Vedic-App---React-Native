@@ -329,7 +329,6 @@ export default function JyotishPage() {
           </TouchableOpacity>
           <View style={styles.headerContent}>
             <Text style={styles.headerTitle}>Jyotish & Astrology</Text>
-            <Text style={styles.headerSubtitle}>জ্যোতিষ ও জ্যোতির্বিদ্যা</Text>
           </View>
           <View style={styles.headerPlaceholder} />
         </LinearGradient>
@@ -910,7 +909,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F7FAFC',
     borderRadius: 25,
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 0,
     gap: 12,
   },
   searchInput: {
