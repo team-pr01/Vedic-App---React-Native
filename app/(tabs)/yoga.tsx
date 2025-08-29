@@ -21,6 +21,7 @@ import { PullToRefreshWrapper } from '@/components/Reusable/PullToRefreshWrapper
 import Header from '@/components/Reusable/HeaderMenuBar/HeaderMenuBar';
 import AppHeader from '@/components/Reusable/AppHeader/AppHeader';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Categories from '@/components/Reusable/Categories/Categories';
 
 export const LEVELS = [
   { id: 'all', name: 'All Levels', color: '#718096' },
@@ -28,9 +29,11 @@ export const LEVELS = [
   { id: 'intermediate', name: 'Intermediate', color: '#F59E0B' },
   { id: 'advanced', name: 'Advanced', color: '#EF4444' },
 ];
+export const allCategories = ['beginner','intermediate',  'advanced' ,
+];
 
 export default function YogaPage() {
-  const { data, isLoading, refetch: refetchYoga } = useGetAllYogaQuery({});
+  const { data, isLoading,isFetching, refetch: refetchYoga } = useGetAllYogaQuery({});
   const {
     data: experts,
     isLoading: isExpertsLoading,
@@ -55,10 +58,11 @@ export default function YogaPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const colors = useThemeColors();
 
-  const [selectedLevel, setSelectedLevel] = useState('all');
+  const [selectedCategory, setSelectedCategory] = useState('');
+  // const [selectedLevel, setSelectedLevel] = useState('all');
   const [filteredPrograms, setFilteredPrograms] = useState<TYoga[]>([]);
 
-  // Filter programs based on search, level, and incoming data
+  // // Filter programs based on search, level, and incoming data
   useEffect(() => {
     let programsToFilter = data?.data ? [...data.data] : [];
 
@@ -68,18 +72,17 @@ export default function YogaPage() {
         (program) =>
           program.name?.toLowerCase().includes(lowercasedQuery) ||
           program.description?.toLowerCase().includes(lowercasedQuery)
-        // Removed instructor and category as they are not in your data model
       );
     }
 
-    if (selectedLevel !== 'all') {
-      programsToFilter = programsToFilter.filter(
-        (program) => program.difficulty?.toLowerCase() === selectedLevel
-      );
-    }
+    if (selectedCategory) {
+  programsToFilter = programsToFilter.filter(
+    (program) => program.difficulty?.toLowerCase() === selectedCategory
+  );
+}
 
     setFilteredPrograms(programsToFilter);
-  }, [searchQuery, selectedLevel, data]);
+  }, [searchQuery, selectedCategory, data]);
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
@@ -127,52 +130,15 @@ export default function YogaPage() {
               </View>
 
               {/* Level Filter */}
-              <View
-                style={[
-                  styles.filterContainer,
-                  { backgroundColor: colors.card },
-                ]}
-              >
-                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                  {LEVELS.map((level) => (
-                    <TouchableOpacity
-                      key={level.id}
-                      style={[
-                        [
-                          styles.levelChip,
-                          {
-                            backgroundColor: colors.background,
-                            borderColor: colors.border,
-                          },
-                        ],
-                        selectedLevel === level.id && [
-                          styles.levelChipActive,
-                          { backgroundColor: level.color },
-                        ],
-                      ]}
-                      onPress={() => {
-                        setSelectedLevel(level.id);
-                      }}
-                    >
-                      <Text
-                        style={[
-                          [
-                            styles.levelChipText,
-                            { color: colors.secondaryText },
-                          ],
-                          selectedLevel === level.id &&
-                            styles.levelChipTextActive,
-                        ]}
-                      >
-                        {level.name}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
-              </View>
+              <Categories
+                setSelectedCategory={setSelectedCategory}
+                selectedCategory={selectedCategory}
+                allCategories={allCategories}
+                bgColor={'#38A169'}
+              />
 
               {/* Programs Grid */}
-              {isLoading ? (
+              {isLoading || isFetching ? (
                 <LoadingComponent loading="Programs" color={colors.success} />
               ) : (
                 <AllYogaPrograms data={filteredPrograms} />
@@ -229,24 +195,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     marginBottom: 20,
     backdropFilter: 'blur(10px)',
-  },
-  levelChip: {
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    marginRight: 12,
-    borderWidth: 1,
-    backdropFilter: 'blur(10px)',
-  },
-  levelChipActive: {
-    borderColor: 'transparent',
-  },
-  levelChipText: {
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  levelChipTextActive: {
-    color: '#FFFFFF',
   },
   bottomSpacing: {
     height: 100,

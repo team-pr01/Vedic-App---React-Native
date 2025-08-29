@@ -23,7 +23,7 @@ const AppHeader = ({
     <SafeAreaView edges={['top']} style={{ backgroundColor: colors[0] ,elevation:10 ,marginTop:60}}>
       <LinearGradient colors={colors} style={styles.header}>
         <TouchableOpacity onPress={() => router.push(backPath)} style={styles.headerButton}>
-          <ArrowLeft size={24} color="#FFFFFF" />
+          <ArrowLeft size={20} color="#FFFFFF" />
         </TouchableOpacity>
 
         <View style={styles.headerContent}>
@@ -44,7 +44,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 6,
+    paddingVertical: 3,
     backgroundColor:"red",
   },
   headerButton: {
@@ -55,7 +55,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   headerTitle: {
-    fontSize: 20,
+    fontSize: 17,
     fontWeight: 'bold',
     color: '#FFFFFF',
   },

@@ -37,6 +37,7 @@ import { useThemeColors } from '@/hooks/useThemeColors';
 import { useGenerateRecipeMutation } from '@/redux/features/AI/aiApi';
 import Header from '@/components/Reusable/HeaderMenuBar/HeaderMenuBar';
 import AppHeader from '@/components/Reusable/AppHeader/AppHeader';
+import Categories from '@/components/Reusable/Categories/Categories';
 
 // *** FIX 1: The AiRecipeParser component is defined OUTSIDE the main component ***
 // This component parses and renders the formatted text from the AI
@@ -114,6 +115,7 @@ export default function FoodPage() {
   const {
     data,
     isLoading,
+    isFetching,
     refetch: refetchRecipe,
   } = useGetAllRecipiesQuery({
     category: selectedCategory,
@@ -283,67 +285,11 @@ export default function FoodPage() {
               </View>
 
               {/* Categories */}
-              <View style={styles.categoriesContainer}>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                  <TouchableOpacity
-                    onPress={() => {
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                      setSelectedCategory('');
-                    }}
-                    style={[
-                      styles.categoryChip,
-                      {
-                        backgroundColor: colors.background,
-                        borderColor: colors.border,
-                      },
-                      selectedCategory === '' && styles.categoryChipActive,
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        styles.categoryText,
-                        { color: colors.secondaryText },
-                        selectedCategory === '' && styles.categoryTextActive,
-                      ]}
-                    >
-                      All
-                    </Text>
-                  </TouchableOpacity>
-                  {allCategories?.map((category: string) => (
-                    <TouchableOpacity
-                      key={category}
-                      onPress={() => {
-                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                        setSelectedCategory(category);
-                      }}
-                      style={[
-                        styles.categoryChip,
-                        {
-                          backgroundColor: colors.background,
-                          borderColor: colors.border,
-                        },
-                        selectedCategory === category &&
-                          styles.categoryChipActive,
-                      ]}
-                    >
-                      <Text
-                        style={[
-                          styles.categoryText,
-                          { color: colors.secondaryText },
-                          selectedCategory === category &&
-                            styles.categoryTextActive,
-                        ]}
-                      >
-                        {category}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
-              </View>
+          <Categories setSelectedCategory={setSelectedCategory} selectedCategory={selectedCategory} allCategories={allCategories} bgColor={"#38A169"}/>
 
               {/* Recipes Grid */}
               <View style={styles.recipesContainer}>
-                {isLoading ? (
+                {isLoading ||isFetching? (
                   <LoadingComponent loading="Recipes" color={colors.success} />
                 ) : data?.data?.length === 0 ? (
                   <View style={styles.emptyState}>

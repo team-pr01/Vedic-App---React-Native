@@ -34,6 +34,7 @@ import { PullToRefreshWrapper } from '@/components/Reusable/PullToRefreshWrapper
 import { useThemeColors } from '@/hooks/useThemeColors';
 import Header from '@/components/Reusable/HeaderMenuBar/HeaderMenuBar';
 import AppHeader from '@/components/Reusable/AppHeader/AppHeader';
+import Categories from '@/components/Reusable/Categories/Categories';
 
 const triggerHaptic = () => {
   if (Platform.OS !== 'web') {
@@ -357,75 +358,7 @@ export default function ConsultancyPage() {
               </View>
 
               {/* Categories */}
-              <View style={styles.categoriesContainer}>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                  <TouchableOpacity
-                    onPress={() => {
-                      triggerHaptic();
-                      setSelectedCategory('');
-                    }}
-                    style={[
-                      styles.categoryChip,
-                      {
-                        backgroundColor: colors.background,
-                        borderColor: colors.border,
-                      },
-                      selectedCategory === '' && [
-                        styles.categoryChipActive,
-                        {
-                          backgroundColor: colors.primary,
-                          borderColor: colors.primary,
-                        },
-                      ],
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        styles.categoryText,
-                        { color: colors.secondaryText },
-                        selectedCategory === '' && styles.categoryTextActive,
-                      ]}
-                    >
-                      All
-                    </Text>
-                  </TouchableOpacity>
-                  {allCategories?.map((category: string) => (
-                    <View key={category}>
-                      <TouchableOpacity
-                        onPress={() => {
-                          triggerHaptic();
-                          setSelectedCategory(category);
-                        }}
-                        style={[
-                          styles.categoryChip,
-                          {
-                            backgroundColor: colors.background,
-                            borderColor: colors.border,
-                          },
-                          selectedCategory === category && [
-                            styles.categoryChipActive,
-                            {
-                              backgroundColor: colors.primary,
-                              borderColor: colors.primary,
-                            },
-                          ],
-                        ]}
-                      >
-                        <Text
-                          style={[
-                            styles.categoryText,
-                            { color: colors.secondaryText },
-                            selectedCategory === category &&
-                              styles.categoryTextActive,
-                          ]}
-                        >
-                          {category}
-                        </Text>
-                      </TouchableOpacity>
-                    </View>
-                  ))}
-                </ScrollView>
-              </View>
+              <Categories setSelectedCategory={setSelectedCategory} selectedCategory={selectedCategory} allCategories={allCategories} bgColor={"#DD6B20"}/>
 
               {/* Doctors List */}
               <View style={styles.section}>
@@ -1133,31 +1066,6 @@ const styles = StyleSheet.create({
   listeningText: {
     fontSize: 12,
     color: '#718096',
-  },
-  categoriesContainer: {
-    paddingVertical: 16,
-    paddingLeft: 16,
-  },
-  categoryChip: {
-    backgroundColor: '#F7FAFC',
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    marginRight: 12,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-  },
-  categoryChipActive: {
-    backgroundColor: '#DD6B20',
-    borderColor: '#DD6B20',
-  },
-  categoryText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#718096',
-  },
-  categoryTextActive: {
-    color: '#FFFFFF',
   },
   section: {
     paddingHorizontal: 16,

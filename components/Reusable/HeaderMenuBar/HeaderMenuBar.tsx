@@ -149,7 +149,7 @@ const Header = () => {
   return (
     <>
       <View style={styles.headerWrapper}>
-      <BlurView intensity={80} tint="light" style={StyleSheet.absoluteFill} />
+      <BlurView intensity={110} tint="light" style={StyleSheet.absoluteFill} />
 
       {/* Actual header content */}
       <View style={styles.headerContent}>

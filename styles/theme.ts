@@ -18,6 +18,7 @@ export const lightColors = {
   headerBackground: ['#FF6F00', '#FF8F00'],
   tabBarBackground: ['#FFFFFF', '#F8FAFC'],
   cardShadow: 'rgba(0, 0, 0, 0.1)',
+  vastu: '#9C74F0FF',
 };
 
 export const darkColors = {
@@ -37,4 +38,5 @@ export const darkColors = {
   headerBackground: ['#FF8F00', '#F57C00'],
   tabBarBackground: ['#2D3748', '#1A202C'],
   cardShadow: 'rgba(0, 0, 0, 0.3)',
+  vastu: '#805AD5',
 };
