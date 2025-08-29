@@ -50,7 +50,7 @@ import JyotishIcon from '@/assets/icons/astrology.svg';
 import ConsultancyIcon from '@/assets/icons/expert.svg';
 import Food from '@/assets/icons/food.svg';
 import ShopIcon from '@/assets/icons/shop.svg';
-import DefaultAvatar from '../../assets/images/user.svg';
+import Header from '@/components/Reusable/HeaderMenuBar/HeaderMenuBar';
 
 export type TContent = {
   _id: string;
@@ -225,9 +225,6 @@ export default function HomeScreen() {
     refetch: refetchProgramData,
   } = useGetAllDonationProgramsQuery({});
 
-  const { data: allPushNotifications, refetch: refetchAllPushNotifications } =
-    useGetAllPushNotificationForUserQuery(user?._id);
-
   const [refreshing, setRefreshing] = useState(false);
 
   const handleRefresh = async () => {
@@ -277,37 +274,6 @@ export default function HomeScreen() {
     }, 60000); // Update every minute
     return () => clearInterval(timer);
   }, []);
-  const now = new Date();
-  const formatHinduDate = (currentTime: Date) => {
-    const hinduMonths = [
-      'Chaitra',
-      'Vaishakha',
-      'Jyeshtha',
-      'Ashadha',
-      'Shravana',
-      'Bhadrapada',
-      'Ashwin',
-      'Kartika',
-      'Margashirsha',
-      'Pausha',
-      'Magha',
-      'Phalguna',
-    ];
-
-    const hinduDays = [
-      'Ravivara', // Sunday
-      'Somavara', // Monday
-      'Mangalavara', // Tuesday
-      'Budhavara', // Wednesday
-      'Guruvara', // Thursday
-      'Shukravara', // Friday
-      'Shanivara', // Saturday
-    ];
-
-    return `Tithi: ${hinduDays[currentTime.getDay()]} 15, ${
-      hinduMonths[currentTime.getMonth()]
-    } Paksha | ${hinduMonths[currentTime.getMonth()]}`;
-  };
 
   const handleServicePress = (serviceId: string, route?: string) => {
     triggerHaptic();
@@ -322,16 +288,6 @@ export default function HomeScreen() {
 
   const handleTextPress = (textId: string) => {
     triggerHaptic();
-  };
-
-  const handleMenuPress = () => {
-    triggerHaptic();
-    setShowSettingsModal(true);
-  };
-
-  const handleProfilePress = () => {
-    triggerHaptic();
-    setShowUserProfileModal(true);
   };
 
   const handleNavigateToSettings = () => {
@@ -415,314 +371,226 @@ export default function HomeScreen() {
     };
   }, []);
 
-  useEffect(() => {
-    if (allPushNotifications?.data) {
-      // Merge backend notifications with real-time ones, newest first
-      const combined = [...notifications, ...allPushNotifications.data];
-
-      // Optional: Deduplicate if needed by filtering based on createdAt + message or _id
-      const unique = Array.from(
-        new Map(
-          combined.map((n) => [n._id || n.createdAt + n.message, n])
-        ).values()
-      );
-
-      // Sort descending by createdAt
-      const sorted = unique.sort(
-        (a: any, b: any) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      );
-
-      setNotifications(sorted);
-    }
-  }, [allPushNotifications?.data]);
-
-  const handleNotificationPress = () => {
-    triggerHaptic();
-    setShowNotificationModal(true);
-    if (!showNotificationModal) {
-      setUnreadCount(0); // ✅ Reset unread count when opening dropdown
-    }
-  };
-
   return (
-    <PullToRefreshWrapper onRefresh={handleRefresh}>
-      <ScrollView
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
-        }
-      >
-        <SafeAreaView
-          edges={['top', 'left', 'right']}
-          style={[styles.container, { backgroundColor: colors.background }]}
+    <SafeAreaView style={{ flex: 1 }}>
+      <Header />
+      <PullToRefreshWrapper onRefresh={handleRefresh}>
+        <ScrollView
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+          }
         >
-          {/* Header */}
-          <LinearGradient
-            colors={colors.tabBarBackground}
-            style={styles.header}
+          <SafeAreaView
+            edges={['top', 'left', 'right']}
+            style={[styles.container, { backgroundColor: colors.background }]}
           >
-            <TouchableOpacity
-              onPress={handleMenuPress}
-              style={styles.menuButton}
+            <ScrollView
+              style={styles.content}
+              showsVerticalScrollIndicator={false}
             >
-              <Menu size={24} color={colors.text} />
-            </TouchableOpacity>
+              {/* Hero Section */}
+              <View style={styles.heroContainer}>
+                <ScrollView
+                  ref={scrollViewRef}
+                  horizontal
+                  pagingEnabled
+                  showsHorizontalScrollIndicator={false}
+                  onMomentumScrollEnd={(event) => {
+                    const index = Math.round(
+                      event.nativeEvent.contentOffset.x / width
+                    );
+                    setCurrentHeroIndex(index);
+                    setIsManualScrolling(false);
+                  }}
+                  onScrollBeginDrag={() => {
+                    setIsManualScrolling(true);
+                  }}
+                >
+                  {data?.data?.map((hero: TContent, index: number) => (
+                    <View key={index} style={styles.heroSlide}>
+                      {hero.videoUrl ? (
+                        <YoutubePlayer
+                          height={280}
+                          play={false}
+                          videoId={getYouTubeVideoId(hero.videoUrl)}
+                        />
+                      ) : (
+                        <Image
+                          source={{ uri: hero.imageUrl }}
+                          style={styles.heroImage}
+                        />
+                      )}
+                    </View>
+                  ))}
+                </ScrollView>
 
-            <View style={styles.dateContainer}>
-              <View
-                style={[
-                  styles.dateWrapper,
-                  {
-                    backgroundColor: `${colors.primary}20`,
-                    borderColor: `${colors.primary}40`,
-                  },
-                ]}
-              >
-                <Calendar size={14} color={colors.primary} />
-                <Text style={[styles.dateText, { color: colors.primary }]}>
-                  {formatHinduDate(now)}
-                </Text>
+                {/* Hero Indicators */}
+                <View style={styles.heroIndicators}>
+                  {data?.data?.map((_: any, index: number) => (
+                    <TouchableOpacity
+                      key={index}
+                      style={[
+                        styles.indicator,
+                        index === currentHeroIndex && [
+                          styles.activeIndicator,
+                          { backgroundColor: colors.info },
+                        ],
+                      ]}
+                      onPress={() => {
+                        scrollViewRef.current?.scrollTo({
+                          x: index * width,
+                          animated: true,
+                        });
+                        setCurrentHeroIndex(index);
+                        triggerHaptic();
+                        console.log(
+                          'Scrolling to index:',
+                          index,
+                          '=> x:',
+                          index * width
+                        );
+                        console.log('ref:', scrollViewRef.current);
+                      }}
+                    />
+                  ))}
+                </View>
               </View>
-            </View>
 
-            <View style={styles.headerActions}>
-              <TouchableOpacity
-                style={styles.headerButton}
-                onPress={handleNotificationPress}
-              >
-                <Bell size={20} color={colors.text} />
-                {unreadCount > 0 && (
-                  <View
-                    style={[
-                      styles.notificationBadge,
-                      { backgroundColor: colors.error },
-                    ]}
-                  />
-                )}
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.profileButton}
-                onPress={handleProfilePress}
-              >
-                {user.avatar ? (
-                  <Image
-                    source={{ uri: user.avatar }}
-                    style={styles.profileImage}
-                  />
-                ) : (
-                  <DefaultAvatar
-                    width={32}
-                    height={32}
-                    style={styles.profileImage}
-                  />
-                )}
-              </TouchableOpacity>
-            </View>
-          </LinearGradient>
+              {/* Search Bar */}
+              <SearchBar
+                placeholderText="Search "
+                onSearch={handleSearch}
+                onFilterClick={handleFilterClick}
+                initialQuery={searchQuery}
+                showFilter={true}
+                filterOptions={searchFilterOptions}
+                currentFilters={searchFilters}
+                onApplyFilters={handleApplyFilters}
+              />
+              {/* Search Results */}
+              {searchQuery.length > 0 && (
+                <View style={{ marginVertical: 12, marginHorizontal: 10 }}>
+                  {filteredServices.length > 0 ? (
+                    filteredServices.map((service) => (
+                      <TouchableOpacity
+                        key={service.id}
+                        style={{
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          padding: 10,
+                          borderBottomWidth: 1,
+                          borderBottomColor: '#eee',
+                        }}
+                        onPress={() =>
+                          handleServicePress(service.id, service.route)
+                        }
+                      >
+                        <LinearGradient
+                          colors={service.gradient}
+                          style={{
+                            width: 32,
+                            height: 32,
+                            borderRadius: 16,
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                            marginRight: 10,
+                          }}
+                        >
+                          <service.icon width={18} height={18} fill="#FFF" />
+                        </LinearGradient>
+                        <Text style={{ fontSize: 16 }}>{service.name}</Text>
+                      </TouchableOpacity>
+                    ))
+                  ) : (
+                    <Text style={{ color: 'gray', padding: 10 }}>
+                      No results found.
+                    </Text>
+                  )}
+                </View>
+              )}
 
-          <ScrollView
-            style={styles.content}
-            showsVerticalScrollIndicator={false}
-          >
-            {/* Hero Section */}
-            <View style={styles.heroContainer}>
-              <ScrollView
-                ref={scrollViewRef}
-                horizontal
-                pagingEnabled
-                showsHorizontalScrollIndicator={false}
-                onMomentumScrollEnd={(event) => {
-                  const index = Math.round(
-                    event.nativeEvent.contentOffset.x / width
-                  );
-                  setCurrentHeroIndex(index);
-                  setIsManualScrolling(false);
-                }}
-                onScrollBeginDrag={() => {
-                  setIsManualScrolling(true);
-                }}
-              >
-                {data?.data?.map((hero: TContent, index: number) => (
-                  <View key={index} style={styles.heroSlide}>
-                    {hero.videoUrl ? (
-                      <YoutubePlayer
-                        height={280}
-                        play={false}
-                        videoId={getYouTubeVideoId(hero.videoUrl)}
-                      />
-                    ) : (
-                      <Image
-                        source={{ uri: hero.imageUrl }}
-                        style={styles.heroImage}
-                      />
-                    )}
-                  </View>
-                ))}
-              </ScrollView>
-
-              {/* Hero Indicators */}
-              <View style={styles.heroIndicators}>
-                {data?.data?.map((_: any, index: number) => (
-                  <TouchableOpacity
-                    key={index}
-                    style={[
-                      styles.indicator,
-                      index === currentHeroIndex && [
-                        styles.activeIndicator,
-                        { backgroundColor: colors.info },
-                      ],
-                    ]}
-                    onPress={() => {
-                      scrollViewRef.current?.scrollTo({
-                        x: index * width,
-                        animated: true,
-                      });
-                      setCurrentHeroIndex(index);
-                      triggerHaptic();
-                      console.log(
-                        'Scrolling to index:',
-                        index,
-                        '=> x:',
-                        index * width
-                      );
-                      console.log('ref:', scrollViewRef.current);
-                    }}
-                  />
-                ))}
-              </View>
-            </View>
-
-            {/* Search Bar */}
-            <SearchBar
-              placeholderText="Search "
-              onSearch={handleSearch}
-              onFilterClick={handleFilterClick}
-              initialQuery={searchQuery}
-              showFilter={true}
-              filterOptions={searchFilterOptions}
-              currentFilters={searchFilters}
-              onApplyFilters={handleApplyFilters}
-            />
-            {/* Search Results */}
-            {searchQuery.length > 0 && (
-              <View style={{ marginVertical: 12, marginHorizontal: 10 }}>
-                {filteredServices.length > 0 ? (
-                  filteredServices.map((service) => (
+              {/* Service Icons */}
+              <View style={styles.servicesContainer}>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.servicesContent}
+                >
+                  {services.map((service, index) => (
                     <TouchableOpacity
                       key={service.id}
-                      style={{
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        padding: 10,
-                        borderBottomWidth: 1,
-                        borderBottomColor: '#eee',
-                      }}
+                      style={styles.serviceItem}
                       onPress={() =>
                         handleServicePress(service.id, service.route)
                       }
                     >
                       <LinearGradient
                         colors={service.gradient}
-                        style={{
-                          width: 32,
-                          height: 32,
-                          borderRadius: 16,
-                          justifyContent: 'center',
-                          alignItems: 'center',
-                          marginRight: 10,
-                        }}
+                        style={styles.serviceIcon}
                       >
-                        <service.icon width={18} height={18} fill="#FFF" />
+                        <service.icon width={24} height={24} fill="#FFFFFF" />
                       </LinearGradient>
-                      <Text style={{ fontSize: 16 }}>{service.name}</Text>
-                    </TouchableOpacity>
-                  ))
-                ) : (
-                  <Text style={{ color: 'gray', padding: 10 }}>
-                    No results found.
-                  </Text>
-                )}
-              </View>
-            )}
-
-            {/* Service Icons */}
-            <View style={styles.servicesContainer}>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.servicesContent}
-              >
-                {services.map((service, index) => (
-                  <TouchableOpacity
-                    key={service.id}
-                    style={styles.serviceItem}
-                    onPress={() =>
-                      handleServicePress(service.id, service.route)
-                    }
-                  >
-                    <LinearGradient
-                      colors={service.gradient}
-                      style={styles.serviceIcon}
-                    >
-                      <service.icon width={24} height={24} fill="#FFFFFF" />
-                    </LinearGradient>
-                    <Text style={[styles.serviceName, { color: colors.text }]}>
-                      {service.name}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            </View>
-
-            {/* Sacred Texts Section */}
-            <SacredTextsSection
-              onTextClick={handleTextPress}
-              data={bookData}
-              isLoading={isBooksLoading}
-            />
-
-            {/* Our Project Section */}
-            <View style={styles.section}>
-              <View style={styles.sectionHeader}>
-                <Text style={[styles.sectionTitle, { color: colors.primary }]}>
-                  {'Our Project'}
-                </Text>
-              </View>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.projectsContent}
-              >
-                {isProgramLoading ? (
-                  <LoadingComponent
-                    loading="Programs "
-                    color={colors.primary}
-                  />
-                ) : (ProgramData?.data?.length || 0) === 0 ? (
-                  <Text style={{ color: colors.text }}>
-                    Projects are coming soon! Stay tuned.
-                  </Text>
-                ) : (
-                  ProgramData?.data?.map((project: any) => (
-                    <View key={project.id} style={styles.projectCard}>
-                      <Image
-                        source={{ uri: project.imageUrl }}
-                        style={styles.projectImage}
-                      />
-                      <LinearGradient
-                        colors={['transparent', 'rgba(0,0,0,0.8)']}
-                        style={styles.projectOverlay}
+                      <Text
+                        style={[styles.serviceName, { color: colors.text }]}
                       >
-                        <View style={styles.projectContent}>
-                          <Text style={styles.projectTitle}>
-                            {project.title}
-                          </Text>
-                          <Text style={styles.projectDescription}>
-                            {project.description}{' '}
-                          </Text>
+                        {service.name}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
 
-                          <View style={styles.projectProgress}>
-                            {/* <View style={styles.progressInfo}>
+              {/* Sacred Texts Section */}
+              <SacredTextsSection
+                onTextClick={handleTextPress}
+                data={bookData}
+                isLoading={isBooksLoading}
+              />
+
+              {/* Our Project Section */}
+              <View style={styles.section}>
+                <View style={styles.sectionHeader}>
+                  <Text
+                    style={[styles.sectionTitle, { color: colors.primary }]}
+                  >
+                    {'Our Project'}
+                  </Text>
+                </View>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.projectsContent}
+                >
+                  {isProgramLoading ? (
+                    <LoadingComponent
+                      loading="Programs "
+                      color={colors.primary}
+                    />
+                  ) : (ProgramData?.data?.length || 0) === 0 ? (
+                    <Text style={{ color: colors.text }}>
+                      Projects are coming soon! Stay tuned.
+                    </Text>
+                  ) : (
+                    ProgramData?.data?.map((project: any) => (
+                      <View key={project.id} style={styles.projectCard}>
+                        <Image
+                          source={{ uri: project.imageUrl }}
+                          style={styles.projectImage}
+                        />
+                        <LinearGradient
+                          colors={['transparent', 'rgba(0,0,0,0.8)']}
+                          style={styles.projectOverlay}
+                        >
+                          <View style={styles.projectContent}>
+                            <Text style={styles.projectTitle}>
+                              {project.title}
+                            </Text>
+                            <Text style={styles.projectDescription}>
+                              {project.description}{' '}
+                            </Text>
+
+                            <View style={styles.projectProgress}>
+                              {/* <View style={styles.progressInfo}>
                             <Text style={styles.progressText}>
                               Raised: ৳
                               {project.collectedAmount.toLocaleString()}
@@ -744,65 +612,32 @@ export default function HomeScreen() {
                               ]}
                             />
                           </View> */}
-                            {/* <Text style={styles.supportersText}>
+                              {/* <Text style={styles.supportersText}>
                               {project.supporters} supporters
                             </Text> */}
-                          </View>
+                            </View>
 
-                          {/* <TouchableOpacity
+                            {/* <TouchableOpacity
                             style={styles.donateButton}
                             onPress={() => handleProjectDonate(project)}
                           >
                             <Heart size={16} color="#FFFFFF" fill="#FFFFFF" />
                             <Text style={styles.donateText}>Donate Now</Text>
                           </TouchableOpacity> */}
-                        </View>
-                      </LinearGradient>
-                    </View>
-                  ))
-                )}
-              </ScrollView>
-            </View>
+                          </View>
+                        </LinearGradient>
+                      </View>
+                    ))
+                  )}
+                </ScrollView>
+              </View>
 
-            <View style={styles.bottomSpacing} />
-          </ScrollView>
-
-          {/* Settings Modal */}
-          <SettingsModal
-            visible={showSettingsModal}
-            onClose={() => setShowSettingsModal(false)}
-            onLogout={handleLogout}
-          />
-
-          {/* User Profile Modal */}
-          <UserProfileModal
-            visible={showUserProfileModal}
-            onClose={() => setShowUserProfileModal(false)}
-            onNavigateToSettings={handleNavigateToSettings}
-          />
-
-          {/* Donation Modal */}
-          <DonationModal
-            isVisible={showDonationModal}
-            onClose={() => setShowDonationModal(false)}
-            project={null}
-          />
-
-          {/* Notification Modal */}
-          <NotificationModal
-            data={notifications}
-            isVisible={showNotificationModal}
-            onClose={() => setShowNotificationModal(false)}
-          />
-
-          {/* Shop Confirmation Modal */}
-          <ShopConfirmationModal
-            isVisible={showShopModal}
-            onClose={() => setShowShopModal(false)}
-          />
-        </SafeAreaView>
-      </ScrollView>
-    </PullToRefreshWrapper>
+              <View style={styles.bottomSpacing} />
+            </ScrollView>
+          </SafeAreaView>
+        </ScrollView>
+      </PullToRefreshWrapper>
+    </SafeAreaView>
   );
 }
 
@@ -810,75 +645,13 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-    gap: 8,
-  },
-  menuButton: {
-    padding: 4,
-  },
-  dateContainer: {
-    flex: 1,
-    alignItems: 'center',
-    width:"100%"
-  },
-  dateWrapper: {
-  flexDirection: 'row',
-  alignItems: 'center',
-  paddingHorizontal: 10,
-  paddingVertical: 6,
-  borderRadius: 16,
-  borderWidth: 1,
-  width: "100%",   // ⬅️ fill parent width
-},
-  dateText: {
-    fontSize: 9,
-    fontWeight: '600',
-    marginLeft: 4,
-  },
-  headerActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  headerButton: {
-    position: 'relative',
-    padding: 4,
-  },
-  notificationBadge: {
-    position: 'absolute',
-    top: 2,
-    right: 2,
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-  profileButton: {
-    borderRadius: 16,
-    overflow: 'hidden',
-  },
-  profileImage: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-  },
   content: {
     flex: 1,
   },
   heroContainer: {
     height: 230,
     position: 'relative',
+    marginTop:58,
   },
   heroSlide: {
     width: width,

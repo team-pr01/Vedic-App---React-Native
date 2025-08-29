@@ -38,6 +38,8 @@ import { formatDate } from './../../utils/formatDate';
 import NewsContent from '@/components/NewsContent';
 import LoadingComponent from '@/components/LoadingComponent/LoadingComponent';
 import { PullToRefreshWrapper } from '@/components/Reusable/PullToRefreshWrapper/PullToRefreshWrapper';
+import AppHeader from '@/components/Reusable/AppHeader/AppHeader';
+import Header from '@/components/Reusable/HeaderMenuBar/HeaderMenuBar';
 
 // Define base English categories for state management and logic
 const baseEnglishCategories = [
@@ -135,8 +137,6 @@ export default function NewsScreen() {
     allLanguages[0]
   );
   const [showLanguageModal, setShowLanguageModal] = useState(false);
-
-
 
   const [newsFeed, setNewsFeed] = useState<any[]>([]);
 
@@ -324,8 +324,10 @@ export default function NewsScreen() {
 
   console.log(selectedNewsItem, 'hi');
 
-  return (
+  return ( <SafeAreaView style={{ flex: 1 }}>
+      <Header />
     <PullToRefreshWrapper onRefresh={handleRefresh}>
+      <AppHeader title="Spiritual News" colors={['#FF8F00', '#F57C00']} />
       <ScrollView
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
@@ -340,7 +342,7 @@ export default function NewsScreen() {
             colors={colors.headerBackground}
             style={styles.header}
           >
-             <TouchableOpacity onPress={() => router.push('/(tabs)')}>
+            <TouchableOpacity onPress={() => router.push('/(tabs)')}>
               <ArrowLeft size={24} color="#FFFFFF" />
             </TouchableOpacity>
             <View style={styles.headerContent}>
@@ -477,7 +479,6 @@ export default function NewsScreen() {
               <Text style={[styles.sectionTitle, { color: colors.text }]}>
                 Latest Articles
               </Text>
-             
 
               {isLoading ? (
                 <LoadingComponent loading="Programs" color={colors.primary} />
@@ -759,7 +760,7 @@ export default function NewsScreen() {
                         {selectedNewsItem.content}
                       </Text> */}
                   </ScrollView>
-{/* 
+                  {/* 
                   <View
                     style={[
                       styles.modalFooter,
@@ -983,7 +984,7 @@ export default function NewsScreen() {
           )}
         </SafeAreaView>
       </ScrollView>
-    </PullToRefreshWrapper>
+    </PullToRefreshWrapper>    </SafeAreaView>
   );
 }
 

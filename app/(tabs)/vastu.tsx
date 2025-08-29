@@ -49,6 +49,8 @@ import NoData from '@/components/Reusable/NoData/NoData';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import LoadingComponent from '@/components/LoadingComponent/LoadingComponent';
 import { PullToRefreshWrapper } from '@/components/Reusable/PullToRefreshWrapper/PullToRefreshWrapper';
+import Header from '@/components/Reusable/HeaderMenuBar/HeaderMenuBar';
+import AppHeader from '@/components/Reusable/AppHeader/AppHeader';
 
 export type TVastu = {
   _id: string;
@@ -104,57 +106,91 @@ const triggerHaptic = () => {
 const generateVastuAnalysis = async (
   prompt: string
 ): Promise<VastuAnalysis> => {
-    // ... (logic is unchanged)
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    const lowerPrompt = prompt.toLowerCase();
-    let roomType = 'Living Room';
-    let direction = 'North-East';
-    let analysis = '';
-    let recommendations: string[] = [];
-    let score = 8.5;
-    if (lowerPrompt.includes('bedroom')) {
-        roomType = 'Bedroom';
-        direction = 'South-West';
-        analysis = 'Your bedroom placement follows traditional Vastu principles. The South-West direction is ideal for the master bedroom as it promotes stability and peaceful sleep.';
-        recommendations = ['Sleep with your head pointing South or East for better rest', 'Avoid placing mirrors directly opposite the bed', 'Use calming colors like light blue or green for walls', 'Keep the room clutter-free for positive energy flow'];
-        score = 9.0;
-    } else if (lowerPrompt.includes('kitchen')) {
-        roomType = 'Kitchen';
-        direction = 'South-East';
-        analysis = 'Your kitchen is well-positioned in the South-East direction (Agni corner), which is highly auspicious for cooking activities according to Vastu principles.';
-        recommendations = ['Cook facing East for positive energy while preparing food', 'Place water source (sink) in the North-East of kitchen', 'Avoid placing stove and sink directly opposite each other', 'Use bright lighting and ensure good ventilation'];
-        score = 9.2;
-    } else {
-        analysis = 'Your living room has good natural light and proper ventilation. The placement follows traditional Vastu principles with some minor adjustments needed.';
-        recommendations = ['Place the main seating facing East or North for positive energy flow', 'Add a small plant in the North-East corner to enhance prosperity', 'Ensure the center of the room remains clutter-free', 'Use light colors for walls to maintain positive vibrations'];
-    }
-    return { id: `analysis-${Date.now()}`, roomType, direction, analysis, recommendations, score };
+  // ... (logic is unchanged)
+  await new Promise((resolve) => setTimeout(resolve, 1500));
+  const lowerPrompt = prompt.toLowerCase();
+  let roomType = 'Living Room';
+  let direction = 'North-East';
+  let analysis = '';
+  let recommendations: string[] = [];
+  let score = 8.5;
+  if (lowerPrompt.includes('bedroom')) {
+    roomType = 'Bedroom';
+    direction = 'South-West';
+    analysis =
+      'Your bedroom placement follows traditional Vastu principles. The South-West direction is ideal for the master bedroom as it promotes stability and peaceful sleep.';
+    recommendations = [
+      'Sleep with your head pointing South or East for better rest',
+      'Avoid placing mirrors directly opposite the bed',
+      'Use calming colors like light blue or green for walls',
+      'Keep the room clutter-free for positive energy flow',
+    ];
+    score = 9.0;
+  } else if (lowerPrompt.includes('kitchen')) {
+    roomType = 'Kitchen';
+    direction = 'South-East';
+    analysis =
+      'Your kitchen is well-positioned in the South-East direction (Agni corner), which is highly auspicious for cooking activities according to Vastu principles.';
+    recommendations = [
+      'Cook facing East for positive energy while preparing food',
+      'Place water source (sink) in the North-East of kitchen',
+      'Avoid placing stove and sink directly opposite each other',
+      'Use bright lighting and ensure good ventilation',
+    ];
+    score = 9.2;
+  } else {
+    analysis =
+      'Your living room has good natural light and proper ventilation. The placement follows traditional Vastu principles with some minor adjustments needed.';
+    recommendations = [
+      'Place the main seating facing East or North for positive energy flow',
+      'Add a small plant in the North-East corner to enhance prosperity',
+      'Ensure the center of the room remains clutter-free',
+      'Use light colors for walls to maintain positive vibrations',
+    ];
+  }
+  return {
+    id: `analysis-${Date.now()}`,
+    roomType,
+    direction,
+    analysis,
+    recommendations,
+    score,
+  };
 };
 
 export default function VastuPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
-  const { data: vastu, isLoading: isVastuLoading, isFetching:isRefetchingVastu  ,refetch: refetchVastu } = useGetAllVastuQuery({
+  const {
+    data: vastu,
+    isLoading: isVastuLoading,
+    isFetching: isRefetchingVastu,
+    refetch: refetchVastu,
+  } = useGetAllVastuQuery({
     keyword: searchQuery,
     category: selectedCategory,
   });
-  const { data, isLoading, refetch: refetchConsultancy } = useGetAllConsultancyServicesQuery({});
+  const {
+    data,
+    isLoading,
+    refetch: refetchConsultancy,
+  } = useGetAllConsultancyServicesQuery({});
   const filteredExperts =
     data?.data?.filter((expert: any) => expert.category === 'Vastu Expert') ||
     [];
-    const [refreshing, setRefreshing] = useState(false);
-    
-      const handleRefresh = async () => {
-        setRefreshing(true);
-    
-        try {
-          await Promise.all([refetchVastu(), refetchConsultancy()]);
-        } catch (error) {
-          console.error('Error while refreshing:', error);
-        } finally {
-          setRefreshing(false);
-        }
-      };
+  const [refreshing, setRefreshing] = useState(false);
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+
+    try {
+      await Promise.all([refetchVastu(), refetchConsultancy()]);
+    } catch (error) {
+      console.error('Error while refreshing:', error);
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   const colors = useThemeColors();
   const [isListening, setIsListening] = useState(false);
@@ -387,404 +423,619 @@ export default function VastuPage() {
   ];
   const [playingCardIndex, setPlayingCardIndex] = useState<number | null>(null);
 
-  return (
-     <PullToRefreshWrapper onRefresh={handleRefresh}>
+  return ( <SafeAreaView style={{ flex: 1 }}>
+      <Header />
+    <PullToRefreshWrapper onRefresh={handleRefresh}>
+      <AppHeader title="Vastu Shastra" colors={['#FF8F00', '#F57C00']} />
       <ScrollView
         style={{ backgroundColor: colors.background }}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
         }
       >
-       <View style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* Header */}
-      <SafeAreaView edges={['top']} style={[styles.headerContainer, { backgroundColor: colors.primary }]}>
-        <LinearGradient colors={colors.headerBackground} style={styles.header}>
-        <TouchableOpacity onPress={() => router.push('/(tabs)')}
-            style={styles.headerButton}
+        <View
+          style={[styles.container, { backgroundColor: colors.background }]}
+        >
+          {/* Search and AI Section */}
+          <ScrollView
+            style={styles.content}
+            showsVerticalScrollIndicator={false}
           >
-            <ArrowLeft size={24} color="#FFFFFF" />
-          </TouchableOpacity>
-          <View style={styles.headerContent}>
-            <Text style={styles.headerTitle}>Vastu Shastra</Text>
-          </View>
-          <View style={styles.headerPlaceholder} />
-        </LinearGradient>
-      </SafeAreaView>
-
-      {/* Search and AI Section */}
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={[styles.searchSection, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
-          <View style={styles.searchContainer}>
-            <View style={[styles.searchBar, { backgroundColor: colors.background }]}>
-              <Search size={20} color={colors.secondaryText} />
-              <TextInput
-                style={[styles.searchInput, { color: colors.text }]}
-                placeholder="Search Vastu tips, experts..."
-                value={searchQuery}
-                onChangeText={setSearchQuery}
-                placeholderTextColor={colors.secondaryText}
-              />
-              <TouchableOpacity
-                onPress={handleVoiceSearch}
-                style={[
-                  styles.voiceButton,
-                  isListening && styles.voiceButtonActive,
-                ]}
-              >
-                {isListening ? (
-                  <StopCircle size={18} color={colors.error} />
-                ) : (
-                  <Mic size={18} color={colors.primary} />
-                )}
-              </TouchableOpacity>
-            </View>
-            <TouchableOpacity
-              onPress={() => {
-                triggerHaptic();
-                setShowAIModal(true);
-              }}
-              style={[styles.aiButton, { backgroundColor: colors.primary }]}
-            >
-              <Brain size={20} color="#FFFFFF" />
-              <Text style={styles.aiButtonText}>AI Analysis</Text>
-            </TouchableOpacity>
-          </View>
-
-          {isListening && (
-            <View style={styles.listeningIndicator}>
-              <View style={styles.listeningDot} />
-              <Text style={[styles.listeningText, { color: colors.secondaryText }]}>Listening...</Text>
-            </View>
-          )}
-        </View>
-        <View style={styles.categoriesContainer}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            <TouchableOpacity
-              onPress={() => {
-                triggerHaptic();
-                setSelectedCategory('');
-              }}
+            <View
               style={[
-                styles.categoryChip,
-                { backgroundColor: colors.background, borderColor: colors.border },
-                selectedCategory === '' && [styles.categoryChipActive, { backgroundColor: colors.primary, borderColor: colors.primary }],
+                styles.searchSection,
+                {
+                  backgroundColor: colors.card,
+                  borderBottomColor: colors.border,
+                },
               ]}
             >
-              <Text
-                style={[
-                  styles.categoryText,
-                  { color: colors.secondaryText },
-                  selectedCategory === '' && styles.categoryTextActive,
-                ]}
-              >
-                All
-              </Text>
-            </TouchableOpacity>
-            {categories.map((category) => (
-              <TouchableOpacity
-                key={category.id}
-                onPress={() => {
-                  triggerHaptic();
-                  setSelectedCategory(category.id);
-                }}
-                style={[
-                  styles.categoryChip,
-                  { backgroundColor: colors.background, borderColor: colors.border },
-                  selectedCategory === category.id && [styles.categoryChipActive, { backgroundColor: colors.primary, borderColor: colors.primary }],
-                ]}
-              >
-                <Text
+              <View style={styles.searchContainer}>
+                <View
                   style={[
-                    styles.categoryText,
-                    { color: colors.secondaryText },
-                    selectedCategory === category.id &&
-                      styles.categoryTextActive,
+                    styles.searchBar,
+                    { backgroundColor: colors.background },
                   ]}
                 >
-                  {category.name}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>Vastu Videos</Text>
-
-          {isVastuLoading  || isRefetchingVastu? (
-            <LoadingComponent loading="Vastu Videos" color={colors.primary} />
-          ) : vastu?.data?.length > 0 ? (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              {vastu?.data?.map((vastu: TVastu, index: number) => (
-                <View key={vastu?._id} style={[styles.videoCard, { backgroundColor: colors.card, shadowColor: colors.cardShadow }]}>
-                  {/* --- Video Player Section --- */}
-                  <View style={styles.programImageContainer}>
-                    <YoutubePlayer
-                      height={200}
-                      play={playingCardIndex === index}
-                      videoId={getYouTubeVideoId(vastu?.videoUrl) || ''}
-                      onChangeState={(state: any) => {
-                        if (state === 'ended') setPlayingCardIndex(null);
-                      }}
-                    />
-                  </View>
-
-                  <Text style={[styles.videoTitle, { color: colors.text }]}>{vastu?.title}</Text>
-                </View>
-              ))}
-            </ScrollView>
-          ) : (
-            <NoData message="No Vastu videos found" />
-          )}
-        </View>
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>Popular Vastu Tips</Text>
-          {filteredTips.length > 0 ? (
-            <View style={styles.tipsContainer}>
-              {filteredTips.map((tip, index) => (
-                <View key={index} style={[styles.tipCard, { backgroundColor: colors.card, shadowColor: colors.cardShadow }]}>
-                  <View style={styles.tipHeader}>
-                    {React.cloneElement(tip.icon, { color: colors.primary })}
-                    <Text style={[styles.tipTitle, { color: colors.text }]}>{tip.title}</Text>
-                    <ChevronRight size={20} color={colors.primary} />
-                  </View>
-                  <View style={styles.tipContent}>
-                    {tip.tips.map((t, i) => (
-                      <Text key={i} style={[styles.tipText, { color: colors.secondaryText }]}>
-                        • {t}
-                      </Text>
-                    ))}
-                  </View>
-                </View>
-              ))}
-            </View>
-          ) : (
-            <Text style={[styles.emptyText, { color: colors.secondaryText }]}>
-              No Vastu tips found for your search.
-            </Text>
-          )}
-        </View>
-        
-        <Experts data={filteredExperts} title={'Vastu'} isLoading={isLoading} />
-      </ScrollView>
-
-      {/* AI Analysis Modal */}
-      {showAIModal && (
-        <Modal
-          visible={showAIModal}
-          transparent
-          animationType="slide"
-          onRequestClose={() => setShowAIModal(false)}
-        >
-          <View style={styles.modalOverlay}>
-            <View style={[styles.aiModal, { backgroundColor: colors.card }]}>
-              <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
-                <View style={styles.aiModalTitle}>
-                  <Brain size={24} color={colors.primary} />
-                  <Text style={[styles.modalTitle, { color: colors.text }]}>AI Vastu Analysis</Text>
-                </View>
-                <TouchableOpacity onPress={() => setShowAIModal(false)}>
-                  <X size={24} color={colors.secondaryText} />
-                </TouchableOpacity>
-              </View>
-
-              <View style={styles.aiModalContent}>
-                <Text style={[styles.promptLabel, { color: colors.secondaryText }]}>
-                  Describe your space for Vastu analysis (room type, direction,
-                  layout):
-                </Text>
-                <TextInput
-                  style={[styles.promptInput, {
-                    borderColor: colors.border,
-                    color: colors.text,
-                    backgroundColor: colors.background
-                  }]}
-                  value={vastuPrompt}
-                  onChangeText={setVastuPrompt}
-                  placeholder="E.g., My living room faces North-East..."
-                  multiline
-                  numberOfLines={4}
-                  textAlignVertical="top"
-                  placeholderTextColor={colors.secondaryText}
-                />
-
-                {error && (
-                  <View style={[styles.errorContainer, { backgroundColor: `${colors.error}20` }]}>
-                    <Text style={[styles.errorText, { color: colors.error }]}>{error}</Text>
-                  </View>
-                )}
-
-                <TouchableOpacity
-                  onPress={handleGenerateAnalysis}
-                  disabled={isAnalyzing || !vastuPrompt.trim()}
-                  style={[
-                    styles.generateButton,
-                    { backgroundColor: colors.primary },
-                    (isAnalyzing || !vastuPrompt.trim()) &&
-                      styles.generateButtonDisabled,
-                  ]}
-                >
-                  {isAnalyzing ? (
-                    <>
-                      <Loader size={20} color="#FFFFFF" />
-                      <Text style={styles.generateButtonText}>
-                        Analyzing...
-                      </Text>
-                    </>
-                  ) : (
-                    <Text style={styles.generateButtonText}>
-                      Generate Analysis
-                    </Text>
-                  )}
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
-        </Modal>
-      )}
-
-      {/* Analysis Result Modal */}
-      {showAnalysisModal && selectedAnalysis && (
-        <Modal
-          visible={showAnalysisModal}
-          transparent
-          animationType="slide"
-          onRequestClose={() => setShowAnalysisModal(false)}
-        >
-          <View style={styles.modalOverlay}>
-            <View style={[styles.analysisModal, { backgroundColor: colors.card }]}>
-              <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
-                <Text style={[styles.modalTitle, { color: colors.text }]}>Vastu Analysis Result</Text>
-                <TouchableOpacity onPress={() => setShowAnalysisModal(false)}>
-                  <X size={24} color={colors.secondaryText} />
-                </TouchableOpacity>
-              </View>
-
-              <ScrollView style={styles.modalContent}>
-                <View style={styles.analysisContent}>
-                  <View style={[styles.scoreContainer, { backgroundColor: colors.background }]}>
-                    <Text style={[styles.scoreLabel, { color: colors.secondaryText }]}>Vastu Score</Text>
-                    <Text style={[styles.scoreValue, { color: colors.primary }]}>
-                      {selectedAnalysis.score}/10
-                    </Text>
-                  </View>
-
-                  <View style={styles.analysisSection}>
-                    <Text style={[styles.analysisSectionTitle, { color: colors.text }]}>
-                      Room Analysis
-                    </Text>
-                    <Text style={[styles.analysisText, { color: colors.secondaryText }]}>
-                      {selectedAnalysis.analysis}
-                    </Text>
-                  </View>
-
-                  <View style={styles.analysisSection}>
-                    <Text style={[styles.analysisSectionTitle, { color: colors.text }]}>
-                      Recommendations
-                    </Text>
-                    {selectedAnalysis.recommendations.map((rec, index) => (
-                      <Text key={index} style={[styles.recommendationText, { color: colors.secondaryText }]}>
-                        • {rec}
-                      </Text>
-                    ))}
-                  </View>
-
-                  <TouchableOpacity style={[styles.saveAnalysisButton, { backgroundColor: colors.background }]}>
-                    <Heart size={20} color={colors.primary} />
-                    <Text style={[styles.saveAnalysisButtonText, { color: colors.primary }]}>
-                      Save Analysis
-                    </Text>
+                  <Search size={20} color={colors.secondaryText} />
+                  <TextInput
+                    style={[styles.searchInput, { color: colors.text }]}
+                    placeholder="Search Vastu tips, experts..."
+                    value={searchQuery}
+                    onChangeText={setSearchQuery}
+                    placeholderTextColor={colors.secondaryText}
+                  />
+                  <TouchableOpacity
+                    onPress={handleVoiceSearch}
+                    style={[
+                      styles.voiceButton,
+                      isListening && styles.voiceButtonActive,
+                    ]}
+                  >
+                    {isListening ? (
+                      <StopCircle size={18} color={colors.error} />
+                    ) : (
+                      <Mic size={18} color={colors.primary} />
+                    )}
                   </TouchableOpacity>
                 </View>
-              </ScrollView>
-            </View>
-          </View>
-        </Modal>
-      )}
-
-      {/* Expert Booking Modal */}
-      {showExpertModal && selectedExpert && (
-        <Modal
-          visible={showExpertModal}
-          transparent
-          animationType="slide"
-          onRequestClose={() => setShowExpertModal(false)}
-        >
-          <View style={styles.modalOverlay}>
-            <View style={[styles.expertModal, { backgroundColor: colors.card }]}>
-              <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
-                <Text style={[styles.modalTitle, { color: colors.text }]}>Book Consultation</Text>
-                <TouchableOpacity onPress={() => setShowExpertModal(false)}>
-                  <X size={24} color={colors.secondaryText} />
-                </TouchableOpacity>
-              </View>
-
-              <View style={styles.expertModalContent}>
-                <View style={styles.expertDetails}>
-                  <Image
-                    source={{ uri: selectedExpert.image }}
-                    style={styles.expertModalImage}
-                  />
-                  <View style={styles.expertModalInfo}>
-                    <Text style={[styles.expertModalName, { color: colors.text }]}>
-                      {selectedExpert.name}
-                    </Text>
-                    <Text style={[styles.expertModalSpeciality, { color: colors.primary }]}>
-                      {selectedExpert.speciality}
-                    </Text>
-                    <View style={styles.expertModalMeta}>
-                      <View style={styles.ratingContainer}>
-                        <Star size={16} color={colors.warning} fill={colors.warning} />
-                        <Text style={[styles.ratingText, { color: colors.text }]}>
-                          {selectedExpert.rating}
-                        </Text>
-                      </View>
-                      <Text style={[styles.expertModalPrice, { color: colors.success }]}>
-                        {selectedExpert.price}
-                      </Text>
-                    </View>
-                  </View>
-                </View>
-
-                <View style={[styles.bookingInfo, { backgroundColor: colors.background }]}>
-                  <View style={styles.bookingItem}>
-                    <Calendar size={20} color={colors.primary} />
-                    <Text style={[styles.bookingText, { color: colors.secondaryText }]}>
-                      Next Available: {selectedExpert.nextAvailable}
-                    </Text>
-                  </View>
-                  <View style={styles.bookingItem}>
-                    <Clock size={20} color={colors.primary} />
-                    <Text style={[styles.bookingText, { color: colors.secondaryText }]}>Duration: 60 minutes</Text>
-                  </View>
-                  <View style={styles.bookingItem}>
-                    <Phone size={20} color={colors.primary} />
-                    <Text style={[styles.bookingText, { color: colors.secondaryText }]}>
-                      Video/Phone Consultation
-                    </Text>
-                  </View>
-                </View>
-
                 <TouchableOpacity
-                  style={[styles.bookButton, { backgroundColor: colors.primary }]}
                   onPress={() => {
                     triggerHaptic();
-                    alert(`Booking confirmed with ${selectedExpert.name}!`);
-                    setShowExpertModal(false);
+                    setShowAIModal(true);
                   }}
+                  style={[styles.aiButton, { backgroundColor: colors.primary }]}
                 >
-                  <Text style={styles.bookButtonText}>
-                    Book Now - {selectedExpert.price}
-                  </Text>
+                  <Brain size={20} color="#FFFFFF" />
+                  <Text style={styles.aiButtonText}>AI Analysis</Text>
                 </TouchableOpacity>
               </View>
+
+              {isListening && (
+                <View style={styles.listeningIndicator}>
+                  <View style={styles.listeningDot} />
+                  <Text
+                    style={[
+                      styles.listeningText,
+                      { color: colors.secondaryText },
+                    ]}
+                  >
+                    Listening...
+                  </Text>
+                </View>
+              )}
             </View>
-          </View>
-        </Modal>
-      )}
-    </View>
-    </ScrollView>
-    </PullToRefreshWrapper>
-   
+            <View style={styles.categoriesContainer}>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                <TouchableOpacity
+                  onPress={() => {
+                    triggerHaptic();
+                    setSelectedCategory('');
+                  }}
+                  style={[
+                    styles.categoryChip,
+                    {
+                      backgroundColor: colors.background,
+                      borderColor: colors.border,
+                    },
+                    selectedCategory === '' && [
+                      styles.categoryChipActive,
+                      {
+                        backgroundColor: colors.primary,
+                        borderColor: colors.primary,
+                      },
+                    ],
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.categoryText,
+                      { color: colors.secondaryText },
+                      selectedCategory === '' && styles.categoryTextActive,
+                    ]}
+                  >
+                    All
+                  </Text>
+                </TouchableOpacity>
+                {categories.map((category) => (
+                  <TouchableOpacity
+                    key={category.id}
+                    onPress={() => {
+                      triggerHaptic();
+                      setSelectedCategory(category.id);
+                    }}
+                    style={[
+                      styles.categoryChip,
+                      {
+                        backgroundColor: colors.background,
+                        borderColor: colors.border,
+                      },
+                      selectedCategory === category.id && [
+                        styles.categoryChipActive,
+                        {
+                          backgroundColor: colors.primary,
+                          borderColor: colors.primary,
+                        },
+                      ],
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.categoryText,
+                        { color: colors.secondaryText },
+                        selectedCategory === category.id &&
+                          styles.categoryTextActive,
+                      ]}
+                    >
+                      {category.name}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+            <View style={styles.section}>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>
+                Vastu Videos
+              </Text>
+
+              {isVastuLoading || isRefetchingVastu ? (
+                <LoadingComponent
+                  loading="Vastu Videos"
+                  color={colors.primary}
+                />
+              ) : vastu?.data?.length > 0 ? (
+                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                  {vastu?.data?.map((vastu: TVastu, index: number) => (
+                    <View
+                      key={vastu?._id}
+                      style={[
+                        styles.videoCard,
+                        {
+                          backgroundColor: colors.card,
+                          shadowColor: colors.cardShadow,
+                        },
+                      ]}
+                    >
+                      {/* --- Video Player Section --- */}
+                      <View style={styles.programImageContainer}>
+                        <YoutubePlayer
+                          height={200}
+                          play={playingCardIndex === index}
+                          videoId={getYouTubeVideoId(vastu?.videoUrl) || ''}
+                          onChangeState={(state: any) => {
+                            if (state === 'ended') setPlayingCardIndex(null);
+                          }}
+                        />
+                      </View>
+
+                      <Text style={[styles.videoTitle, { color: colors.text }]}>
+                        {vastu?.title}
+                      </Text>
+                    </View>
+                  ))}
+                </ScrollView>
+              ) : (
+                <NoData message="No Vastu videos found" />
+              )}
+            </View>
+            <View style={styles.section}>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>
+                Popular Vastu Tips
+              </Text>
+              {filteredTips.length > 0 ? (
+                <View style={styles.tipsContainer}>
+                  {filteredTips.map((tip, index) => (
+                    <View
+                      key={index}
+                      style={[
+                        styles.tipCard,
+                        {
+                          backgroundColor: colors.card,
+                          shadowColor: colors.cardShadow,
+                        },
+                      ]}
+                    >
+                      <View style={styles.tipHeader}>
+                        {React.cloneElement(tip.icon, {
+                          color: colors.primary,
+                        })}
+                        <Text style={[styles.tipTitle, { color: colors.text }]}>
+                          {tip.title}
+                        </Text>
+                        <ChevronRight size={20} color={colors.primary} />
+                      </View>
+                      <View style={styles.tipContent}>
+                        {tip.tips.map((t, i) => (
+                          <Text
+                            key={i}
+                            style={[
+                              styles.tipText,
+                              { color: colors.secondaryText },
+                            ]}
+                          >
+                            • {t}
+                          </Text>
+                        ))}
+                      </View>
+                    </View>
+                  ))}
+                </View>
+              ) : (
+                <Text
+                  style={[styles.emptyText, { color: colors.secondaryText }]}
+                >
+                  No Vastu tips found for your search.
+                </Text>
+              )}
+            </View>
+
+            <Experts
+              data={filteredExperts}
+              title={'Vastu'}
+              isLoading={isLoading}
+            />
+          </ScrollView>
+
+          {/* AI Analysis Modal */}
+          {showAIModal && (
+            <Modal
+              visible={showAIModal}
+              transparent
+              animationType="slide"
+              onRequestClose={() => setShowAIModal(false)}
+            >
+              <View style={styles.modalOverlay}>
+                <View
+                  style={[styles.aiModal, { backgroundColor: colors.card }]}
+                >
+                  <View
+                    style={[
+                      styles.modalHeader,
+                      { borderBottomColor: colors.border },
+                    ]}
+                  >
+                    <View style={styles.aiModalTitle}>
+                      <Brain size={24} color={colors.primary} />
+                      <Text style={[styles.modalTitle, { color: colors.text }]}>
+                        AI Vastu Analysis
+                      </Text>
+                    </View>
+                    <TouchableOpacity onPress={() => setShowAIModal(false)}>
+                      <X size={24} color={colors.secondaryText} />
+                    </TouchableOpacity>
+                  </View>
+
+                  <View style={styles.aiModalContent}>
+                    <Text
+                      style={[
+                        styles.promptLabel,
+                        { color: colors.secondaryText },
+                      ]}
+                    >
+                      Describe your space for Vastu analysis (room type,
+                      direction, layout):
+                    </Text>
+                    <TextInput
+                      style={[
+                        styles.promptInput,
+                        {
+                          borderColor: colors.border,
+                          color: colors.text,
+                          backgroundColor: colors.background,
+                        },
+                      ]}
+                      value={vastuPrompt}
+                      onChangeText={setVastuPrompt}
+                      placeholder="E.g., My living room faces North-East..."
+                      multiline
+                      numberOfLines={4}
+                      textAlignVertical="top"
+                      placeholderTextColor={colors.secondaryText}
+                    />
+
+                    {error && (
+                      <View
+                        style={[
+                          styles.errorContainer,
+                          { backgroundColor: `${colors.error}20` },
+                        ]}
+                      >
+                        <Text
+                          style={[styles.errorText, { color: colors.error }]}
+                        >
+                          {error}
+                        </Text>
+                      </View>
+                    )}
+
+                    <TouchableOpacity
+                      onPress={handleGenerateAnalysis}
+                      disabled={isAnalyzing || !vastuPrompt.trim()}
+                      style={[
+                        styles.generateButton,
+                        { backgroundColor: colors.primary },
+                        (isAnalyzing || !vastuPrompt.trim()) &&
+                          styles.generateButtonDisabled,
+                      ]}
+                    >
+                      {isAnalyzing ? (
+                        <>
+                          <Loader size={20} color="#FFFFFF" />
+                          <Text style={styles.generateButtonText}>
+                            Analyzing...
+                          </Text>
+                        </>
+                      ) : (
+                        <Text style={styles.generateButtonText}>
+                          Generate Analysis
+                        </Text>
+                      )}
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </View>
+            </Modal>
+          )}
+
+          {/* Analysis Result Modal */}
+          {showAnalysisModal && selectedAnalysis && (
+            <Modal
+              visible={showAnalysisModal}
+              transparent
+              animationType="slide"
+              onRequestClose={() => setShowAnalysisModal(false)}
+            >
+              <View style={styles.modalOverlay}>
+                <View
+                  style={[
+                    styles.analysisModal,
+                    { backgroundColor: colors.card },
+                  ]}
+                >
+                  <View
+                    style={[
+                      styles.modalHeader,
+                      { borderBottomColor: colors.border },
+                    ]}
+                  >
+                    <Text style={[styles.modalTitle, { color: colors.text }]}>
+                      Vastu Analysis Result
+                    </Text>
+                    <TouchableOpacity
+                      onPress={() => setShowAnalysisModal(false)}
+                    >
+                      <X size={24} color={colors.secondaryText} />
+                    </TouchableOpacity>
+                  </View>
+
+                  <ScrollView style={styles.modalContent}>
+                    <View style={styles.analysisContent}>
+                      <View
+                        style={[
+                          styles.scoreContainer,
+                          { backgroundColor: colors.background },
+                        ]}
+                      >
+                        <Text
+                          style={[
+                            styles.scoreLabel,
+                            { color: colors.secondaryText },
+                          ]}
+                        >
+                          Vastu Score
+                        </Text>
+                        <Text
+                          style={[styles.scoreValue, { color: colors.primary }]}
+                        >
+                          {selectedAnalysis.score}/10
+                        </Text>
+                      </View>
+
+                      <View style={styles.analysisSection}>
+                        <Text
+                          style={[
+                            styles.analysisSectionTitle,
+                            { color: colors.text },
+                          ]}
+                        >
+                          Room Analysis
+                        </Text>
+                        <Text
+                          style={[
+                            styles.analysisText,
+                            { color: colors.secondaryText },
+                          ]}
+                        >
+                          {selectedAnalysis.analysis}
+                        </Text>
+                      </View>
+
+                      <View style={styles.analysisSection}>
+                        <Text
+                          style={[
+                            styles.analysisSectionTitle,
+                            { color: colors.text },
+                          ]}
+                        >
+                          Recommendations
+                        </Text>
+                        {selectedAnalysis.recommendations.map((rec, index) => (
+                          <Text
+                            key={index}
+                            style={[
+                              styles.recommendationText,
+                              { color: colors.secondaryText },
+                            ]}
+                          >
+                            • {rec}
+                          </Text>
+                        ))}
+                      </View>
+
+                      <TouchableOpacity
+                        style={[
+                          styles.saveAnalysisButton,
+                          { backgroundColor: colors.background },
+                        ]}
+                      >
+                        <Heart size={20} color={colors.primary} />
+                        <Text
+                          style={[
+                            styles.saveAnalysisButtonText,
+                            { color: colors.primary },
+                          ]}
+                        >
+                          Save Analysis
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  </ScrollView>
+                </View>
+              </View>
+            </Modal>
+          )}
+
+          {/* Expert Booking Modal */}
+          {showExpertModal && selectedExpert && (
+            <Modal
+              visible={showExpertModal}
+              transparent
+              animationType="slide"
+              onRequestClose={() => setShowExpertModal(false)}
+            >
+              <View style={styles.modalOverlay}>
+                <View
+                  style={[styles.expertModal, { backgroundColor: colors.card }]}
+                >
+                  <View
+                    style={[
+                      styles.modalHeader,
+                      { borderBottomColor: colors.border },
+                    ]}
+                  >
+                    <Text style={[styles.modalTitle, { color: colors.text }]}>
+                      Book Consultation
+                    </Text>
+                    <TouchableOpacity onPress={() => setShowExpertModal(false)}>
+                      <X size={24} color={colors.secondaryText} />
+                    </TouchableOpacity>
+                  </View>
+
+                  <View style={styles.expertModalContent}>
+                    <View style={styles.expertDetails}>
+                      <Image
+                        source={{ uri: selectedExpert.image }}
+                        style={styles.expertModalImage}
+                      />
+                      <View style={styles.expertModalInfo}>
+                        <Text
+                          style={[
+                            styles.expertModalName,
+                            { color: colors.text },
+                          ]}
+                        >
+                          {selectedExpert.name}
+                        </Text>
+                        <Text
+                          style={[
+                            styles.expertModalSpeciality,
+                            { color: colors.primary },
+                          ]}
+                        >
+                          {selectedExpert.speciality}
+                        </Text>
+                        <View style={styles.expertModalMeta}>
+                          <View style={styles.ratingContainer}>
+                            <Star
+                              size={16}
+                              color={colors.warning}
+                              fill={colors.warning}
+                            />
+                            <Text
+                              style={[
+                                styles.ratingText,
+                                { color: colors.text },
+                              ]}
+                            >
+                              {selectedExpert.rating}
+                            </Text>
+                          </View>
+                          <Text
+                            style={[
+                              styles.expertModalPrice,
+                              { color: colors.success },
+                            ]}
+                          >
+                            {selectedExpert.price}
+                          </Text>
+                        </View>
+                      </View>
+                    </View>
+
+                    <View
+                      style={[
+                        styles.bookingInfo,
+                        { backgroundColor: colors.background },
+                      ]}
+                    >
+                      <View style={styles.bookingItem}>
+                        <Calendar size={20} color={colors.primary} />
+                        <Text
+                          style={[
+                            styles.bookingText,
+                            { color: colors.secondaryText },
+                          ]}
+                        >
+                          Next Available: {selectedExpert.nextAvailable}
+                        </Text>
+                      </View>
+                      <View style={styles.bookingItem}>
+                        <Clock size={20} color={colors.primary} />
+                        <Text
+                          style={[
+                            styles.bookingText,
+                            { color: colors.secondaryText },
+                          ]}
+                        >
+                          Duration: 60 minutes
+                        </Text>
+                      </View>
+                      <View style={styles.bookingItem}>
+                        <Phone size={20} color={colors.primary} />
+                        <Text
+                          style={[
+                            styles.bookingText,
+                            { color: colors.secondaryText },
+                          ]}
+                        >
+                          Video/Phone Consultation
+                        </Text>
+                      </View>
+                    </View>
+
+                    <TouchableOpacity
+                      style={[
+                        styles.bookButton,
+                        { backgroundColor: colors.primary },
+                      ]}
+                      onPress={() => {
+                        triggerHaptic();
+                        alert(`Booking confirmed with ${selectedExpert.name}!`);
+                        setShowExpertModal(false);
+                      }}
+                    >
+                      <Text style={styles.bookButtonText}>
+                        Book Now - {selectedExpert.price}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </View>
+            </Modal>
+          )}
+        </View>
+      </ScrollView>
+    </PullToRefreshWrapper>    </SafeAreaView>
   );
 }
 

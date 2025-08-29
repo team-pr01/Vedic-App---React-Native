@@ -30,6 +30,8 @@ import { useThemeColors } from '@/hooks/useThemeColors';
 import { useTranslate } from '@/hooks/useTranslate';
 import { useSendEmergencyAlertMutation } from '@/redux/features/Emergency/Emergency';
 import { socket } from '@/utils/socket';
+import Header from '@/components/Reusable/HeaderMenuBar/HeaderMenuBar';
+import AppHeader from '@/components/Reusable/AppHeader/AppHeader';
 
 interface EmergencyContact {
   name: string;
@@ -117,16 +119,11 @@ export default function EmergencyScreen() {
     edges={['top', 'left', 'right']} 
       style={[styles.container, { backgroundColor: colors.background }]}
     >
-      {/* Header */}
-      <LinearGradient colors={['#EF4444', '#DC2626']} style={styles.header}>
-        <TouchableOpacity onPress={() => router.push('/(tabs)')}>
-          <ArrowLeft size={24} color="#FFFFFF" />
-        </TouchableOpacity>
-        <View style={styles.headerContent}>
-          <Text style={styles.headerTitle}>Emergency</Text>
-        </View>
-        <View style={styles.headerPlaceholder} />
-      </LinearGradient>
+       <Header/>
+           <AppHeader title="Emergency"
+           colors={['#EF4444', '#DC2626']}
+           />
+   
 
       {/* Emergency Alert */}
       <View

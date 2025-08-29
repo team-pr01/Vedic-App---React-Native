@@ -54,6 +54,8 @@ import { useThemeColors } from '@/hooks/useThemeColors';
 import { useGetSingleBookQuery } from '@/redux/features/Book/bookApi';
 import LoadingComponent from '@/components/LoadingComponent/LoadingComponent';
 import { useTranslateShlokaMutation } from '@/redux/features/AI/aiApi';
+import Header from '@/components/Reusable/HeaderMenuBar/HeaderMenuBar';
+import AppHeader from '@/components/Reusable/AppHeader/AppHeader';
 
 function VedaReaderContent() {
   const { vedaId } = useLocalSearchParams<{ vedaId: string }>();
@@ -258,11 +260,11 @@ function VedaReaderContent() {
     }
   };
 
-  const handleOpenReportModal = (verse: Mantra) => {
-    triggerHaptic();
-    setReportingVerse(verse);
-    setIsReportModalOpen(true);
-  };
+  // const handleOpenReportModal = (verse: Mantra) => {
+  //   triggerHaptic();
+  //   setReportingVerse(verse);
+  //   setIsReportModalOpen(true);
+  // };
 
   const handleCloseReportModal = () => {
     setIsReportModalOpen(false);
@@ -318,21 +320,13 @@ function VedaReaderContent() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
+      
       {/* Header */}
       <SafeAreaView edges={['top']} style={styles.headerContainer}>
-        <LinearGradient colors={['#FF6F00', '#FF8F00']} style={styles.header}>
-          <TouchableOpacity
-            onPress={() => router.back()}
-            style={styles.headerButton}
-          >
-            <ArrowLeft size={24} color="#FFFFFF" />
-          </TouchableOpacity>
-          <View style={styles.headerContent}>
-            <Text style={styles.headerTitle}>{veda.title} </Text>
-            {/* {veda.subname && <Text style={styles.headerSubname}>{veda.subname}</Text>} */}
-          </View>
-          <View style={styles.headerPlaceholder} />
-        </LinearGradient>
+         <Header/>
+           <AppHeader title={veda.title}
+           colors={['#FF6F00', '#FF8F00']}
+           />
       </SafeAreaView>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>

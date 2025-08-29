@@ -15,11 +15,12 @@ import { useGetAllYogaQuery } from '@/redux/features/Yoga/yogaApi';
 import { TYoga } from '@/types';
 import { useGetAllConsultancyServicesQuery } from '@/redux/features/Consultancy/consultancyApi';
 import Experts from '@/components/Experts';
-
-import YogaHeader from '@/components/YogaPage/YogaHeader';
 import AllYogaPrograms from '@/components/YogaPage/AllYogaPrograms';
 import LoadingComponent from '@/components/LoadingComponent/LoadingComponent';
 import { PullToRefreshWrapper } from '@/components/Reusable/PullToRefreshWrapper/PullToRefreshWrapper';
+import Header from '@/components/Reusable/HeaderMenuBar/HeaderMenuBar';
+import AppHeader from '@/components/Reusable/AppHeader/AppHeader';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export const LEVELS = [
   { id: 'all', name: 'All Levels', color: '#718096' },
@@ -53,7 +54,7 @@ export default function YogaPage() {
     [];
   const [searchQuery, setSearchQuery] = useState('');
   const colors = useThemeColors();
-  
+
   const [selectedLevel, setSelectedLevel] = useState('all');
   const [filteredPrograms, setFilteredPrograms] = useState<TYoga[]>([]);
 
@@ -81,99 +82,116 @@ export default function YogaPage() {
   }, [searchQuery, selectedLevel, data]);
 
   return (
-    <PullToRefreshWrapper onRefresh={handleRefresh}>
-      <ScrollView
-      refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
-      }
-    >
-      <View style={[styles.container, { backgroundColor: colors.background }]}>
-        {/* Header */}
-        <YogaHeader />
+    <SafeAreaView style={{ flex: 1 }}>
+      <Header />
 
-        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-          {/* Search Bar */}
+      <PullToRefreshWrapper onRefresh={handleRefresh}>
+        <AppHeader title="Yoga Programs" colors={['#10B981', '#059669']} />
+        <ScrollView
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+          }
+        >
           <View
-            style={[styles.searchContainer, { backgroundColor: colors.card }]}
+            style={[styles.container, { backgroundColor: colors.background }]}
           >
-            <View
-              style={[
-                styles.searchBar,
-                {
-                  backgroundColor: colors.background,
-                  shadowColor: colors.cardShadow,
-                },
-              ]}
+            <ScrollView
+              style={styles.content}
+              showsVerticalScrollIndicator={false}
             >
-              <Search size={20} color="#718096" />
-              <TextInput
-                style={[styles.searchInput, { color: colors.text }]}
-                placeholder="Search yoga programs..."
-                value={searchQuery}
-                onChangeText={setSearchQuery}
-                placeholderTextColor={colors.secondaryText}
-              />
-            </View>
-          </View>
-
-          {/* Level Filter */}
-          <View
-            style={[styles.filterContainer, { backgroundColor: colors.card }]}
-          >
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              {LEVELS.map((level) => (
-                <TouchableOpacity
-                  key={level.id}
+              {/* Search Bar */}
+              <View
+                style={[
+                  styles.searchContainer,
+                  { backgroundColor: colors.card },
+                ]}
+              >
+                <View
                   style={[
-                    [
-                      styles.levelChip,
-                      {
-                        backgroundColor: colors.background,
-                        borderColor: colors.border,
-                      },
-                    ],
-                    selectedLevel === level.id && [
-                      styles.levelChipActive,
-                      { backgroundColor: level.color },
-                    ],
+                    styles.searchBar,
+                    {
+                      backgroundColor: colors.background,
+                      shadowColor: colors.cardShadow,
+                    },
                   ]}
-                  onPress={() => {
-                    setSelectedLevel(level.id);
-                  }}
                 >
-                  <Text
-                    style={[
-                      [styles.levelChipText, { color: colors.secondaryText }],
-                      selectedLevel === level.id && styles.levelChipTextActive,
-                    ]}
-                  >
-                    {level.name}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+                  <Search size={20} color="#718096" />
+                  <TextInput
+                    style={[styles.searchInput, { color: colors.text }]}
+                    placeholder="Search yoga programs..."
+                    value={searchQuery}
+                    onChangeText={setSearchQuery}
+                    placeholderTextColor={colors.secondaryText}
+                  />
+                </View>
+              </View>
+
+              {/* Level Filter */}
+              <View
+                style={[
+                  styles.filterContainer,
+                  { backgroundColor: colors.card },
+                ]}
+              >
+                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                  {LEVELS.map((level) => (
+                    <TouchableOpacity
+                      key={level.id}
+                      style={[
+                        [
+                          styles.levelChip,
+                          {
+                            backgroundColor: colors.background,
+                            borderColor: colors.border,
+                          },
+                        ],
+                        selectedLevel === level.id && [
+                          styles.levelChipActive,
+                          { backgroundColor: level.color },
+                        ],
+                      ]}
+                      onPress={() => {
+                        setSelectedLevel(level.id);
+                      }}
+                    >
+                      <Text
+                        style={[
+                          [
+                            styles.levelChipText,
+                            { color: colors.secondaryText },
+                          ],
+                          selectedLevel === level.id &&
+                            styles.levelChipTextActive,
+                        ]}
+                      >
+                        {level.name}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+
+              {/* Programs Grid */}
+              {isLoading ? (
+                <LoadingComponent loading="Programs" color={colors.success} />
+              ) : (
+                <AllYogaPrograms data={filteredPrograms} />
+              )}
+
+              {isExpertsLoading ? (
+                <LoadingComponent loading="Experts" color={colors.success} />
+              ) : (
+                <Experts
+                  data={filteredExperts}
+                  title={'Yoga'}
+                  isLoading={isLoading}
+                />
+              )}
             </ScrollView>
           </View>
-
-          {/* Programs Grid */}
-          {isLoading ? (
-            <LoadingComponent loading="Programs" color={colors.success} />
-          ) : (
-            <AllYogaPrograms data={filteredPrograms} />
-          )}
-
-          {isExpertsLoading ? (
-            <LoadingComponent loading="Experts" color={colors.success} />
-          ) : (
-            <Experts
-              data={filteredExperts}
-              title={'Yoga'}
-              isLoading={isLoading}
-            />
-          )}
         </ScrollView>
-      </View>
-    </ScrollView>
-    </PullToRefreshWrapper>
+      </PullToRefreshWrapper>
+    </SafeAreaView>
   );
 }
 

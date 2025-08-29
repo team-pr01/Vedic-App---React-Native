@@ -36,6 +36,8 @@ import { useGetAllTempleQuery } from '@/redux/features/Temple/templeApi';
 import AddTempleForm from '@/components/TemplePage/AddTempleForm/AddTempleForm';
 import { PullToRefreshWrapper } from '@/components/Reusable/PullToRefreshWrapper/PullToRefreshWrapper';
 import LoadingComponent from '@/components/LoadingComponent/LoadingComponent';
+import Header from '@/components/Reusable/HeaderMenuBar/HeaderMenuBar';
+import AppHeader from '@/components/Reusable/AppHeader/AppHeader';
 
 interface SanatanSthalItem {
   id: string;
@@ -155,8 +157,10 @@ export default function SanatanSthalPage() {
     }
   };
 
-  return (
+  return ( <SafeAreaView style={{ flex: 1 }}>
+      <Header />
     <PullToRefreshWrapper onRefresh={handleRefresh}>
+      <AppHeader title="Sanatan Sthal" colors={['#00BCD4', '#00ACC1']} />
       <ScrollView
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
@@ -165,24 +169,6 @@ export default function SanatanSthalPage() {
         <View
           style={[styles.container, { backgroundColor: colors.background }]}
         >
-          {/* Header */}
-          <SafeAreaView edges={['top']} style={styles.headerContainer}>
-            <LinearGradient
-              colors={['#00BCD4', '#00ACC1']}
-              style={styles.header}
-            >
-             <TouchableOpacity onPress={() => router.push('/(tabs)')}
-                style={styles.headerButton}
-              >
-                <ArrowLeft size={24} color="#FFFFFF" />
-              </TouchableOpacity>
-              <View style={styles.headerContent}>
-                <Text style={styles.headerTitle}>Sanatan Sthal</Text>
-              </View>
-              <View style={styles.headerPlaceholder} />
-            </LinearGradient>
-          </SafeAreaView>
-
           {/* Floating Add Button */}
           <TouchableOpacity
             style={[styles.floatingButton, { backgroundColor: colors.info }]}
@@ -332,23 +318,25 @@ export default function SanatanSthalPage() {
                 ))
               )}
 
-              {isLoading?"":approvedTemples?.length === 0 && (
-                <View style={styles.emptyState}>
-                  <Text
-                    style={[styles.emptyStateTitle, { color: colors.text }]}
-                  >
-                    No places found
-                  </Text>
-                  <Text
-                    style={[
-                      styles.emptyStateText,
-                      { color: colors.secondaryText },
-                    ]}
-                  >
-                    Try adjusting your search criteria or add a new place
-                  </Text>
-                </View>
-              )}
+              {isLoading
+                ? ''
+                : approvedTemples?.length === 0 && (
+                    <View style={styles.emptyState}>
+                      <Text
+                        style={[styles.emptyStateTitle, { color: colors.text }]}
+                      >
+                        No places found
+                      </Text>
+                      <Text
+                        style={[
+                          styles.emptyStateText,
+                          { color: colors.secondaryText },
+                        ]}
+                      >
+                        Try adjusting your search criteria or add a new place
+                      </Text>
+                    </View>
+                  )}
             </View>
 
             <View style={styles.bottomSpacing} />
@@ -367,7 +355,7 @@ export default function SanatanSthalPage() {
           </Modal>
         </View>
       </ScrollView>
-    </PullToRefreshWrapper>
+    </PullToRefreshWrapper>    </SafeAreaView>
   );
 }
 

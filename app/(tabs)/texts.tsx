@@ -46,6 +46,8 @@ import { useChatMutation } from '@/redux/features/AI/aiApi';
 import { useAttendOnQuizMutation, useGetAllQuizzesQuery } from '@/redux/features/Quiz/quizApi';
 import { useSelector } from 'react-redux';
 import { useCurrentUser } from '@/redux/features/Auth/authSlice';
+import Header from '@/components/Reusable/HeaderMenuBar/HeaderMenuBar';
+import AppHeader from '@/components/Reusable/AppHeader/AppHeader';
 
 
 interface RealVideo {
@@ -697,8 +699,12 @@ export default function LearnScreen() {
     }
   };
 
-  return (
+  return ( <SafeAreaView style={{ flex: 1 }}>
+      <Header />
     <PullToRefreshWrapper onRefresh={handleRefresh}>
+           <AppHeader title="Learn & Explore"
+           colors={['#FF6F00', '#FF8F00']}
+           />
       <SafeAreaView
         edges={['top', 'left', 'right']}
         style={[styles.container, { backgroundColor: colors.background }]}
@@ -709,19 +715,6 @@ export default function LearnScreen() {
             <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
           }
         >
-          {/* Header */}
-          <LinearGradient colors={['#FF6F00', '#FF8F00']} style={styles.header}>
-            <TouchableOpacity
-              onPress={() => router.push('/(tabs)')}
-              style={styles.backButton}
-            >
-              <ArrowLeft size={24} color="#FFFFFF" />
-            </TouchableOpacity>
-            <View style={styles.headerContent}>
-              <Text style={styles.headerTitle}>Learn & Explore</Text>
-            </View>
-            <View style={styles.headerPlaceholder} />
-          </LinearGradient>
 
           {/* Tab Navigation */}
           <View
@@ -933,7 +926,7 @@ export default function LearnScreen() {
           </Modal>
         )}
       </SafeAreaView>
-    </PullToRefreshWrapper>
+    </PullToRefreshWrapper>    </SafeAreaView>
   );
 }
 
