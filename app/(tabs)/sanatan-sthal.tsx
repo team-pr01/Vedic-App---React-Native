@@ -159,6 +159,16 @@ export default function SanatanSthalPage() {
 
   return ( <SafeAreaView style={{ flex: 1 }}>
       <Header />
+      {/* Floating Add Button */}
+          <TouchableOpacity
+            style={[styles.floatingButton, { backgroundColor: colors.info }]}
+            onPress={() => {
+              triggerHaptic();
+              setShowRegistrationModal(true);
+            }}
+          >
+            <Plus size={24} color="#FFFFFF" />
+          </TouchableOpacity>
     <PullToRefreshWrapper onRefresh={handleRefresh}>
       <AppHeader title="Sanatan Sthal" colors={['#00BCD4', '#00ACC1']} />
       <ScrollView
@@ -169,16 +179,7 @@ export default function SanatanSthalPage() {
         <View
           style={[styles.container, { backgroundColor: colors.background }]}
         >
-          {/* Floating Add Button */}
-          <TouchableOpacity
-            style={[styles.floatingButton, { backgroundColor: colors.info }]}
-            onPress={() => {
-              triggerHaptic();
-              setShowRegistrationModal(true);
-            }}
-          >
-            <Plus size={24} color="#FFFFFF" />
-          </TouchableOpacity>
+          
 
           <ScrollView
             style={styles.content}
@@ -339,7 +340,7 @@ export default function SanatanSthalPage() {
                   )}
             </View>
 
-            <View style={styles.bottomSpacing} />
+            {/* <View style={styles.bottomSpacing} /> */}
           </ScrollView>
 
           {/* Registration Modal */}
@@ -363,6 +364,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F7FAFC',
+    position: "relative"
   },
   headerContainer: {
     backgroundColor: '#00BCD4',
@@ -778,18 +780,5 @@ const styles = StyleSheet.create({
   },
   typeOptionTextSelected: {
     color: '#FFFFFF',
-  },
-  submitButton: {
-    backgroundColor: '#00BCD4',
-    borderRadius: 8,
-    paddingVertical: 16,
-    alignItems: 'center',
-    marginTop: 8,
-    marginBottom: 32,
-  },
-  submitButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
   },
 });

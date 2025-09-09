@@ -140,7 +140,7 @@ export default function SearchBar({
     <>
       <View style={[styles.container, style]}>
         <View style={[styles.searchBar, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <Search size={20} color={colors.secondaryText} style={styles.searchIcon} />
+          <Search size={20} color={colors.primary} style={styles.searchIcon} />
           <TextInput
             style={[styles.searchInput, { color: colors.text }]}
             placeholder={placeholderText || "Search anything..."}
@@ -161,7 +161,7 @@ export default function SearchBar({
               </TouchableOpacity>
             )}
             
-            <TouchableOpacity 
+            {/* <TouchableOpacity 
               onPress={handleVoiceSearchToggle}
               style={[
                 styles.actionButton,
@@ -174,14 +174,14 @@ export default function SearchBar({
               ) : (
                 <Mic size={18} color={colors.info} />
               )}
-            </TouchableOpacity>
+            </TouchableOpacity> */}
             
-            <TouchableOpacity 
+            {/* <TouchableOpacity 
               onPress={handleSearchSubmit}
               style={styles.actionButton}
             >
               <Search size={18} color={colors.primary} />
-            </TouchableOpacity>
+            </TouchableOpacity> */}
             
             {/* {showFilter && (
               <TouchableOpacity 

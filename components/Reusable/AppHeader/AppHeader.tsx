@@ -7,20 +7,20 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 type HeaderProps = {
   title: string;
   subtitle?: string;
-  colors?: string[]; // Gradient colors
-  backPath?: string; // Path for back navigation
-  showRight?: boolean; // Right placeholder or not
+  colors?: string[]; 
+  backPath?: string;
+  showRight?: boolean; 
 };
 
 const AppHeader = ({
   title,
   subtitle,
-  colors = ['#DD6B20', '#C05621'], // default orange gradient
+  colors = ['#DD6B20', '#C05621'],
   backPath = '/(tabs)',
   showRight = true,
 }: HeaderProps) => {
   return (
-    <SafeAreaView edges={['top']} style={{ backgroundColor: colors[0] ,elevation:10 ,marginTop:60}}>
+    <SafeAreaView edges={['top']} style={{ backgroundColor: colors[0] ,elevation:10 ,marginTop:56}}>
       <LinearGradient colors={colors} style={styles.header}>
         <TouchableOpacity onPress={() => router.push(backPath)} style={styles.headerButton}>
           <ArrowLeft size={20} color="#FFFFFF" />

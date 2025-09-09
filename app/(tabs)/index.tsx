@@ -458,7 +458,7 @@ export default function HomeScreen() {
 
               {/* Search Bar */}
               <SearchBar
-                placeholderText="Search "
+                placeholderText="Search Yoga, Sanathan Sthal, Food, News... "
                 onSearch={handleSearch}
                 onFilterClick={handleFilterClick}
                 initialQuery={searchQuery}
@@ -551,7 +551,7 @@ export default function HomeScreen() {
               <View style={styles.section}>
                 <View style={styles.sectionHeader}>
                   <Text
-                    style={[styles.sectionTitle, { color: colors.primary }]}
+                    style={[styles.sectionTitle, { color: colors.success }]}
                   >
                     {'Our Project'}
                   </Text>
@@ -651,7 +651,7 @@ const styles = StyleSheet.create({
   heroContainer: {
     height: 230,
     position: 'relative',
-    marginTop:58,
+    marginTop: 54,
   },
   heroSlide: {
     width: width,
@@ -691,6 +691,7 @@ const styles = StyleSheet.create({
   },
   servicesContent: {
     paddingHorizontal: 16,
+    marginTop: 4,
   },
   serviceItem: {
     alignItems: 'center',
@@ -720,12 +721,14 @@ const styles = StyleSheet.create({
   },
   sectionHeader: {
     paddingHorizontal: 16,
-    marginBottom: 16,
+    marginBottom: 10,
+    marginTop: 10,
   },
   sectionTitle: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: 'bold',
-    marginBottom: 4,
+    marginBottom: 0,
+    marginTop: 4,
   },
   sectionSubtitle: {
     fontSize: 16,

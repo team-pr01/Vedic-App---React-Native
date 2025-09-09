@@ -6,6 +6,7 @@ import {
   Image,
   Platform,
   StyleSheet,
+  useColorScheme,
 } from 'react-native';
 import { Bell, Calendar, Menu } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
@@ -29,7 +30,8 @@ const Header = () => {
   const router = useRouter();
   const dispatch = useDispatch();
   const colors = useThemeColors();
-
+  const colorScheme = useColorScheme();
+  const theme = useSelector((state: RootState) => state.theme.theme);
   const user = useSelector((state: RootState) => state.auth.user);
 
   const [now, setNow] = useState(new Date());
@@ -148,64 +150,80 @@ const Header = () => {
 
   return (
     <>
-      <View style={styles.headerWrapper}>
-      <BlurView intensity={110} tint="light" style={StyleSheet.absoluteFill} />
+      <View
+        style={[
+          styles.headerWrapper,
+          { backgroundColor: colors.backgroundGlass },
+        ]}
+      >
+        <BlurView
+          intensity={110}
+          tint={theme === 'dark' ? 'dark' : 'light'}
+          style={StyleSheet.absoluteFill}
+        />
 
-      {/* Actual header content */}
-      <View style={styles.headerContent}>
-        {/* Left Menu */}
-        <TouchableOpacity onPress={handleMenuPress} style={styles.menuButton}>
-          <Menu size={24} color={colors.text} />
-        </TouchableOpacity>
+        {/* Actual header content */}
+        <View style={styles.headerContent}>
+          {/* Left Menu */}
+          <TouchableOpacity onPress={handleMenuPress} style={styles.menuButton}>
+            <Menu size={24} color={colors.text} />
+          </TouchableOpacity>
 
-        {/* Date */}
-        <View style={styles.dateContainer}>
-          <View
-            style={[
-              styles.dateWrapper,
-              {
-                backgroundColor: `${colors.primary}20`,
-                borderColor: `${colors.primary}40`,
-              },
-            ]}
-          >
-            <Calendar size={14} color={colors.primary} />
-            <Text style={[styles.dateText, { color: colors.primary }]}>
-              {formatHinduDate(now)}
-            </Text>
+          {/* Date */}
+          <View style={styles.dateContainer}>
+            <View
+              style={[
+                styles.dateWrapper,
+                {
+                  backgroundColor: `${colors.primary}20`,
+                  borderColor: `${colors.primary}40`,
+                },
+              ]}
+            >
+              <Calendar size={14} color={colors.primary} />
+              <Text style={[styles.dateText, { color: colors.primary }]}>
+                {formatHinduDate(now)}
+              </Text>
+            </View>
+          </View>
+
+          {/* Right Actions */}
+          <View style={styles.headerActions}>
+            <TouchableOpacity
+              style={styles.headerButton}
+              onPress={handleNotificationPress}
+            >
+              <Bell size={20} color={colors.text} />
+              {unreadCount > 0 && (
+                <View
+                  style={[
+                    styles.notificationBadge,
+                    { backgroundColor: colors.error },
+                  ]}
+                />
+              )}
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.profileButton}
+              onPress={handleProfilePress}
+            >
+              {user?.avatar ? (
+                <Image
+                  source={{ uri: user.avatar }}
+                  style={styles.profileImage}
+                />
+              ) : (
+                <DefaultAvatar
+                  width={22}
+                  height={22}
+                  style={styles.profileImage}
+                />
+              )}
+            </TouchableOpacity>
           </View>
         </View>
-
-        {/* Right Actions */}
-        <View style={styles.headerActions}>
-          <TouchableOpacity
-            style={styles.headerButton}
-            onPress={handleNotificationPress}
-          >
-            <Bell size={20} color={colors.text} />
-            {unreadCount > 0 && (
-              <View
-                style={[
-                  styles.notificationBadge,
-                  { backgroundColor: colors.error },
-                ]}
-              />
-            )}
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.profileButton}
-            onPress={handleProfilePress}
-          >
-            {user?.avatar ? (
-              <Image source={{ uri: user.avatar }} style={styles.profileImage} />
-            ) : (
-              <DefaultAvatar width={28} height={28} style={styles.profileImage} />
-            )}
-          </TouchableOpacity>
-        </View>
       </View>
-    </View>
 
       {/* Modals */}
       <SettingsModal
@@ -230,19 +248,17 @@ const Header = () => {
 export default Header;
 const styles = StyleSheet.create({
   headerWrapper: {
-    position: "absolute",
+    position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
     zIndex: 1000,
-    overflow: "hidden",
-    borderBottomWidth: 1,
-    borderBottomColor: "rgba(255,255,255,0.9)",
+    overflow: 'hidden',
   },
   headerContent: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 12,
     gap: 8,

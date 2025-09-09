@@ -64,7 +64,6 @@ export default function AuthScreen({currentAuthMode}:{
             <View style={styles.heroContent}>
               <Star size={48} color="#FFFFFF" fill="#FFFFFF" />
               <Text style={styles.appTitle}>Vedic Wisdom</Text>
-              <Text style={styles.appSubtitle}>বৈদিক জ্ঞান</Text>
               <Text style={styles.heroDescription}>
                 Discover ancient wisdom, connect with sacred texts, and join a community of spiritual seekers.
               </Text>

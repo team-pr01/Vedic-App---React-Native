@@ -976,10 +976,11 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 3,
+    justifyContent:"center"
   },
   tab: {
-    paddingHorizontal: 20,
-    paddingVertical: 12,
+    paddingHorizontal:  16,
+    paddingVertical: 8,
     marginLeft: 16,
     borderRadius: 25,
     backgroundColor: '#F7FAFC',

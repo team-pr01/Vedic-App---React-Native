@@ -118,12 +118,13 @@ export default function SacredTextsSection({
 
 const styles = StyleSheet.create({
   container: {
-    paddingVertical: 16,
+    paddingVertical: 0,
   },
   sectionTitle: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: 'bold',
     marginBottom: 4,
+    marginTop: 8,
     paddingHorizontal: 16,
   },
   sectionSubtitle: {

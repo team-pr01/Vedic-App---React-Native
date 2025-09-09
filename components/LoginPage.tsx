@@ -94,14 +94,14 @@ export default function LoginPage({
       await AsyncStorage.setItem('resetEmail', resetEmail);
       const res = await forgetPassword(payload).unwrap();
       if (res.success) {
-        Alert.alert(
-          t('resetPasswordSuccessTitle', 'Reset Request Success'),
-          t(
-            'resetPasswordSuccessMessage',
-            'An email has been sent with instructions to reset your password.'
-          ),
-          [{ text: t('ok', 'OK'), onPress: () => setShowForgotPassword(false) }]
-        );
+        // Alert.alert(
+        //   t('resetPasswordSuccessTitle', 'Reset Request Success'),
+        //   t(
+        //     'resetPasswordSuccessMessage',
+        //     'An email has been sent with instructions to reset your password.'
+        //   ),
+        //   [{ text: t('ok', 'OK'), onPress: () => setShowForgotPassword(false) }]
+        // );
         router.replace({
           pathname: '/auth',
           params: { mode: 'resetPassword' },
@@ -120,13 +120,12 @@ export default function LoginPage({
       <TouchableOpacity onPress={onBackToMain} style={styles.backButton}>
         <ArrowLeft size={20} color="#FF6F00" />
         <Text style={styles.backButtonText}>
-          {t('backToOptions', 'Back to options')}
+          Back to options
         </Text>
       </TouchableOpacity>
 
-      <Text style={styles.title}>{t('welcomeBack', 'Welcome Back')}</Text>
-      <Text style={styles.subtitle}>
-        {t('signInToContinue', 'Sign in to continue your spiritual journey')}
+      <Text style={styles.title}>Welcome Back</Text>
+      <Text style={styles.subtitle}>Sign in to continue your spiritual journey
       </Text>
 
       {error && (
@@ -189,7 +188,7 @@ export default function LoginPage({
           onPress={() => setShowForgotPassword(true)}
         >
           <Text style={styles.forgotPasswordText}>
-            {t('forgotPassword', 'Forgot Password?')}
+            Forgot Password?
           </Text>
         </TouchableOpacity>
 
@@ -206,8 +205,8 @@ export default function LoginPage({
           ) : null}
           <Text style={styles.loginButtonText}>
             {isSubmitting
-              ? t('signingIn', 'Signing In...')
-              : t('signIn', 'Sign In')}
+              ? "Signing In..."
+              : "Sign In"}
           </Text>
         </TouchableOpacity>
       </View>
@@ -215,7 +214,7 @@ export default function LoginPage({
       <View style={styles.divider}>
         <View style={styles.dividerLine} />
         <Text style={styles.dividerText}>
-          {t('orContinueWith', 'Or continue with')}
+      Or continue with
         </Text>
         <View style={styles.dividerLine} />
       </View>
@@ -235,11 +234,11 @@ export default function LoginPage({
 
       <View style={styles.signupPrompt}>
         <Text style={styles.signupPromptText}>
-          {t('dontHaveAccount', "Don't have an account? ")}{' '}
+         Don't have an account? 
         </Text>
         <TouchableOpacity onPress={onSwitchToSignup}>
           <Text style={styles.signupLink}>
-            {t('signUpHere', 'Sign up here')}
+          Sign up here
           </Text>
         </TouchableOpacity>
       </View>
@@ -249,13 +248,11 @@ export default function LoginPage({
         <View style={styles.modalOverlay}>
           <View style={styles.modal}>
             <Text style={styles.modalTitle}>
-              {t('resetPasswordTitle', 'Reset Password')}
+              Reset Password
             </Text>
             <Text style={styles.modalText}>
-              {t(
-                'resetPasswordInstructions',
-                "Enter your email address and we'll send you instructions to reset your password."
-              )}
+              Enter your email address and we'll send you instructions to reset your password.
+            
             </Text>
             <View style={styles.modalInputContainer}>
               <Mail size={20} color="#718096" style={{ marginRight: 8 }} />
@@ -274,8 +271,7 @@ export default function LoginPage({
                 style={styles.modalCancelButton}
                 onPress={() => setShowForgotPassword(false)}
               >
-                <Text style={styles.modalCancelText}>
-                  {t('cancel', 'Cancel')}
+                <Text style={styles.modalCancelText}>Cancel
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity

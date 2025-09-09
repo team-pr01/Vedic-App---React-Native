@@ -12,16 +12,38 @@ import { LinearGradient } from 'expo-linear-gradient';
 
 import { useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
-import { useRouter } from 'expo-router';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import Logo from "../../assets/icons/logo.png"
 import { Image } from 'react-native';
+import { useFocusEffect, useRouter, useSegments } from "expo-router";
+import { BackHandler } from "react-native";
+import { useCallback } from "react";
 
 
 export default function TabLayout() {
   const colors = useThemeColors();
   const token = useSelector((state: RootState) => state.auth.token);
   const router = useRouter();
+  const segments = useSegments(); // tells current route segments
+ useFocusEffect(
+    useCallback(() => {
+      const onBackPress = () => {
+        if (segments[segments.length - 1] !== "index") {
+          router.replace("/(tabs)");
+          return true; // stop default back action
+        }
+        return false; // exit app if already on index
+      };
+
+      const subscription = BackHandler.addEventListener(
+        "hardwareBackPress",
+        onBackPress
+      );
+
+      return () => subscription.remove(); // ✅ correct cleanup
+    }, [segments])
+  );
+  
 
   return (
     <Tabs
@@ -55,7 +77,7 @@ export default function TabLayout() {
                 styles.iconContainer,
                 focused && {
                   ...styles.focusedIcon,
-                  backgroundColor: `${colors.primary}20`,
+                  backgroundColor: `${colors.primary}10`,
                 },
               ]}
             >
@@ -74,7 +96,7 @@ export default function TabLayout() {
                 styles.iconContainer,
                 focused && {
                   ...styles.focusedIcon,
-                  backgroundColor: `${colors.primary}20`,
+                  backgroundColor: `${colors.primary}10`,
                 },
               ]}
             >
@@ -86,7 +108,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'AKF Home',
+          title: "",
           tabBarIcon: ({ size, color, focused }) => (
             <View
               style={[
@@ -118,7 +140,7 @@ export default function TabLayout() {
                 styles.iconContainer,
                 focused && {
                   ...styles.focusedIcon,
-                  backgroundColor: `${colors.primary}20`,
+                  backgroundColor: `${colors.primary}10`,
                 },
               ]}
             >
@@ -137,7 +159,7 @@ export default function TabLayout() {
                 styles.iconContainer,
                 focused && {
                   ...styles.focusedIcon,
-                  backgroundColor: `${colors.warning}20`,
+                  backgroundColor: `${colors.warning}10`,
                 },
               ]}
             >
@@ -163,31 +185,29 @@ export default function TabLayout() {
 
 const styles = StyleSheet.create({
   tabBar: {
-    height: 60,
-    paddingBottom: 0,
-    paddingTop: 0,
+    height: 48,
     borderTopWidth: 1,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -4 },
     shadowOpacity: 0.1,
     shadowRadius: 12,
-    elevation: 20,
+    elevation: 10,
     width: '100%',
   },
   tabBarItem: {
-    paddingTop: 5,
+    paddingTop: 0,
   },
   tabBarLabel: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: '600',
-    marginTop: 4,
+    marginTop: 0,
   },
   akfLabel: {
     marginTop: 8,
     fontWeight: 'bold',
   },
   iconContainer: {
-    padding: 6,
+    padding: 0,
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
@@ -196,6 +216,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 4,
+    padding:6,
     // elevation: 4,
   },
   akfIcon: {
@@ -209,6 +230,6 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 8,
     borderWidth: 1,
-    marginBottom:20
+    marginBottom:10
   },
 });

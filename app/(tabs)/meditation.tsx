@@ -459,7 +459,7 @@ export default function NewsScreen() {
 
                     return (
                       <TouchableOpacity
-                        key={article.id}
+                        key={article._id}
                         style={[
                           styles.articleCard,
                           {

@@ -1,10 +1,12 @@
 // app/_layout.tsx
-import { Stack, router, SplashScreen } from 'expo-router';
+import { Stack, router } from 'expo-router';
 import { useFonts } from 'expo-font';
 import { useEffect, useRef, useState } from 'react';
 import { Provider, useSelector } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
 import { persistor, store, RootState } from '@/redux/store';
+import * as SplashScreen from "expo-splash-screen";
+
 
 // Fonts
 import {
@@ -111,10 +113,8 @@ function RootLayoutNav() {
   };
   }, []);
 
-  // 2️⃣ Handle splash screen and routing based on auth & fonts
-
   useEffect(() => {
-    if (data) {
+    if (data && user) {
     setShowWelcomePopup(true);
     }
   },[data]);
