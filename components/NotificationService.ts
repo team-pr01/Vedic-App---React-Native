@@ -3,19 +3,16 @@ import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 
 export async function registerForPushNotificationsAsync(): Promise<string | undefined> {
-  console.log('Checking if physical device...');
   if (!Device.isDevice) {
     alert('Must use physical device for Push Notifications');
     return;
   }
   
   const { status: existingStatus } = await Notifications.getPermissionsAsync();
-  console.log('Existing permission status:', existingStatus);
   let finalStatus = existingStatus;
 
   if (existingStatus !== 'granted') {
     const { status } = await Notifications.requestPermissionsAsync();
-    console.log('Requested permission status:', status);
     finalStatus = status;
   }
 
@@ -27,7 +24,6 @@ export async function registerForPushNotificationsAsync(): Promise<string | unde
   try {
     const tokenData = await Notifications.getExpoPushTokenAsync();
     const token = tokenData.data;
-    console.log('Got Expo Push Token:', token);
 
     if (Platform.OS === 'android') {
       await Notifications.setNotificationChannelAsync('default', {

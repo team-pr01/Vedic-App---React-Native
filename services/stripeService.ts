@@ -11,8 +11,6 @@ export class StripeService {
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1000));
     
-    console.log(`Creating donation session for amount: ${amount}, description: ${description}`);
-    
     // Return mock session data
     return {
       id: `session_${Date.now()}`,

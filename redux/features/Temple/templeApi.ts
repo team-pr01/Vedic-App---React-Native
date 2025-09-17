@@ -4,7 +4,6 @@ const templeApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getAllTemple: builder.query({
       query: ({keyword}) => {
-        console.log('Keyword for getAllTemple:', keyword);
         return {
           url: '/temple',
           method: 'GET',

@@ -323,7 +323,6 @@ export default function NewsScreen() {
     }
   };
 
-  console.log(selectedNewsItem, 'hi');
 
   return (
     <SafeAreaView style={{ flex: 1 }}>

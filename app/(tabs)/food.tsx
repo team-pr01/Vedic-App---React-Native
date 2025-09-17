@@ -22,11 +22,9 @@ import {
   ChevronRight,
   X,
   Loader,
-  ArrowLeft,
   Box,
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
-import { router } from 'expo-router';
 import YoutubePlayer from 'react-native-youtube-iframe';
 import { getYouTubeVideoId } from '@/utils/getYouTubeVideoId';
 import { useGetAllRecipiesQuery } from '@/redux/features/Recipe/recipeApi';

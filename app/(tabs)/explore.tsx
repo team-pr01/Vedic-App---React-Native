@@ -241,7 +241,6 @@ export default function ExploreScreen() {
                 style={[styles.card, { backgroundColor: colors.card, shadowColor: colors.cardShadow }]}
                 onPress={() => {
                   triggerHaptic();
-                  console.log('Temple selected:', temple.name);
                 }}
               >
                 <Image source={{ uri: temple.image }} style={styles.cardImage} />
@@ -313,7 +312,6 @@ export default function ExploreScreen() {
                 style={[styles.card, { backgroundColor: colors.card, shadowColor: colors.cardShadow }]}
                 onPress={() => {
                   triggerHaptic();
-                  console.log('Festival selected:', festival.name);
                 }}
               >
                 <Image source={{ uri: festival.image }} style={styles.cardImage} />
@@ -371,7 +369,6 @@ export default function ExploreScreen() {
                 style={[styles.card, { backgroundColor: colors.card, shadowColor: colors.cardShadow }]}
                 onPress={() => {
                   triggerHaptic();
-                  console.log('Retreat selected:', retreat.name);
                 }}
               >
                 <Image source={{ uri: retreat.image }} style={styles.cardImage} />

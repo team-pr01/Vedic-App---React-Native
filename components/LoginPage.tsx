@@ -149,7 +149,6 @@ export default function LoginPage({
               keyboardType="email-address"
               autoCapitalize="none"
               onChangeText={(text) => {
-                console.log('Typed email:', text);
                 setEmail(text);
               }}
               editable={true}

@@ -121,8 +121,6 @@ const QuizModal: React.FC<{
     });
   };
  
-  
-  console.log(answers)
   const handleSubmitQuiz = async () => {
     try {
       const payload = {
@@ -328,7 +326,6 @@ export default function LearnScreen() {
       setIsGeneratingQuiz(true);
       setError(null);
       setCurrentQuiz(questions);
-      console.log(currentQuiz, 'question');
     } catch (err: any) {
       console.error('Error generating quiz:', err);
       setError(err.message || 'Failed to generate quiz. Please try again.');

@@ -63,7 +63,6 @@ export default function ResetPassword({
     otp,
     newPassword: password,
   };
-  console.log(payload)
     setIsSubmitting(true);
     setError(null);
     triggerHaptic();

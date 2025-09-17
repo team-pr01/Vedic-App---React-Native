@@ -272,7 +272,6 @@ function VedaReaderContent() {
   };
 
   const handleSubmitReport = (submission: ReportSubmission) => {
-    console.log('Report Submitted:', submission);
     // In a real app, this would send to your backend
     alert(
       `Report for verse ${submission.verseId} submitted. Thank you for your feedback!`

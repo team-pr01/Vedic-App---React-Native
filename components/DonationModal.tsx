@@ -87,8 +87,6 @@ const DonationModal: React.FC<DonationModalProps> = ({ isVisible, onClose, proje
     triggerHaptic();
 
     try {
-      // Simulate payment processing
-      console.log(`Processing ${selectedPaymentMethod} payment of ৳${amount} for ${project.title}`);
       await new Promise(resolve => setTimeout(resolve, 2000));
       setPaymentSuccess(true);
     } catch (error: any) {

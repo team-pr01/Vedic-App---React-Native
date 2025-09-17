@@ -50,7 +50,6 @@ const NotificationModal: React.FC<NotificationModalProps> = ({
   data,
 }) => {
   const colors = useThemeColors();
-  console.log(data, 'text');
 
   const triggerHaptic = () => {
     if (Platform.OS !== 'web') {

@@ -136,7 +136,6 @@ export default function SignupPage({ onSwitchToLogin, onBackToMain }: SignupPage
       });
 
       const response = await signup(formData).unwrap();
-      console.log('Signup response:', response);
       if (response?.success) {
         router.replace({ pathname: '/auth', params: { mode: 'login' } });
       }

@@ -133,7 +133,6 @@ export default function SearchBar({
     if (onApplyFilters) {
       onApplyFilters(selectedFilters);
     }
-    console.log('Applied filters:', selectedFilters);
   };
 
   return (

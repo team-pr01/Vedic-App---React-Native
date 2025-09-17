@@ -19,6 +19,7 @@ import {
   Bell,
   AlertTriangle,
   Newspaper,
+  TreePine,
 } from 'lucide-react-native';
 import { ShoppingBag } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
@@ -91,7 +92,7 @@ const services = [
     icon: ShopIcon,
     color: '#8B5CF6',
     gradient: ['#8B5CF6', '#7C3AED'],
-    route: null,
+    route: '/shop',
   },
   {
     id: 'vastu',
@@ -116,6 +117,14 @@ const services = [
     color: '#DD6B20',
     gradient: ['#DD6B20', '#C05621'],
     route: '/consultancy',
+  },
+  {
+    id: 'ayurveda',
+    name: 'Ayurveda',
+    icon: TreePine ,
+    color: '#29C743',
+    gradient: ['#29C743', '#21C03C'],
+    route: '/ayurveda',
   },
 ];
 const searchServices = [
@@ -276,10 +285,7 @@ export default function HomeScreen() {
   }, []);
 
   const handleServicePress = (serviceId: string, route?: string) => {
-    triggerHaptic();
-    if (serviceId === 'shop') {
-      setShowShopModal(true);
-    } else if (route) {
+    triggerHaptic(); if (route) {
       router.push(route as any);
     } else {
       console.log(`Service pressed: ${serviceId}`);

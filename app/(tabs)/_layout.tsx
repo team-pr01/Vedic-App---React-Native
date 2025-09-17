@@ -179,6 +179,8 @@ export default function TabLayout() {
       <Tabs.Screen name="yoga" options={{ href: null }} />
       <Tabs.Screen name="veda-reader" options={{ href: null }} />
       <Tabs.Screen name="explore" options={{ href: null }} />
+      <Tabs.Screen name="ayurveda" options={{ href: null }} />
+      <Tabs.Screen name="shop" options={{ href: null }} />
     </Tabs>
   );
 }

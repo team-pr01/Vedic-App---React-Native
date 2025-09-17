@@ -24,7 +24,6 @@ interface UserProfileModalProps {
 export default function UserProfileModal({ visible, onClose, onNavigateToSettings }: UserProfileModalProps) {
  
   const user = useSelector(useCurrentUser);
-  console.log(user)
     const t = useTranslate();
   const colors = useThemeColors();
 

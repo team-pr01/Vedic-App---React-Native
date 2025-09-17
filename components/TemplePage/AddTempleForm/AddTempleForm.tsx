@@ -130,7 +130,6 @@ const AddTempleForm = ({
       formData.append('createdBy', user?._id);
 
       const response = await addTemple(formData).unwrap();
-      console.log(response);
 
       if (response?.success) {
         Alert.alert('Temple added successfully. Temple will be listed if Admin approves.' );
