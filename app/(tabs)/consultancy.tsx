@@ -27,7 +27,10 @@ import {
   TriangleAlert as AlertTriangle,
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
-import { useBookConsultationMutation, useGetAllConsultancyServicesQuery } from '@/redux/features/Consultancy/consultancyApi';
+import {
+  useBookConsultationMutation,
+  useGetAllConsultancyServicesQuery,
+} from '@/redux/features/Consultancy/consultancyApi';
 import { TConsultancyService } from '@/types';
 import { useGetAllCategoriesQuery } from '@/redux/features/Categories/categoriesApi';
 import NoData from '@/components/Reusable/NoData/NoData';
@@ -42,7 +45,6 @@ const triggerHaptic = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   }
 };
-
 
 export default function ConsultancyPage() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -79,15 +81,20 @@ export default function ConsultancyPage() {
   const allCategories = filteredCategory?.map(
     (category: any) => category.category
   );
-   const [
+  const [
     bookConsultation,
-    { isLoading: isBooking, isSuccess: bookingSuccess, isError: bookingIsError, error: bookingErrorDetails },
+    {
+      isLoading: isBooking,
+      isSuccess: bookingSuccess,
+      isError: bookingIsError,
+      error: bookingErrorDetails,
+    },
   ] = useBookConsultationMutation();
   const [isListening, setIsListening] = useState(false);
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [selectedDoctor, setSelectedDoctor] =
-    useState(null);
+    useState<TConsultancyService | null>(null);
   const [consultationIssue, setConsultationIssue] = useState('');
   const [patientName, setPatientName] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -95,21 +102,20 @@ export default function ConsultancyPage() {
   const colors = useThemeColors();
   useEffect(() => {
     if (bookingSuccess) {
-      setShowBookingModal(false); 
-      setShowSuccessModal(true); 
+      setShowBookingModal(false);
+      setShowSuccessModal(true);
       setPatientName('');
       setConsultationIssue('');
-      setError(null); // Clear any previous form errors
+      setError(null);
     }
     if (bookingIsError) {
-      // Handle the error, showing a user-friendly message
       const errorMessage =
-        (bookingErrorDetails as any)?.data?.message || 'Failed to book consultation. Please try again.';
+        (bookingErrorDetails as any)?.data?.message ||
+        'Failed to book consultation. Please try again.';
       setError(errorMessage);
-      Alert.alert('Booking Error', errorMessage); // Use Alert for prominent error display
+      Alert.alert('Booking Error', errorMessage);
     }
   }, [bookingSuccess, bookingIsError, bookingErrorDetails]);
-
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -139,11 +145,14 @@ export default function ConsultancyPage() {
       }
     }
   }, []);
-    const handleBookConsultation = async () => {
+
+  const handleBookConsultation = async () => {
     triggerHaptic();
 
-    if (!consultationIssue.trim() ) {
-      setError('Please fill in all required fields (Name, Health Concern, Preferred Time).');
+    if (!consultationIssue.trim()) {
+      setError(
+        'Please fill in all required fields (Name, Health Concern, Preferred Time).'
+      );
       return;
     }
 
@@ -152,24 +161,18 @@ export default function ConsultancyPage() {
       return;
     }
 
-    setError(null); // Clear previous errors
+    setError(null);
 
     try {
-      // The payload structure for your bookConsultation mutation
       const bookingData = {
         consultantId: selectedDoctor._id,
         concern: consultationIssue,
         fees: selectedDoctor.fees,
-        category:selectedDoctor.specialty,
+        category: selectedDoctor.specialty,
       };
-console.log(bookingData)
       await bookConsultation(bookingData).unwrap();
-      
-      // Success is handled by the useEffect hook
     } catch (err) {
       console.log('Failed to initiate booking:', err);
-
-      // Error handling is also managed by the useEffect hook
     }
   };
 
@@ -336,7 +339,14 @@ console.log(bookingData)
                           </Text>
 
                           <View style={styles.doctorMeta}>
-                            <View style={{flexDirection:"row", justifyContent:"center", alignItems:"flex-start" ,gap:10  }}>
+                            <View
+                              style={{
+                                flexDirection: 'row',
+                                justifyContent: 'center',
+                                alignItems: 'flex-start',
+                                gap: 10,
+                              }}
+                            >
                               <View style={styles.availabilityContainer}>
                                 <Clock size={14} color={colors.success} />
                                 <Text
@@ -397,14 +407,33 @@ console.log(bookingData)
                                 </View>
                               ))}
                           </View>
-                          <View style={{flexDirection:"row" , justifyContent:"flex-end",marginTop:5}}>
-                            <TouchableOpacity onPress={
-                              ()=>{
+                          <View
+                            style={{
+                              flexDirection: 'row',
+                              justifyContent: 'flex-end',
+                              marginTop: 5,
+                            }}
+                          >
+                            <TouchableOpacity
+                              onPress={() => {
                                 setShowBookingModal(true);
                                 setSelectedDoctor(doctor);
-                              }
-                            } style={{backgroundColor:colors.primary, width:130, padding:10,borderRadius:10, flexDirection:"row",justifyContent:"center", alignContent:"center"}}>
-                            <Text style={{color:"white"}}>Book Appointment</Text>
+                              }}
+                              style={{
+                                backgroundColor: colors.primary,
+                                width: 150,
+                                paddingVertical: 7,
+                                paddingHorizontal: 10,
+                                borderRadius: 7,
+                                flexDirection: 'row',
+                                justifyContent: 'center',
+                                alignContent: 'center',
+                                marginTop: 5,
+                              }}
+                            >
+                              <Text style={{ color: 'white' }}>
+                                Book Appointment
+                              </Text>
                             </TouchableOpacity>
                           </View>
                         </View>
@@ -629,29 +658,7 @@ console.log(bookingData)
                         <Text
                           style={[styles.formLabel, { color: colors.text }]}
                         >
-                          Your Name *
-                        </Text>
-                        <TextInput
-                          style={[
-                            styles.formInput,
-                            {
-                              borderColor: colors.border,
-                              color: colors.text,
-                              backgroundColor: colors.background,
-                            },
-                          ]}
-                          value={patientName}
-                          onChangeText={setPatientName}
-                          placeholder="Enter your full name"
-                          placeholderTextColor={colors.secondaryText}
-                        />
-                      </View>
-
-                      <View style={styles.formSection}>
-                        <Text
-                          style={[styles.formLabel, { color: colors.text }]}
-                        >
-                          Health Concern *
+                          Your Concern *
                         </Text>
                         <TextInput
                           style={[
@@ -696,7 +703,7 @@ console.log(bookingData)
                         ]}
                       >
                         <Text style={styles.proceedButtonText}>
-                          Book Consultation
+                          {isBooking ? 'Booking...' : 'Book Appointment'}
                         </Text>
                         <ChevronRight size={20} color="#FFFFFF" />
                       </TouchableOpacity>
@@ -836,8 +843,7 @@ console.log(bookingData)
                       ]}
                     >
                       Your consultation with {selectedDoctor.name} has been
-                      booked successfully. You will connect with you
-                      shortly
+                      booked successfully. You will connect with you shortly
                     </Text>
                     <TouchableOpacity
                       onPress={() => {
