@@ -10,6 +10,7 @@ import {
   Modal,
   Platform,
   Dimensions,
+  Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -31,20 +32,33 @@ import { router } from 'expo-router';
 import { ShopBanner, ShopCategory, ShopProduct } from '../../types/shop';
 import { MOCK_SHOP_BANNERS, MOCK_SHOP_CATEGORIES, MOCK_SHOP_PRODUCTS } from '../../data/shopMockData';
 import { useThemeColors } from '@/hooks/useThemeColors';
+import { useGetAllCategoriesQuery } from '@/redux/features/Categories/categoriesApi';
+import Categories from '@/components/Reusable/Categories/Categories';
+import { useGetAllProductsQuery, useUpdateProductClicksMutation } from '@/redux/features/Products/productApi';
 
 const { width } = Dimensions.get('window');
 
 export default function ShopPage() {
   const colors = useThemeColors();
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('all');
-  const [products, setProducts] = useState<ShopProduct[]>(MOCK_SHOP_PRODUCTS);
+  const [selectedCategory, setSelectedCategory] = useState('');
   const [isListening, setIsListening] = useState(false);
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
-  const [productToBuy, setProductToBuy] = useState<ShopProduct | null>(null);
+  const [productToBuy, setProductToBuy] = useState<ShopProduct| null>(null);
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
   const recognitionRef = useRef<any>(null);
-
+  const {data:products,isLoading:isLoadingProducts}=useGetAllProductsQuery({
+    keyword: searchQuery,
+    category: selectedCategory,
+  })
+  const { data: categoryData, refetch: refetchCategories } =
+      useGetAllCategoriesQuery({});
+    const filteredCategory = categoryData?.data?.filter(
+      (category: any) => category.areaName === 'product'
+    );
+    const allCategories = filteredCategory?.map(
+      (category: any) => category.category
+    );
   const triggerHaptic = () => {
     if (Platform.OS !== 'web') {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -106,52 +120,37 @@ export default function ShopPage() {
     }
   };
 
-  const toggleFavorite = (productId: string) => {
-    triggerHaptic();
-    setProducts(prevProducts =>
-      prevProducts.map(p =>
-        p.id === productId ? { ...p, isFavorite: !p.isFavorite } : p
-      )
-    );
-  };
 
-  const filteredProducts = useMemo(() => {
-    let filtered = [...products];
-    
-    // Filter by category
-    if (selectedCategory !== 'all') {
-      filtered = filtered.filter(product => product.category === selectedCategory);
-    }
-    
-    // Filter by search query
-    if (searchQuery.trim()) {
-      const lowercasedQuery = searchQuery.toLowerCase();
-      filtered = filtered.filter(product => 
-        product.name.toLowerCase().includes(lowercasedQuery) || 
-        product.subtitle.toLowerCase().includes(lowercasedQuery) ||
-        product.tag?.toLowerCase().includes(lowercasedQuery) ||
-        product.description?.toLowerCase().includes(lowercasedQuery)
-      );
-    }
-    
-    return filtered;
-  }, [products, searchQuery, selectedCategory]);
-
+const [updateProductClicks] = useUpdateProductClicksMutation();
   const handleBuyNowClick = (product: ShopProduct) => {
     triggerHaptic();
     setProductToBuy(product);
     setShowConfirmationModal(true);
   };
 
-  const handleConfirmPurchase = () => {
+ const handleConfirmPurchase = async (product: ShopProduct) => {
     triggerHaptic();
-    if (Platform.OS === 'web') {
-      window.open('https://www.akfbd.org/shop', '_blank');
-    } else {
-      console.log('Opening shop website');
+
+    try {
+      // First update clicks
+      await updateProductClicks(product._id).unwrap();
+      console.log("Clicks updated successfully");
+
+      // Then open link
+      if (Platform.OS === "web") {
+        window.open(product.productLink, "_blank");
+      } else {
+        Linking.openURL(product.productLink).catch((err) =>
+          console.error("Failed to open link: ", err)
+        );
+      }
+    } catch (err) {
+      console.error("Failed to update clicks:", err);
     }
+
     setShowConfirmationModal(false);
   };
+
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -272,80 +271,37 @@ export default function ShopPage() {
           </View>
         </View>
 
-        {/* Categories */}
-        <View style={styles.categoriesSection}>
-          <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>Categories</Text>
-            <TouchableOpacity style={styles.seeAllButton} onPress={triggerHaptic}>
-              <Text style={[styles.seeAllText, { color: colors.secondaryText }]}>See all</Text>
-              <ChevronRight size={16} color={colors.secondaryText} />
-            </TouchableOpacity>
-          </View>
-          
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            {MOCK_SHOP_CATEGORIES.map((category) => (
-              <TouchableOpacity
-                key={category.id}
-                onPress={() => {
-                  triggerHaptic();
-                  setSelectedCategory(category.id);
-                }}
-                style={[
-                  [styles.categoryChip, { backgroundColor: colors.background, borderColor: colors.border }],
-                  selectedCategory === category.id && [styles.categoryChipActive, { backgroundColor: colors.primary }]
-                ]}
-              >
-                <Text style={[
-                  [styles.categoryText, { color: colors.secondaryText }],
-                  selectedCategory === category.id && styles.categoryTextActive
-                ]}>
-                  {category.name}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
+         {/* Category Tabs */}
+            <Categories
+              setSelectedCategory={setSelectedCategory}
+              selectedCategory={selectedCategory}
+              allCategories={allCategories}
+              bgColor={'#DD6B20'}
+            />
 
         {/* Products Grid */}
         <View style={styles.productsSection}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>Products</Text>
           <View style={styles.productsGrid}>
-            {filteredProducts.map((product) => (
-              <View key={product.id} style={[styles.productCard, { backgroundColor: colors.card, shadowColor: colors.cardShadow }]}>
+            {products?.data?.products?.map((product:ShopProduct) => (
+              <View key={product?._id} style={[styles.productCard, { backgroundColor: colors.card, shadowColor: colors.cardShadow }]}>
                 <View style={[styles.productImageContainer, { backgroundColor: product.imageBgColor }]}>
                   <Image source={{ uri: product.imageUrl }} style={styles.productImage} />
-                  {product.tag && (
-                    <View style={[styles.productTag, { backgroundColor: product.tagColor }]}>
-                      <Text style={styles.productTagText}>{product.tag}</Text>
+                  {product?.tags && (
+                    <View style={[styles.productTag, { backgroundColor:colors.error }]}>
+                      <Text style={styles.productTagText}>{product?.tags}</Text>
                     </View>
                   )}
-                  <TouchableOpacity
-                    onPress={() => toggleFavorite(product.id)}
-                    style={styles.favoriteButton}
-                  >
-                    <Heart
-                      size={16}
-                      color={product.isFavorite ? "#EF4444" : "#718096"}
-                      fill={product.isFavorite ? "#EF4444" : "none"}
-                    />
-                  </TouchableOpacity>
                 </View>
                 
                 <View style={styles.productContent}>
-                  <Text style={[styles.productSubtitle, { color: colors.secondaryText }]}>{product.subtitle}</Text>
-                  <Text style={[styles.productName, { color: colors.text }]} numberOfLines={1}>{product.name}</Text>
-                  
-                  {product.rating && (
-                    <View style={styles.ratingContainer}>
-                      <Star size={12} color="#F59E0B" fill="#F59E0B" />
-                      <Text style={[styles.ratingText, { color: colors.secondaryText }]}>{product.rating}</Text>
-                      <Text style={[styles.reviewsText, { color: colors.secondaryText }]}>({product.reviews})</Text>
-                    </View>
-                  )}
+                  <Text style={[styles.productSubtitle, { color: colors.secondaryText }]}>{product?.category}</Text>
+                  <Text style={[styles.productName, { color: colors.text }]} numberOfLines={1}>{product?.name}</Text>
+                
                   
                   <View style={styles.productFooter}>
                     <View style={[styles.priceContainer, { backgroundColor: colors.background }]}>
-                      <Text style={[styles.priceText, { color: colors.text }]}>${product.price.toFixed(2)}</Text>
+                      <Text style={[styles.priceText, { color: colors.text }]}>{product.currency} {product?.price}</Text>
                     </View>
                     <TouchableOpacity
                       onPress={() => handleBuyNowClick(product)}
@@ -360,7 +316,7 @@ export default function ShopPage() {
             ))}
           </View>
 
-          {filteredProducts.length === 0 && (
+          {products?.length === 0 && (
             <View style={styles.emptyState}>
               <ShoppingBag size={48} color={colors.secondaryText} />
               <Text style={[styles.emptyStateTitle, { color: colors.text }]}>No products found</Text>
@@ -393,8 +349,8 @@ export default function ShopPage() {
               
               <View style={styles.modalContent}>
                 <Image source={{ uri: productToBuy.imageUrl }} style={styles.modalProductImage} />
-                <Text style={[styles.modalProductName, { color: colors.text }]}>{productToBuy.name}</Text>
-                <Text style={[styles.modalProductPrice, { color: colors.primary }]}>${productToBuy.price.toFixed(2)}</Text>
+                <Text style={[styles.modalProductName, { color: colors.text }]}>{productToBuy?.name}</Text>
+                <Text style={[styles.modalProductPrice, { color: colors.primary }]}>{productToBuy.currency} {productToBuy?.price}</Text>
                 
                 <Text style={[styles.modalMessage, { color: colors.secondaryText }]}>
                   You will be redirected to our main website to complete the purchase. Do you want to continue?
@@ -409,7 +365,7 @@ export default function ShopPage() {
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[styles.confirmButton, { backgroundColor: colors.primary }]}
-                    onPress={handleConfirmPurchase}
+                    onPress={()=>{handleConfirmPurchase(productToBuy)}}
                   >
                     <ExternalLink size={16} color="#FFFFFF" />
                     <Text style={styles.confirmButtonText}>Continue</Text>
@@ -662,11 +618,11 @@ const styles = StyleSheet.create({
   },
   productTag: {
     position: 'absolute',
-    top: 8,
-    left: 8,
+    top: 4,
+    left: 4,
     paddingHorizontal: 6,
     paddingVertical: 2,
-    borderRadius: 6,
+    borderRadius: 10,
   },
   productTagText: {
     fontSize: 10,

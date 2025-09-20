@@ -14,7 +14,16 @@ const consultancyServiceApi = baseApi.injectEndpoints({
       }),
       providesTags: ['consultancyService'],
     }),
+     bookConsultation: builder.mutation<any, any>({
+      query: (data) => ({
+        url: `/consultation/book`,
+        method: 'POST',
+        body: data,
+        credentials: 'include',
+      }),
+      invalidatesTags: ['consultancyService'],
+    }),
   }),
 });
 
-export const { useGetAllConsultancyServicesQuery } = consultancyServiceApi;
+export const { useGetAllConsultancyServicesQuery,useBookConsultationMutation } = consultancyServiceApi;

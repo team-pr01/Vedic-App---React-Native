@@ -18,17 +18,15 @@ export interface ShopCategory {
 }
 
 export interface ShopProduct {
-  id: string;
+  _id: string;
   name: string;
   subtitle: string;
   price: number;
   imageUrl: string;
   imageBgColor: string;
-  tag?: string;
+  tags?: string[];
   tagColor?: string;
-  isFavorite: boolean;
   category: string;
-  description?: string;
-  rating?: number;
-  reviews?: number;
+  productLink:string;
+  currency:string
 }

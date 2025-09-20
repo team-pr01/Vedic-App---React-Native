@@ -12,6 +12,7 @@ import {
   ActivityIndicator,
   RefreshControl,
   SafeAreaView,
+  Alert,
 } from 'react-native';
 import {
   Search,
@@ -26,7 +27,7 @@ import {
   TriangleAlert as AlertTriangle,
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
-import { useGetAllConsultancyServicesQuery } from '@/redux/features/Consultancy/consultancyApi';
+import { useBookConsultationMutation, useGetAllConsultancyServicesQuery } from '@/redux/features/Consultancy/consultancyApi';
 import { TConsultancyService } from '@/types';
 import { useGetAllCategoriesQuery } from '@/redux/features/Categories/categoriesApi';
 import NoData from '@/components/Reusable/NoData/NoData';
@@ -42,96 +43,6 @@ const triggerHaptic = () => {
   }
 };
 
-// Mock AI Consultation Service (as provided)
-const generateConsultationRecommendations = async (
-  issue: string
-): Promise<string[]> => {
-  // Enhanced AI Consultation Recommendations
-  await new Promise((resolve) => setTimeout(resolve, 1200));
-
-  // Analyze the issue for better recommendations
-  const lowerIssue = issue.toLowerCase();
-  let recommendations: string[] = [];
-
-  if (
-    lowerIssue.includes('stress') ||
-    lowerIssue.includes('anxiety') ||
-    lowerIssue.includes('tension')
-  ) {
-    recommendations = [
-      'Consider scheduling a consultation within 24-48 hours for stress management',
-      'Practice deep breathing exercises and meditation daily',
-      'Document stress triggers and patterns in your daily life',
-      'Prepare to discuss your sleep patterns and work-life balance',
-      'Consider yoga therapy or mindfulness-based stress reduction',
-      'Bring information about your current lifestyle and diet',
-    ];
-  } else if (
-    lowerIssue.includes('relationship') ||
-    lowerIssue.includes('family') ||
-    lowerIssue.includes('marriage')
-  ) {
-    recommendations = [
-      'Schedule a consultation for relationship counseling guidance',
-      'Prepare to discuss communication patterns with your partner/family',
-      'Document specific incidents or recurring issues',
-      'Consider couples therapy or family counseling sessions',
-      'Bring your partner/family member if they are willing to participate',
-      'Prepare questions about conflict resolution techniques',
-    ];
-  } else if (
-    lowerIssue.includes('spiritual') ||
-    lowerIssue.includes('meditation') ||
-    lowerIssue.includes('purpose')
-  ) {
-    recommendations = [
-      'Schedule a spiritual guidance session within the next week',
-      'Prepare questions about your spiritual journey and goals',
-      'Document your current spiritual practices and experiences',
-      'Consider discussing meditation techniques and spiritual texts',
-      'Bring any spiritual books or practices you currently follow',
-      'Prepare to explore your life purpose and spiritual calling',
-    ];
-  } else if (
-    lowerIssue.includes('health') ||
-    lowerIssue.includes('ayurveda') ||
-    lowerIssue.includes('wellness')
-  ) {
-    recommendations = [
-      'Schedule an Ayurvedic consultation for holistic health assessment',
-      'Prepare a detailed list of current symptoms and health concerns',
-      'Document your daily routine, diet, and lifestyle habits',
-      'Bring recent medical reports and test results if available',
-      'Prepare questions about Ayurvedic treatments and lifestyle changes',
-      'Consider discussing your constitution (Prakriti) and current imbalances',
-    ];
-  } else if (
-    lowerIssue.includes('career') ||
-    lowerIssue.includes('job') ||
-    lowerIssue.includes('work')
-  ) {
-    recommendations = [
-      'Schedule a career guidance consultation within 1-2 weeks',
-      'Prepare your resume and career history for discussion',
-      'Document your career goals and aspirations',
-      'Consider discussing your strengths and areas for improvement',
-      'Bring information about your educational background',
-      'Prepare questions about career transitions and opportunities',
-    ];
-  } else {
-    // General recommendations
-    recommendations = [
-      'Based on your concern, consider scheduling within 24-48 hours',
-      'Prepare a detailed description of your situation and concerns',
-      'Document any patterns, triggers, or specific incidents',
-      'Consider bringing relevant documents or reports',
-      'Prepare questions about treatment options and next steps',
-      'Think about your goals and expectations from the consultation',
-    ];
-  }
-
-  return recommendations;
-};
 
 export default function ConsultancyPage() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -168,35 +79,38 @@ export default function ConsultancyPage() {
   const allCategories = filteredCategory?.map(
     (category: any) => category.category
   );
-
-  const categoryNames = categoryData?.data?.map((item: any) => item?.category);
+   const [
+    bookConsultation,
+    { isLoading: isBooking, isSuccess: bookingSuccess, isError: bookingIsError, error: bookingErrorDetails },
+  ] = useBookConsultationMutation();
   const [isListening, setIsListening] = useState(false);
-  const [showAIModal, setShowAIModal] = useState(false);
   const [showBookingModal, setShowBookingModal] = useState(false);
-  const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [selectedDoctor, setSelectedDoctor] =
-    useState<TConsultancyService | null>(null);
+    useState(null);
   const [consultationIssue, setConsultationIssue] = useState('');
   const [patientName, setPatientName] = useState('');
-  const [preferredTime, setPreferredTime] = useState('');
-  const [consultationType, setConsultationType] = useState<
-    'video' | 'phone' | 'chat'
-  >('video');
-  const [urgency, setUrgency] = useState<'low' | 'medium' | 'high'>('medium');
-  const [isGeneratingRecommendations, setIsGeneratingRecommendations] =
-    useState(false);
-  const [aiRecommendations, setAiRecommendations] = useState<string[]>([]);
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<
-    'card' | 'bkash' | 'nagad' | null
-  >(null);
-  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
-  const [paymentError, setPaymentError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const recognitionRef = useRef<any>(null);
   const colors = useThemeColors();
+  useEffect(() => {
+    if (bookingSuccess) {
+      setShowBookingModal(false); 
+      setShowSuccessModal(true); 
+      setPatientName('');
+      setConsultationIssue('');
+      setError(null); // Clear any previous form errors
+    }
+    if (bookingIsError) {
+      // Handle the error, showing a user-friendly message
+      const errorMessage =
+        (bookingErrorDetails as any)?.data?.message || 'Failed to book consultation. Please try again.';
+      setError(errorMessage);
+      Alert.alert('Booking Error', errorMessage); // Use Alert for prominent error display
+    }
+  }, [bookingSuccess, bookingIsError, bookingErrorDetails]);
 
-  // Initialize speech recognition
+
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const SpeechRecognition =
@@ -225,6 +139,39 @@ export default function ConsultancyPage() {
       }
     }
   }, []);
+    const handleBookConsultation = async () => {
+    triggerHaptic();
+
+    if (!consultationIssue.trim() ) {
+      setError('Please fill in all required fields (Name, Health Concern, Preferred Time).');
+      return;
+    }
+
+    if (!selectedDoctor) {
+      setError('No consultant selected. Please select a consultant.');
+      return;
+    }
+
+    setError(null); // Clear previous errors
+
+    try {
+      // The payload structure for your bookConsultation mutation
+      const bookingData = {
+        consultantId: selectedDoctor._id,
+        concern: consultationIssue,
+        fees: selectedDoctor.fees,
+        category:selectedDoctor.specialty,
+      };
+console.log(bookingData)
+      await bookConsultation(bookingData).unwrap();
+      
+      // Success is handled by the useEffect hook
+    } catch (err) {
+      console.log('Failed to initiate booking:', err);
+
+      // Error handling is also managed by the useEffect hook
+    }
+  };
 
   const handleVoiceSearch = () => {
     triggerHaptic();
@@ -244,34 +191,6 @@ export default function ConsultancyPage() {
       }
     }
   };
-
-  const handleGenerateRecommendations = async () => {
-    if (!consultationIssue.trim()) return;
-
-    setIsGeneratingRecommendations(true);
-    setError(null);
-    triggerHaptic();
-
-    try {
-      const recommendations = await generateConsultationRecommendations(
-        consultationIssue
-      );
-      setAiRecommendations(recommendations);
-    } catch (err: any) {
-      console.error('Error generating recommendations:', err);
-      setError(
-        err.message || 'Failed to generate recommendations. Please try again.'
-      );
-    } finally {
-      setIsGeneratingRecommendations(false);
-    }
-  };
-
-  const urgencyOptions = [
-    { id: 'low', name: 'Low', color: '#10B981' },
-    { id: 'medium', name: 'Medium', color: '#F59E0B' },
-    { id: 'high', name: 'High', color: '#EF4444' },
-  ];
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
@@ -358,7 +277,12 @@ export default function ConsultancyPage() {
               </View>
 
               {/* Categories */}
-              <Categories setSelectedCategory={setSelectedCategory} selectedCategory={selectedCategory} allCategories={allCategories} bgColor={"#DD6B20"}/>
+              <Categories
+                setSelectedCategory={setSelectedCategory}
+                selectedCategory={selectedCategory}
+                allCategories={allCategories}
+                bgColor={'#DD6B20'}
+              />
 
               {/* Doctors List */}
               <View style={styles.section}>
@@ -412,21 +336,35 @@ export default function ConsultancyPage() {
                           </Text>
 
                           <View style={styles.doctorMeta}>
-                            <View style={styles.ratingContainer}>
-                              <Star
-                                size={16}
-                                color={colors.warning}
-                                fill={colors.warning}
-                              />
-                              <Text
-                                style={[
-                                  styles.ratingText,
-                                  { color: colors.text },
-                                ]}
-                              >
-                                {doctor.rating}
-                              </Text>
+                            <View style={{flexDirection:"row", justifyContent:"center", alignItems:"flex-start" ,gap:10  }}>
+                              <View style={styles.availabilityContainer}>
+                                <Clock size={14} color={colors.success} />
+                                <Text
+                                  style={[
+                                    styles.availabilityText,
+                                    { color: colors.success },
+                                  ]}
+                                >
+                                  {doctor.availableTime}
+                                </Text>
+                              </View>
+                              <View style={styles.ratingContainer}>
+                                <Star
+                                  size={16}
+                                  color={colors.warning}
+                                  fill={colors.warning}
+                                />
+                                <Text
+                                  style={[
+                                    styles.ratingText,
+                                    { color: colors.text },
+                                  ]}
+                                >
+                                  {doctor.rating}
+                                </Text>
+                              </View>
                             </View>
+
                             <Text
                               style={[
                                 styles.doctorPrice,
@@ -434,18 +372,6 @@ export default function ConsultancyPage() {
                               ]}
                             >
                               ৳{doctor.fees}
-                            </Text>
-                          </View>
-
-                          <View style={styles.availabilityContainer}>
-                            <Clock size={14} color={colors.success} />
-                            <Text
-                              style={[
-                                styles.availabilityText,
-                                { color: colors.success },
-                              ]}
-                            >
-                              {doctor.availableTime}
                             </Text>
                           </View>
 
@@ -471,6 +397,16 @@ export default function ConsultancyPage() {
                                 </View>
                               ))}
                           </View>
+                          <View style={{flexDirection:"row" , justifyContent:"flex-end",marginTop:5}}>
+                            <TouchableOpacity onPress={
+                              ()=>{
+                                setShowBookingModal(true);
+                                setSelectedDoctor(doctor);
+                              }
+                            } style={{backgroundColor:colors.primary, width:130, padding:10,borderRadius:10, flexDirection:"row",justifyContent:"center", alignContent:"center"}}>
+                            <Text style={{color:"white"}}>Book Appointment</Text>
+                            </TouchableOpacity>
+                          </View>
                         </View>
                       </TouchableOpacity>
                     ))}
@@ -484,7 +420,7 @@ export default function ConsultancyPage() {
             </ScrollView>
 
             {/* AI Assistant Modal */}
-            {showAIModal && (
+            {/* {showAIModal && (
               <Modal
                 visible={showAIModal}
                 transparent
@@ -621,7 +557,7 @@ export default function ConsultancyPage() {
                   </View>
                 </View>
               </Modal>
-            )}
+            )} */}
 
             {/* Booking Modal */}
             {showBookingModal && selectedDoctor && (
@@ -661,10 +597,6 @@ export default function ConsultancyPage() {
                           { backgroundColor: colors.background },
                         ]}
                       >
-                        <Image
-                          source={{ uri: selectedDoctor.imageUrl }}
-                          style={styles.doctorSummaryImage}
-                        />
                         <View style={styles.doctorSummaryInfo}>
                           <Text
                             style={[
@@ -740,70 +672,6 @@ export default function ConsultancyPage() {
                           placeholderTextColor={colors.secondaryText}
                         />
                       </View>
-
-                      <View style={styles.formSection}>
-                        <Text
-                          style={[styles.formLabel, { color: colors.text }]}
-                        >
-                          Preferred Time *
-                        </Text>
-                        <TextInput
-                          style={[
-                            styles.formInput,
-                            {
-                              borderColor: colors.border,
-                              color: colors.text,
-                              backgroundColor: colors.background,
-                            },
-                          ]}
-                          value={preferredTime}
-                          onChangeText={setPreferredTime}
-                          placeholder="e.g., Today 3:00 PM or Tomorrow 10:00 AM"
-                          placeholderTextColor={colors.secondaryText}
-                        />
-                      </View>
-
-                      <View style={styles.formSection}>
-                        <Text
-                          style={[styles.formLabel, { color: colors.text }]}
-                        >
-                          Urgency Level
-                        </Text>
-                        <View style={styles.optionsContainer}>
-                          {urgencyOptions.map((option) => (
-                            <TouchableOpacity
-                              key={option.id}
-                              onPress={() => {
-                                triggerHaptic();
-                                setUrgency(option.id as any);
-                              }}
-                              style={[
-                                styles.urgencyChip,
-                                {
-                                  backgroundColor: colors.background,
-                                  borderColor: colors.border,
-                                },
-                                urgency === option.id && {
-                                  backgroundColor: option.color,
-                                  borderColor: option.color,
-                                },
-                              ]}
-                            >
-                              <Text
-                                style={[
-                                  styles.urgencyChipText,
-                                  { color: colors.secondaryText },
-                                  urgency === option.id &&
-                                    styles.urgencyChipTextActive,
-                                ]}
-                              >
-                                {option.name}
-                              </Text>
-                            </TouchableOpacity>
-                          ))}
-                        </View>
-                      </View>
-
                       {error && (
                         <View
                           style={[
@@ -821,14 +689,14 @@ export default function ConsultancyPage() {
                       )}
 
                       <TouchableOpacity
-                        // onPress={handleProceedToPayment}
+                        onPress={handleBookConsultation}
                         style={[
                           styles.proceedButton,
                           { backgroundColor: colors.primary },
                         ]}
                       >
                         <Text style={styles.proceedButtonText}>
-                          Proceed to Payment
+                          Book Consultation
                         </Text>
                         <ChevronRight size={20} color="#FFFFFF" />
                       </TouchableOpacity>
@@ -839,7 +707,7 @@ export default function ConsultancyPage() {
             )}
 
             {/* Payment Modal */}
-            {showPaymentModal && selectedDoctor && (
+            {/* {showPaymentModal && selectedDoctor && (
               <Modal
                 visible={showPaymentModal}
                 transparent
@@ -936,7 +804,7 @@ export default function ConsultancyPage() {
                   </View>
                 </View>
               </Modal>
-            )}
+            )} */}
 
             {/* Success Modal */}
             {showSuccessModal && selectedDoctor && (
@@ -968,8 +836,8 @@ export default function ConsultancyPage() {
                       ]}
                     >
                       Your consultation with {selectedDoctor.name} has been
-                      booked successfully. You will receive a confirmation email
-                      shortly.
+                      booked successfully. You will connect with you
+                      shortly
                     </Text>
                     <TouchableOpacity
                       onPress={() => {
