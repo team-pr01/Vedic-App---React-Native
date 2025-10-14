@@ -41,8 +41,8 @@ import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
 import { Video, ResizeMode, AVPlaybackStatus } from 'expo-av';
 import { useGetAllConsultancyServicesQuery } from '@/redux/features/Consultancy/consultancyApi';
-import Experts from '@/components/Experts';
-import { useGetAllVastuQuery } from '@/redux/features/Vastu/vastuApi';
+import Experts from '@/components/Reusable/Experts';
+import { useGetAllVastuQuery, useGetAllVastuTipsQuery } from '@/redux/features/Vastu/vastuApi';
 import YoutubePlayer from 'react-native-youtube-iframe';
 import { getYouTubeVideoId } from '@/utils/getYouTubeVideoId';
 import NoData from '@/components/Reusable/NoData/NoData';
@@ -172,6 +172,15 @@ export default function VastuPage() {
     category: selectedCategory,
   });
   const {
+    data: vastuTips,
+    isLoading: isVastuTipsLoading,
+    isFetching: isRefetchingVastuTips,
+    refetch: refetchVastuTips,
+  } = useGetAllVastuTipsQuery({
+    keyword: searchQuery,
+    category: selectedCategory,
+  });
+  const {
     data,
     isLoading,
     refetch: refetchConsultancy,
@@ -180,7 +189,7 @@ export default function VastuPage() {
     data?.data?.filter((expert: any) => expert.category === 'Vastu Expert') ||
     [];
   const [refreshing, setRefreshing] = useState(false);
-
+ console.log(vastuTips?.data,"tips")
   const handleRefresh = async () => {
     setRefreshing(true);
 
@@ -548,9 +557,12 @@ export default function VastuPage() {
                 <Text style={[styles.sectionTitle, { color: colors.text }]}>
                   Popular Vastu Tips
                 </Text>
-                {filteredTips.length > 0 ? (
+                {isVastuTipsLoading || isRefetchingVastuTips ? ( <LoadingComponent
+                    loading="Vastu Videos"
+                    color={colors.vastu}
+                  />): vastuTips?.data?.length > 0 ? (
                   <View style={styles.tipsContainer}>
-                    {filteredTips.map((tip, index) => (
+                    {vastuTips?.data?.map((tip, index) => (
                       <View
                         key={index}
                         style={[
@@ -562,9 +574,7 @@ export default function VastuPage() {
                         ]}
                       >
                         <View style={styles.tipHeader}>
-                          {React.cloneElement(tip.icon, {
-                            color: colors.vastu,
-                          })}
+                      
                           <Text
                             style={[styles.tipTitle, { color: colors.text }]}
                           >

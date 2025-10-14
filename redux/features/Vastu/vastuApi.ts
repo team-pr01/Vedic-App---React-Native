@@ -14,6 +14,18 @@ const vastuApi = baseApi.injectEndpoints({
       }),
       providesTags: ['vastu'],
     }),
+    getAllVastuTips: builder.query({
+      query: ({ keyword, category }) => ({
+        url: '/vastuTips',
+        method: 'GET',
+        credentials: 'include',
+        params: {
+          keyword,
+          category,
+        },
+      }),
+      providesTags: ['vastu'],
+    }),
 
     getSingleVastu: builder.query({
       query: (id) => ({
@@ -26,4 +38,4 @@ const vastuApi = baseApi.injectEndpoints({
   }),
 });
 
-export const { useGetAllVastuQuery, useGetSingleVastuQuery } = vastuApi;
+export const { useGetAllVastuQuery, useGetSingleVastuQuery,useGetAllVastuTipsQuery } = vastuApi;

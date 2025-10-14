@@ -1,52 +1,31 @@
-import React from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { TouchableOpacity } from 'react-native';
-import * as Haptics from 'expo-haptics';
-import { useThemeColors } from '@/hooks/useThemeColors';
+import React from "react";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { TouchableOpacity } from "react-native";
+import * as Haptics from "expo-haptics";
+import { useThemeColors } from "@/hooks/useThemeColors";
+import SkeletonLoader from "../SkeletonLoader";
 
 const Categories = ({
   setSelectedCategory,
   selectedCategory,
   allCategories,
   bgColor,
+  isLoading=false,
 }: any) => {
   const colors = useThemeColors();
+
   return (
     <View style={styles.categoriesContainer}>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-        <TouchableOpacity
-          onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            setSelectedCategory('');
-          }}
-          style={[
-            styles.categoryChip,
-            {
-              backgroundColor: colors.background,
-              borderColor: colors.border,
-            },
-            selectedCategory === '' && {
-              backgroundColor: bgColor,
-              borderColor: bgColor,
-            },
-          ]}
-        >
-          <Text
-            style={[
-              styles.categoryText,
-              { color: colors.secondaryText },
-              selectedCategory === '' && styles.categoryTextActive,
-            ]}
-          >
-            All
-          </Text>
-        </TouchableOpacity>
-        {allCategories?.map((category: string) => (
+      {isLoading ? (
+        // 🔹 Skeleton Loader when loading
+        <SkeletonLoader width={60} height={26} borderRadius={20} />
+      ) : (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          {/* "All" category */}
           <TouchableOpacity
-            key={category}
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              setSelectedCategory(category);
+              setSelectedCategory("");
             }}
             style={[
               styles.categoryChip,
@@ -54,7 +33,7 @@ const Categories = ({
                 backgroundColor: colors.background,
                 borderColor: colors.border,
               },
-              selectedCategory === category && {
+              selectedCategory === "" && {
                 backgroundColor: bgColor,
                 borderColor: bgColor,
               },
@@ -64,27 +43,60 @@ const Categories = ({
               style={[
                 styles.categoryText,
                 { color: colors.secondaryText },
-                selectedCategory === category && styles.categoryTextActive,
+                selectedCategory === "" && styles.categoryTextActive,
               ]}
             >
-              {category}
+              All
             </Text>
           </TouchableOpacity>
-        ))}
-      </ScrollView>
+
+          {/* Dynamic categories */}
+          {allCategories?.map((category: string) => (
+            <TouchableOpacity
+              key={category}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setSelectedCategory(category);
+              }}
+              style={[
+                styles.categoryChip,
+                {
+                  backgroundColor: colors.background,
+                  borderColor: colors.border,
+                },
+                selectedCategory === category && {
+                  backgroundColor: bgColor,
+                  borderColor: bgColor,
+                },
+              ]}
+            >
+              <Text
+                style={[
+                  styles.categoryText,
+                  { color: colors.secondaryText },
+                  selectedCategory === category && styles.categoryTextActive,
+                ]}
+              >
+                {category}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      )}
     </View>
   );
 };
 
 export default Categories;
+
 const styles = StyleSheet.create({
   categoriesContainer: {
     paddingVertical: 16,
     paddingLeft: 16,
   },
   categoryChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     borderRadius: 20,
     paddingHorizontal: 10,
     paddingVertical: 4,
@@ -93,14 +105,14 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   categoryChipActive: {
-    backgroundColor: '#38A169',
-    borderColor: '#38A169',
+    backgroundColor: "#38A169",
+    borderColor: "#38A169",
   },
   categoryText: {
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   categoryTextActive: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
   },
 });

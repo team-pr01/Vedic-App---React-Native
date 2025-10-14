@@ -20,7 +20,15 @@ const donationProgramApi = baseApi.injectEndpoints({
       }),
       providesTags: ["donations"],
     }),
-
+ addPaymentProof: builder.mutation<any, any>({
+      query: (data) => ({
+        url: `/donation/donate`,
+        method: 'POST',
+        body: data,
+        credentials: 'include',
+      }),
+      invalidatesTags: ['donations'],
+    }),
     
   }),
 });
@@ -28,4 +36,5 @@ const donationProgramApi = baseApi.injectEndpoints({
 export const {
   useGetAllDonationProgramsQuery,
   useGetSingleDonationProgramsQuery,
+  useAddPaymentProofMutation,
 } = donationProgramApi;

@@ -13,6 +13,7 @@ import { useThemeColors } from '@/hooks/useThemeColors';
 import { useGetAllBooksQuery } from '@/redux/features/Book/bookApi';
 import { VedicText } from '@/types';
 import LoadingComponent from './LoadingComponent/LoadingComponent';
+import SkeletonLoader from './Reusable/SkeletonLoader';
 
 interface SacredTextsSectionProps {
   data: any;
@@ -48,9 +49,87 @@ export default function SacredTextsSection({
   };
 
   // Loading state
-  if (isLoading) {
-    return <LoadingComponent loading="Programs " color={colors.primary} />;
-  }
+if (isLoading) {
+  return (
+    <View
+      style={[
+        styles.container,
+        { backgroundColor: colors.background, paddingLeft: 16 },
+      ]}
+    >
+      <Text style={[styles.sectionTitle, { color: colors.primary }]}>
+        Sacred Texts
+      </Text>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{ paddingVertical: 8, gap: 12, paddingRight: 16 }}
+      >
+        <SkeletonLoader
+          width={180}
+          height={140}
+          innerSkeleton={
+            <View
+              style={{
+                flex: 1,
+                justifyContent: "flex-end",
+                padding: 12,
+                backgroundColor: "rgba(0,0,0,0.05)",
+              }}
+            >
+              {/* Title Placeholder */}
+              <View
+                style={{
+                  width: "70%",
+                  height: 14,
+                  borderRadius: 6,
+                  backgroundColor: "#d6d6d6",
+                  marginBottom: 6,
+                }}
+              />
+              {/* Subtitle Placeholder */}
+              <View
+                style={{
+                  width: "50%",
+                  height: 12,
+                  borderRadius: 6,
+                  backgroundColor: "#d6d6d6",
+                  marginBottom: 6,
+                }}
+              />
+              {/* Meta Row */}
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 6,
+                }}
+              >
+                <View
+                  style={{
+                    width: 12,
+                    height: 12,
+                    borderRadius: 6,
+                    backgroundColor: "#d6d6d6",
+                  }}
+                />
+                <View
+                  style={{
+                    width: "40%",
+                    height: 10,
+                    borderRadius: 6,
+                    backgroundColor: "#d6d6d6",
+                  }}
+                />
+              </View>
+            </View>
+          }
+        />
+      </ScrollView>
+    </View>
+  );
+}
+
 
   // Empty state
   if (!data?.data?.length) {

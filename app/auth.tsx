@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
-import AuthScreen from '../components/AuthScreen';
 import { useLocalSearchParams } from 'expo-router';
+import AuthScreen from '@/components/AuthPages/AuthScreen';
 
 export default function AuthPage() {
   const { mode } = useLocalSearchParams(); 

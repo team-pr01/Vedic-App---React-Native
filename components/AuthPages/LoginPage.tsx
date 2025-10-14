@@ -21,12 +21,9 @@ import {
 import * as Haptics from 'expo-haptics';
 import { useDispatch } from 'react-redux';
 import { setUser } from '@/redux/features/Auth/authSlice';
-import {
-  useForgetPasswordMutation,
-  useLoginMutation,
-} from '@/redux/features/Auth/authApi';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
+import { useForgetPasswordMutation, useLoginMutation } from '@/redux/features/Auth/authApi';
 
 interface LoginPageProps {
   onSwitchToSignup: () => void;
@@ -73,6 +70,7 @@ export default function LoginPage({
 
     try {
       const res = await login({ email, password }).unwrap();
+      console.log("logged in")
       const { accessToken, user } = res.data;
 
       dispatch(setUser({ token: accessToken, user }));

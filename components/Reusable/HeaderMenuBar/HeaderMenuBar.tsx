@@ -154,6 +154,7 @@ const Header = () => {
         style={[
           styles.headerWrapper,
           { backgroundColor: colors.backgroundGlass },
+ 
         ]}
       >
         <BlurView

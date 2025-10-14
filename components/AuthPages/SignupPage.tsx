@@ -37,7 +37,7 @@ type TFormData = {
   state: string;
   city: string;
   area?: string;
-}
+};
 type TInputFieldProps = {
   name: keyof TFormData;
   label: string;
@@ -46,25 +46,24 @@ type TInputFieldProps = {
   secure?: boolean;
   keyboardType?: 'default' | 'email-address' | 'phone-pad';
   isRequired?: boolean;
-}
+};
 
 type SignupPageProps = {
   onSwitchToLogin: () => void;
   onBackToMain: () => void;
 };
 
-export default function SignupPage({ onSwitchToLogin, onBackToMain }: SignupPageProps) {
- 
+export default function SignupPage({
+  onSwitchToLogin,
+  onBackToMain,
+}: SignupPageProps) {
+  const [userType, setUserType] = useState('user');
   const [currentStep, setCurrentStep] = useState(1);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [imageUrl, setImageUrl] = useState('');
 
-  const {
-    control,
-    handleSubmit,
-    trigger,
-  } = useForm({
+  const { control, handleSubmit, trigger, setValue } = useForm({
     defaultValues: {
       name: '',
       email: '',
@@ -74,6 +73,7 @@ export default function SignupPage({ onSwitchToLogin, onBackToMain }: SignupPage
       state: '',
       city: '',
       area: '',
+      role: userType,
     },
   });
 
@@ -97,9 +97,15 @@ export default function SignupPage({ onSwitchToLogin, onBackToMain }: SignupPage
   };
 
   const handleNextStep = async () => {
-    const isStep1Valid = await trigger(["name", "email", "phoneNumber", "password"]);
+    const isStep1Valid = await trigger([
+      'name',
+      'email',
+      'phoneNumber',
+      'password',
+      'role',
+    ]);
     if (!isStep1Valid) {
-      setError("Please fill all required fields correctly");
+      setError('Please fill all required fields correctly');
       return;
     }
     triggerHaptic();
@@ -115,7 +121,7 @@ export default function SignupPage({ onSwitchToLogin, onBackToMain }: SignupPage
 
   const onSubmit = async (data: any) => {
     if (currentStep !== 2) return;
-
+    data.role=userType
     try {
       const formData = new FormData();
 
@@ -139,14 +145,25 @@ export default function SignupPage({ onSwitchToLogin, onBackToMain }: SignupPage
       if (response?.success) {
         router.replace({ pathname: '/auth', params: { mode: 'login' } });
       }
-      Alert.alert('Sign up Success', 'You have successfully signed up. Please login to continue.');
+      Alert.alert(
+        'Sign up Success',
+        'You have successfully signed up. Please login to continue.'
+      );
       setIsSubmitting(true);
     } catch (err) {
       console.log(err);
     }
   };
 
-  const InputField:React.FC<TInputFieldProps> = ({ name, label, placeholder, icon, secure = false, keyboardType = 'default', isRequired=false }) => (
+  const InputField: React.FC<TInputFieldProps> = ({
+    name,
+    label,
+    placeholder,
+    icon,
+    secure = false,
+    keyboardType = 'default',
+    isRequired = false,
+  }) => (
     <Controller
       control={control}
       name={name}
@@ -176,7 +193,10 @@ export default function SignupPage({ onSwitchToLogin, onBackToMain }: SignupPage
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity onPress={currentStep === 1 ? onBackToMain : handlePrevStep} style={styles.backButton}>
+      <TouchableOpacity
+        onPress={currentStep === 1 ? onBackToMain : handlePrevStep}
+        style={styles.backButton}
+      >
         <ArrowLeft size={20} color="#FF6F00" />
         <Text style={styles.backButtonText}>
           {currentStep === 1 ? 'Back to options' : 'Previous Step'}
@@ -184,12 +204,16 @@ export default function SignupPage({ onSwitchToLogin, onBackToMain }: SignupPage
       </TouchableOpacity>
 
       <Text style={styles.title}>Create Your Account</Text>
-      <Text style={styles.subtitle}>Join our community to explore Vedic wisdom.</Text>
+      <Text style={styles.subtitle}>
+        Join our community to explore Vedic wisdom.
+      </Text>
 
       {/* Progress Bar */}
       <View style={styles.progressContainer}>
         <View style={styles.progressBar}>
-          <View style={[styles.progressFill, { width: `${progressPercentage}%` }]} />
+          <View
+            style={[styles.progressFill, { width: `${progressPercentage}%` }]}
+          />
         </View>
       </View>
 
@@ -208,6 +232,62 @@ export default function SignupPage({ onSwitchToLogin, onBackToMain }: SignupPage
       >
         {currentStep === 1 && (
           <>
+            <View
+              style={{
+                width: '100%',
+                flexDirection: 'row',
+                gap: 10,
+                justifyContent: 'space-between',
+                marginBottom: 10,
+              }}
+            >
+              <TouchableOpacity
+                style={[
+                  styles.typeButton,
+                  {
+                    backgroundColor:
+                      userType === 'user' ? '#FF6F00' : '#FFFFFF',
+                  },
+                ]}
+                onPress={() => {
+                  setUserType('user');
+                  setValue('role', 'user'); // ✅ keep form in sync
+                }}
+              >
+                <Text
+                  style={[
+                    styles.typeButtonText,
+                    { color: userType === 'user' ? '#FFFFFF' : '#FF6F00' },
+                  ]}
+                >
+                  User
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.typeButton,
+                  {
+                    backgroundColor:
+                      userType === 'temple' ? '#FF6F00' : '#FFFFFF',
+                  },
+                ]}
+                onPress={() => {
+                  setUserType('temple');
+                  setValue('role', 'temple'); // ✅ keep form in sync
+                }}
+              >
+                <Text
+                  style={[
+                    styles.typeButtonText,
+                    { color: userType === 'temple' ? '#FFFFFF' : '#FF6F00' },
+                  ]}
+                >
+                  Temple
+                </Text>
+              </TouchableOpacity>
+            </View>
+
             <InputField
               name="name"
               label="Full Name"
@@ -241,11 +321,19 @@ export default function SignupPage({ onSwitchToLogin, onBackToMain }: SignupPage
             />
             <View style={{ marginBottom: 16 }}>
               <Text style={styles.label}>Select profile picture</Text>
-              <Button title="Pick Image from Gallery" onPress={pickCoverImage} />
+              <Button
+                title="Pick Image from Gallery"
+                onPress={pickCoverImage}
+              />
               {imageUrl ? (
                 <Image
                   source={{ uri: imageUrl }}
-                  style={{ width: 200, height: 200, marginTop: 10, borderRadius: 8 }}
+                  style={{
+                    width: 200,
+                    height: 200,
+                    marginTop: 10,
+                    borderRadius: 8,
+                  }}
                 />
               ) : null}
             </View>
@@ -254,23 +342,58 @@ export default function SignupPage({ onSwitchToLogin, onBackToMain }: SignupPage
 
         {currentStep === 2 && (
           <>
-            <InputField name="country" label="Country" placeholder="India, Bangladesh" icon={<User size={20} color="#718096" />} isRequired={true}/>
-            <InputField name="state" label="State/Province" placeholder="West Bengal, Dhaka" icon={<User size={20} color="#718096" />} isRequired={true} />
-            <InputField name="city" label="City/Town" placeholder="Kolkata, Dhaka" icon={<User size={20} color="#718096" />} isRequired={true} />
-            <InputField name="area" label="Village/Area (Optional)" placeholder="Shantiniketan, Mirpur" icon={<User size={20} color="#718096" />} />
+            <InputField
+              name="country"
+              label="Country"
+              placeholder="India, Bangladesh"
+              icon={<User size={20} color="#718096" />}
+              isRequired={true}
+            />
+            <InputField
+              name="state"
+              label="State/Province"
+              placeholder="West Bengal, Dhaka"
+              icon={<User size={20} color="#718096" />}
+              isRequired={true}
+            />
+            <InputField
+              name="city"
+              label="City/Town"
+              placeholder="Kolkata, Dhaka"
+              icon={<User size={20} color="#718096" />}
+              isRequired={true}
+            />
+            <InputField
+              name="area"
+              label="Village/Area (Optional)"
+              placeholder="Shantiniketan, Mirpur"
+              icon={<User size={20} color="#718096" />}
+            />
           </>
         )}
 
         <View style={styles.buttonContainer}>
           {currentStep < 2 ? (
-            <TouchableOpacity style={styles.nextButton} onPress={handleNextStep}>
+            <TouchableOpacity
+              style={styles.nextButton}
+              onPress={handleNextStep}
+            >
               <Text style={styles.nextButtonText}>Next</Text>
               <ArrowRight size={20} color="#FFFFFF" />
             </TouchableOpacity>
           ) : (
-            <TouchableOpacity style={styles.submitButton} onPress={handleSubmit(onSubmit)}>
-              {isSubmitting ? <Loader size={20} color="#FFFFFF" /> : <CheckCircle size={20} color="#FFFFFF" />}
-              <Text style={styles.submitButtonText}>{isLoading ? 'Loading...' : 'Create Account'}</Text>
+            <TouchableOpacity
+              style={styles.submitButton}
+              onPress={handleSubmit(onSubmit)}
+            >
+              {isSubmitting ? (
+                <Loader size={20} color="#FFFFFF" />
+              ) : (
+                <CheckCircle size={20} color="#FFFFFF" />
+              )}
+              <Text style={styles.submitButtonText}>
+                {isLoading ? 'Loading...' : 'Create Account'}
+              </Text>
             </TouchableOpacity>
           )}
         </View>
@@ -404,10 +527,25 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     gap: 8,
   },
+  typeButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 50,
+    paddingVertical: 14,
+    gap: 8,
+    width: '47%',
+    borderWidth: 2,
+    borderColor: '#FF6F00',
+  },
   nextButtonText: {
     fontSize: 16,
     fontWeight: '600',
     color: '#FFFFFF',
+  },
+  typeButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
   },
   submitButton: {
     flexDirection: 'row',
@@ -475,7 +613,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#FF6F00',
   },
-   label: {
+  label: {
     marginBottom: 5,
     fontWeight: 'bold',
   },

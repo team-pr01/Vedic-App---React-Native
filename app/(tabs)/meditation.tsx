@@ -12,25 +12,8 @@ import {
   RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
-import {
-  Search,
-  Eye,
-  Share2,
-  Languages,
-  X,
-  Facebook,
-  Twitter,
-  Linkedin,
-  Link2,
-  ArrowLeft,
-  Filter,
-  Heart,
-  Loader,
-} from 'lucide-react-native';
+import { Search, Languages, X, Filter } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
-import { router } from 'expo-router';
-import { allLanguages } from '@/redux/features/Language/languageSlice';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { useGetAllNewsQuery } from '@/redux/features/News/newsApi';
 import { useGetAllCategoriesQuery } from '@/redux/features/Categories/categoriesApi';
@@ -41,51 +24,19 @@ import { PullToRefreshWrapper } from '@/components/Reusable/PullToRefreshWrapper
 import AppHeader from '@/components/Reusable/AppHeader/AppHeader';
 import Header from '@/components/Reusable/HeaderMenuBar/HeaderMenuBar';
 import Categories from '@/components/Reusable/Categories/Categories';
-
-// Define base English categories for state management and logic
-const baseEnglishCategories = [
-  'All',
-  'Education',
-  'Event',
-  'Health',
-  'Culture',
-  'Spirituality',
-  'Community',
-];
+import { LANGUAGES } from '@/data/allLanguages';
+import { useSelector } from 'react-redux';
+import { useCurrentUser } from '@/redux/features/Auth/authSlice';
 
 interface Language {
   code: string;
   name: string;
 }
 
-// Import languages from LanguageContext
-
-// Mock Translation Service
-const TranslationService = {
-  translate: async ({
-    sourceText,
-    targetLanguageCode,
-    targetLanguageName,
-    sourceLanguageCode,
-    sourceLanguageName,
-  }: any) => {
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    // For demo purposes, we'll just return a simple translation
-    if (targetLanguageCode === 'en' && sourceLanguageCode === 'bn') {
-      return {
-        translatedText: `[Translated to ${targetLanguageName}]: ${sourceText}`,
-      };
-    } else {
-      return {
-        translatedText: `[Translated to ${targetLanguageName}]: ${sourceText}`,
-      };
-    }
-  },
-};
-
 export default function NewsScreen() {
+  const user = useSelector(useCurrentUser);
   const [searchQuery, setSearchQuery] = useState('');
+  const [translatedArticles, setTranslatedArticles] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('');
   const {
     data,
@@ -95,11 +46,49 @@ export default function NewsScreen() {
     category: selectedCategory,
     keyword: searchQuery,
   });
-  const { data: categoryData, refetch: refetchCategories } =
+  const [currentLanguage, setCurrentLanguage] = useState<Language>(
+    LANGUAGES[0]
+  );
+  console.log(data?.data[0]);
+  useEffect(() => {
+    const langCode = currentLanguage?.code;
+    if (!data?.data || !langCode) {
+      setTranslatedArticles([]);
+      return;
+    }
+    const filtered = data.data
+      .map((article: any) => {
+        let translations = article?.translations;
+        if (!translations) return null;
+
+        // 🔹 Convert array → object if needed
+        if (Array.isArray(translations)) {
+          translations = translations.reduce((acc: any, t: any) => {
+            if (t?.language) acc[t.language] = t;
+            return acc;
+          }, {});
+        }
+        const hasLang =
+          translations?.[langCode] ||
+          translations?.[langCode.toLowerCase?.()] ||
+          translations?.[langCode.toUpperCase?.()];
+
+        if (!hasLang) return null;
+
+        return { ...article, translated: hasLang };
+      })
+      .filter(Boolean); // remove nulls (articles without that language)
+
+    setTranslatedArticles(filtered);
+    console.log('✅ Translated articles:', filtered);
+  }, [data, currentLanguage]);
+  
+  const { data: categoryData,isLoading:isLoadingCategories, refetch: refetchCategories } =
     useGetAllCategoriesQuery({});
-  const filteredCategory = categoryData?.data?.filter(
+ const filteredCategory = categoryData?.data?.filter(
     (category: any) => category.areaName === 'news'
   );
+
   const allCategories = filteredCategory?.map(
     (category: any) => category.category
   );
@@ -120,201 +109,14 @@ export default function NewsScreen() {
 
   const colors = useThemeColors();
   const [selectedNewsItem, setSelectedNewsItem] = useState<any | null>(null);
+  console.log(selectedNewsItem);
   const [isArticleModalOpen, setIsArticleModalOpen] = useState(false);
-
-  const [showShareModal, setShowShareModal] = useState(false);
-  const [shareTargetNews, setShareTargetNews] = useState<any | null>(null);
-
-  const [isTranslating, setIsTranslating] = useState<Record<string, boolean>>(
-    {}
-  );
-  const [translatedArticles, setTranslatedArticles] = useState<
-    Record<number, Record<string, Partial<any>>>
-  >({});
-  const [loveReacts, setLoveReacts] = useState<
-    Record<number, { count: number; loved: boolean }>
-  >({});
-  const [currentLanguage, setCurrentLanguage] = useState<Language>(
-    allLanguages[0]
-  );
   const [showLanguageModal, setShowLanguageModal] = useState(false);
 
-  const [newsFeed, setNewsFeed] = useState<any[]>([]);
-
-  useEffect(() => {
-    const initialLoveReacts: Record<number, { count: number; loved: boolean }> =
-      {};
-    newsFeed.forEach((article) => {
-      initialLoveReacts[article.id] = {
-        count: Math.floor(Math.random() * 100) + 10,
-        loved: false,
-      };
-    });
-    setLoveReacts(initialLoveReacts);
-  }, [newsFeed]);
-
-  const translateArticleIfNeeded = useCallback(
-    async (article: any, targetLang: Language) => {
-      if (targetLang.code === 'bn') {
-        setTranslatedArticles((prev) => ({
-          ...prev,
-          [article.id]: {
-            ...prev[article.id],
-            [targetLang.code]: {
-              title: article.title,
-              summary: article.summary,
-              content: article.content,
-            },
-          },
-        }));
-        return;
-      }
-
-      const translationKey = `${article.id}_${targetLang.code}`;
-      if (translatedArticles[article.id]?.[targetLang.code]?.content) return;
-
-      setIsTranslating((prev) => ({ ...prev, [translationKey]: true }));
-      try {
-        const [titleRes, summaryRes, contentRes] = await Promise.all([
-          TranslationService.translate({
-            sourceText: article.title,
-            targetLanguageCode: targetLang.code,
-            targetLanguageName: targetLang.name,
-            sourceLanguageCode: 'bn',
-            sourceLanguageName: 'Bengali',
-          }),
-          TranslationService.translate({
-            sourceText: article.summary,
-            targetLanguageCode: targetLang.code,
-            targetLanguageName: targetLang.name,
-            sourceLanguageCode: 'bn',
-            sourceLanguageName: 'Bengali',
-          }),
-          TranslationService.translate({
-            sourceText: article.content,
-            targetLanguageCode: targetLang.code,
-            targetLanguageName: targetLang.name,
-            sourceLanguageCode: 'bn',
-            sourceLanguageName: 'Bengali',
-          }),
-        ]);
-        setTranslatedArticles((prev) => ({
-          ...prev,
-          [article.id]: {
-            ...prev[article.id],
-            [targetLang.code]: {
-              title: titleRes.translatedText,
-              summary: summaryRes.translatedText,
-              content: contentRes.translatedText,
-            },
-          },
-        }));
-      } catch (error) {
-        console.error(
-          `Error translating article ${article.id} to ${targetLang.name}:`,
-          error
-        );
-      } finally {
-        setIsTranslating((prev) => ({ ...prev, [translationKey]: false }));
-      }
-    },
-    [translatedArticles]
-  );
-
-  useEffect(() => {
-    newsFeed.forEach((article) => {
-      translateArticleIfNeeded(article, currentLanguage);
-    });
-  }, [currentLanguage, newsFeed, translateArticleIfNeeded]);
-
-  const handleOpenArticleModal = (article: any) => {
+  const handleOpenArticleModal = (article: any, translated: any) => {
     triggerHaptic();
-    setSelectedNewsItem(article);
+    setSelectedNewsItem({ article, translated });
     setIsArticleModalOpen(true);
-  };
-
-  const handleLoveReact = (articleId: number) => {
-    triggerHaptic();
-    setLoveReacts((prev) => {
-      const currentReact = prev[articleId] || { count: 0, loved: false };
-      return {
-        ...prev,
-        [articleId]: {
-          count: currentReact.loved
-            ? currentReact.count - 1
-            : currentReact.count + 1,
-          loved: !currentReact.loved,
-        },
-      };
-    });
-  };
-
-  const handleShare = (newsItem: any) => {
-    triggerHaptic();
-    setShareTargetNews(newsItem);
-    setShowShareModal(true);
-  };
-
-  const handleSharePlatform = (platform: string) => {
-    if (!shareTargetNews) return;
-
-    const url = 'https://akfbd.org/news';
-    const text = encodeURIComponent(
-      translatedArticles[shareTargetNews.id]?.[currentLanguage.code]?.title ||
-        shareTargetNews.title
-    );
-    const summary = encodeURIComponent(
-      translatedArticles[shareTargetNews.id]?.[currentLanguage.code]?.summary ||
-        shareTargetNews.summary
-    );
-
-    let shareUrl = '';
-
-    switch (platform) {
-      case 'facebook':
-        shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(
-          url
-        )}&quote=${text}`;
-        break;
-      case 'twitter':
-        shareUrl = `https://twitter.com/intent/tweet?text=${text}&url=${encodeURIComponent(
-          url
-        )}`;
-        break;
-      case 'linkedin':
-        shareUrl = `https://www.linkedin.com/shareArticle?mini=true&url=${encodeURIComponent(
-          url
-        )}&title=${text}&summary=${summary}`;
-        break;
-      case 'copy':
-        if (Platform.OS === 'web') {
-          navigator.clipboard
-            .writeText(
-              `${
-                translatedArticles[shareTargetNews.id]?.[currentLanguage.code]
-                  ?.title || shareTargetNews.title
-              } - ${url}`
-            )
-            .then(() => alert('Link copied to clipboard!'))
-            .catch((err) => console.error('Failed to copy: ', err));
-        } else {
-          alert('Copy to clipboard is not available on this platform');
-        }
-        setShowShareModal(false);
-        return;
-    }
-
-    if (Platform.OS === 'web' && shareUrl) {
-      window.open(
-        shareUrl,
-        '_blank',
-        'noopener,noreferrer,width=600,height=400'
-      );
-    } else {
-      console.log('Share URL:', shareUrl);
-    }
-
-    setShowShareModal(false);
   };
 
   const triggerHaptic = () => {
@@ -322,7 +124,6 @@ export default function NewsScreen() {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
   };
-
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
@@ -382,6 +183,7 @@ export default function NewsScreen() {
               selectedCategory={selectedCategory}
               allCategories={allCategories}
               bgColor={'#DD6B20'}
+               isLoading={isLoadingCategories}
             />
 
             {/* Trending Topics */}
@@ -424,8 +226,7 @@ export default function NewsScreen() {
 
                 {isLoading ? (
                   <LoadingComponent loading="Programs" color={colors.primary} />
-                ) : data?.data?.length === 0 &&
-                  !Object.values(isTranslating).some((v) => v) ? (
+                ) : translatedArticles.length === 0 ? (
                   <View style={styles.emptyState}>
                     <Filter size={48} color={colors.secondaryText} />
                     <Text style={[styles.emptyTitle, { color: colors.text }]}>
@@ -441,24 +242,12 @@ export default function NewsScreen() {
                     </Text>
                   </View>
                 ) : (
-                  data?.data?.map((article: any) => {
-                    const translationKey = `${article.id}_${currentLanguage.code}`;
-                    const isLoadingTranslation = isTranslating[translationKey];
+                  translatedArticles?.map((article: any) => {
                     const translated =
-                      translatedArticles[article.id]?.[currentLanguage.code];
-                    const displayTitle = translated?.title || article.title;
-                    const displaySummary =
-                      translated?.summary || article.summary;
-                    const { count: loveCount, loved: userLoved } = loveReacts[
-                      article.id
-                    ] || { count: 0, loved: false };
-                    const categoryIndex = baseEnglishCategories.indexOf(
-                      article.category
-                    );
-
+                      article?.translations?.[currentLanguage.code];
                     return (
                       <TouchableOpacity
-                        key={article._id}
+                        key={article?._id}
                         style={[
                           styles.articleCard,
                           {
@@ -466,17 +255,19 @@ export default function NewsScreen() {
                             shadowColor: colors.cardShadow,
                           },
                         ]}
-                        onPress={() => handleOpenArticleModal(article)}
+                        onPress={() =>
+                          handleOpenArticleModal(article, translated)
+                        }
                       >
                         <Image
-                          source={{ uri: article.imageUrl }}
+                          source={{ uri: article?.imageUrl }}
                           style={styles.articleImage}
                         />
 
                         <View style={styles.articleContent}>
                           <View style={styles.articleHeader}>
                             <Text style={styles.categoryBadgeText}>
-                              {article?.category}
+                              {translated?.category}
                             </Text>
                             <Text
                               style={[
@@ -484,7 +275,7 @@ export default function NewsScreen() {
                                 { color: colors.secondaryText },
                               ]}
                             >
-                              {formatDate(article.createdAt)}
+                              {formatDate(article?.createdAt)}
                             </Text>
                           </View>
 
@@ -494,11 +285,7 @@ export default function NewsScreen() {
                               { color: colors.text },
                             ]}
                           >
-                            {isLoadingTranslation && !translated?.title ? (
-                              <Loader size={16} color={colors.primary} />
-                            ) : (
-                              displayTitle
-                            )}
+                            {translated?.title}
                           </Text>
 
                           {article.excerpt ? (
@@ -518,11 +305,9 @@ export default function NewsScreen() {
                               { color: colors.secondaryText },
                             ]}
                           >
-                            {isLoadingTranslation && !translated?.summary ? (
-                              <Loader size={14} color={colors.primary} />
-                            ) : (
-                              displaySummary
-                            )}
+                            {translated?.content
+                              .replace(/<[^>]+>/g, '')
+                              .slice(0, 100) + '...'}
                           </Text>
 
                           {/* <View style={styles.articleMeta}>
@@ -630,11 +415,12 @@ export default function NewsScreen() {
                       },
                     ]}
                   >
+                    {/* 🔹 Header */}
                     <View style={styles.modalHeader}>
                       <Text style={[styles.modalTitle, { color: colors.text }]}>
-                        {translatedArticles[selectedNewsItem.id]?.[
-                          currentLanguage.code
-                        ]?.title || selectedNewsItem.title}
+                        {selectedNewsItem?.translated?.title ||
+                          selectedNewsItem?.title ||
+                          'Untitled'}
                       </Text>
 
                       <TouchableOpacity
@@ -644,15 +430,18 @@ export default function NewsScreen() {
                       </TouchableOpacity>
                     </View>
 
+                    {/* 🔹 Body */}
                     <ScrollView style={[styles.modalContent, { padding: 10 }]}>
                       <Image
-                        source={{ uri: selectedNewsItem.imageUrl }}
+                        source={{ uri: selectedNewsItem?.article?.imageUrl }}
                         style={styles.modalImage}
                       />
 
                       <View style={[styles.articleHeader, { marginTop: 10 }]}>
                         <Text style={styles.categoryBadgeText}>
-                          {selectedNewsItem?.category}
+                          {selectedNewsItem?.translated?.category ||
+                            selectedNewsItem?.article?.category ||
+                            'General'}
                         </Text>
                         <Text
                           style={[
@@ -660,125 +449,30 @@ export default function NewsScreen() {
                             { color: colors.secondaryText },
                           ]}
                         >
-                          {formatDate(selectedNewsItem.createdAt)}
+                          {formatDate(selectedNewsItem?.article?.createdAt)}
                         </Text>
                       </View>
 
-                      {selectedNewsItem.excerpt ? (
+                      {selectedNewsItem?.translated?.excerpt ? (
                         <Text
                           style={[
                             styles.articleExcerpt,
                             { color: colors.secondaryText },
                           ]}
                         >
-                          {selectedNewsItem.excerpt}
+                          {selectedNewsItem.translated.excerpt}
                         </Text>
                       ) : null}
 
-                      {/* <View style={styles.articleModalContent}>
-                  <Text
-                    style={[styles.articleModalText, { color: colors.text }]}
-                  >
-                    {isTranslating[
-                      `${selectedNewsItem.id}_${currentLanguage.code}`
-                    ] ? (
-                      <View style={styles.loadingContainer}>
-                        <Loader size={24} color={colors.primary} />
-                        <Text
-                          style={[
-                            styles.loadingText,
-                            { color: colors.secondaryText },
-                          ]}
-                        >
-                          Translating content...
-                        </Text>
-                      </View>
-                    ) : (
-                      translatedArticles[selectedNewsItem.id]?.[
-                        currentLanguage.code
-                      ]?.content || selectedNewsItem.content
-                    )}
-                  </Text>
-                </View> */}
-
-                      <NewsContent htmlContent={selectedNewsItem.content} />
-                      {/* <Text
-                        style={[
-                          styles.articleExcerpt,
-                          { color: "#000" },
-                        ]}
-                      >
-                        {selectedNewsItem.content}
-                      </Text> */}
+                      {/* 🔹 Actual translated HTML content */}
+                      <NewsContent
+                        htmlContent={
+                          selectedNewsItem?.translated?.content ||
+                          selectedNewsItem?.content ||
+                          '<p>No content available</p>'
+                        }
+                      />
                     </ScrollView>
-                    {/* 
-                  <View
-                    style={[
-                      styles.modalFooter,
-                      { borderTopColor: colors.border },
-                    ]}
-                  >
-                    <View style={styles.footerInfo}>
-                      <Text
-                        style={[
-                          styles.footerText,
-                          { color: colors.secondaryText },
-                        ]}
-                      >
-                        {selectedNewsItem.date} • {selectedNewsItem.views} views
-                      </Text>
-                    </View>
-                    <View style={styles.footerActions}>
-                      <TouchableOpacity
-                        style={[
-                          styles.footerButton,
-                          { backgroundColor: colors.background },
-                          loveReacts[selectedNewsItem.id]?.loved && {
-                            backgroundColor: colors.error + '20',
-                          },
-                        ]}
-                        onPress={() => handleLoveReact(selectedNewsItem.id)}
-                      >
-                        <Heart
-                          size={20}
-                          color={
-                            loveReacts[selectedNewsItem.id]?.loved
-                              ? colors.error
-                              : colors.secondaryText
-                          }
-                          fill={
-                            loveReacts[selectedNewsItem.id]?.loved
-                              ? colors.error
-                              : 'none'
-                          }
-                        />
-                        <Text
-                          style={[
-                            styles.footerButtonText,
-                            { color: colors.secondaryText },
-                            loveReacts[selectedNewsItem.id]?.loved && {
-                              color: colors.error,
-                            },
-                          ]}
-                        >
-                          {loveReacts[selectedNewsItem.id]?.count || 0}
-                        </Text>
-                      </TouchableOpacity>
-
-                      <TouchableOpacity
-                        style={[
-                          styles.footerButton,
-                          { backgroundColor: colors.background },
-                        ]}
-                        onPress={() => {
-                          handleShare(selectedNewsItem);
-                          setIsArticleModalOpen(false);
-                        }}
-                      >
-                        <Share2 size={20} color={colors.secondaryText} />
-                      </TouchableOpacity>
-                    </View>
-                  </View> */}
                   </View>
                 </View>
               </Modal>
@@ -898,7 +592,7 @@ export default function NewsScreen() {
                     </View>
 
                     <ScrollView style={styles.languageList}>
-                      {allLanguages.map((language) => (
+                      {LANGUAGES.map((language) => (
                         <TouchableOpacity
                           key={language.code}
                           style={[
@@ -938,19 +632,6 @@ export default function NewsScreen() {
       </PullToRefreshWrapper>{' '}
     </SafeAreaView>
   );
-}
-
-function getCategoryColor(index: number): string {
-  const colors = [
-    '#3B82F6', // blue
-    '#10B981', // green
-    '#8B5CF6', // purple
-    '#EC4899', // pink
-    '#6366F1', // indigo
-    '#14B8A6', // teal
-    '#F59E0B', // amber
-  ];
-  return colors[index % colors.length];
 }
 
 const styles = StyleSheet.create({
@@ -1203,7 +884,8 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.25,
     shadowRadius: 20,
-    elevation: 10,
+    elevation: 10, 
+    paddingBottom: 10,
   },
   modalHeader: {
     flexDirection: 'row',

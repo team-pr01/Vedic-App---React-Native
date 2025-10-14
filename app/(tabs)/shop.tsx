@@ -35,6 +35,8 @@ import { useThemeColors } from '@/hooks/useThemeColors';
 import { useGetAllCategoriesQuery } from '@/redux/features/Categories/categoriesApi';
 import Categories from '@/components/Reusable/Categories/Categories';
 import { useGetAllProductsQuery, useUpdateProductClicksMutation } from '@/redux/features/Products/productApi';
+import Header from '@/components/Reusable/HeaderMenuBar/HeaderMenuBar';
+import AppHeader from '@/components/Reusable/AppHeader/AppHeader';
 
 const { width } = Dimensions.get('window');
 
@@ -51,7 +53,7 @@ export default function ShopPage() {
     keyword: searchQuery,
     category: selectedCategory,
   })
-  const { data: categoryData, refetch: refetchCategories } =
+  const { data: categoryData,isLoading:isLoadingCategories, refetch: refetchCategories } =
       useGetAllCategoriesQuery({});
     const filteredCategory = categoryData?.data?.filter(
       (category: any) => category.areaName === 'product'
@@ -156,16 +158,9 @@ const [updateProductClicks] = useUpdateProductClicksMutation();
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header */}
       <SafeAreaView edges={['top']} style={styles.headerContainer}>
-        <LinearGradient colors={['#8B5CF6', '#7C3AED']} style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.headerButton}>
-            <ArrowLeft size={24} color="#FFFFFF" />
-          </TouchableOpacity>
-          <View style={styles.headerContent}>
-            <Text style={styles.headerTitle}>Spiritual Shop</Text>
-            <Text style={styles.headerSubtitle}>আধ্যাত্মিক দোকান</Text>
-          </View>
-          <View style={styles.headerPlaceholder} />
-        </LinearGradient>
+         <Header /> 
+        
+        <AppHeader title="Spiritual Shop" colors={['#8B5CF6', '#7C3AED']} />
       </SafeAreaView>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
@@ -185,7 +180,7 @@ const [updateProductClicks] = useUpdateProductClicksMutation();
                     <Search size={20} color="#718096" />
                     <TextInput
                       style={[styles.searchInput, { color: colors.text }]}
-                      placeholder="Search recipes..."
+                      placeholder="Search product..."
                       value={searchQuery}
                       onChangeText={setSearchQuery}
                       placeholderTextColor="#A0AEC0"
@@ -277,6 +272,7 @@ const [updateProductClicks] = useUpdateProductClicksMutation();
               selectedCategory={selectedCategory}
               allCategories={allCategories}
               bgColor={'#DD6B20'}
+              isLoading={isLoadingProducts}
             />
 
         {/* Products Grid */}

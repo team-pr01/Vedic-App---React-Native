@@ -120,7 +120,8 @@ export default function FoodPage() {
     keyword: searchQuery,
   });
 
-  const { data: categoryData, refetch: refetchCategories } =
+              {/* Experts Section */}
+  const { data: categoryData,isLoading:isLoadingCategories, refetch: refetchCategories } =
     useGetAllCategoriesQuery({});
 
   const [refreshing, setRefreshing] = useState(false);
@@ -283,7 +284,7 @@ export default function FoodPage() {
               </View>
 
               {/* Categories */}
-          <Categories setSelectedCategory={setSelectedCategory} selectedCategory={selectedCategory} allCategories={allCategories} bgColor={"#38A169"}/>
+          <Categories setSelectedCategory={setSelectedCategory} selectedCategory={selectedCategory} allCategories={allCategories} bgColor={"#38A169"}  isLoading={isLoadingCategories}/>
 
               {/* Recipes Grid */}
               <View style={styles.recipesContainer}>

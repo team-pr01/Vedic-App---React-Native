@@ -1,21 +1,20 @@
-
-import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import type {
   BaseQueryFn,
   FetchArgs,
   FetchBaseQueryError,
-} from "@reduxjs/toolkit/query";
-import { setUser } from "../features/Auth/authSlice";
-import { RootState } from "../store";
+} from '@reduxjs/toolkit/query';
+import { setUser } from '../features/Auth/authSlice';
+import { RootState } from '../store';
 
 const baseQuery = fetchBaseQuery({
-  baseUrl: "https://vedic-app-server.onrender.com/api/v1",
+  baseUrl: 'https://vedic-app-server.onrender.com/api/v1',
   // baseUrl: "http://localhost:5000/api/v1",
-  credentials: "include",
+  credentials: 'include',
   prepareHeaders: (headers, { getState }) => {
     const token = (getState() as RootState).auth.token;
     if (token) {
-      headers.set("authorization", `${token}`);
+      headers.set('authorization', `${token}`);
     }
     return headers;
   },
@@ -31,10 +30,10 @@ const baseQueryWithRefreshToken: BaseQueryFn<
   if (result.error?.status === 401) {
     // Try to get a new token
     const res = await fetch(
-      "https://vedic-app-server.onrender.com/api/v1/auth/refresh-token",
+      'https://vedic-app-server.onrender.com/api/v1/auth/refresh-token',
       {
-        method: "POST",
-        credentials: "include",
+        method: 'POST',
+        credentials: 'include',
       }
     );
 
@@ -56,9 +55,9 @@ const baseQueryWithRefreshToken: BaseQueryFn<
 };
 
 export const baseApi = createApi({
-  reducerPath: "baseApi",
+  reducerPath: 'baseApi',
   baseQuery: baseQueryWithRefreshToken,
-    tagTypes: [
+  tagTypes: [
     'users',
     'consultancyService',
     'categories',
@@ -75,7 +74,8 @@ export const baseApi = createApi({
     'popups',
     'quiz',
     'ayurveda',
-    'product'
+    'product',
+    'dailyHoroscope',
   ],
   endpoints: () => ({}),
 });

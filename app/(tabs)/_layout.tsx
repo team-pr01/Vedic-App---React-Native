@@ -23,16 +23,21 @@ import { useCallback } from "react";
 export default function TabLayout() {
   const colors = useThemeColors();
   const token = useSelector((state: RootState) => state.auth.token);
-  const router = useRouter();
-  const segments = useSegments(); // tells current route segments
- useFocusEffect(
+  const theme = useSelector((state: RootState) => state.theme.theme);
+   const router = useRouter();
+  const segments = useSegments();
+
+  useFocusEffect(
     useCallback(() => {
       const onBackPress = () => {
-        if (segments[segments.length - 1] !== "index") {
+        const currentSegment = segments[segments.length - 1];
+        console.log(currentSegment)
+        if (currentSegment === "(tabs)") {
+          return false;
+        } else {
           router.replace("/(tabs)");
-          return true; // stop default back action
+          return true; 
         }
-        return false; // exit app if already on index
       };
 
       const subscription = BackHandler.addEventListener(
@@ -40,32 +45,36 @@ export default function TabLayout() {
         onBackPress
       );
 
-      return () => subscription.remove(); // ✅ correct cleanup
-    }, [segments])
+      return () => subscription.remove();
+    }, [segments, router])
   );
-  
+
+
 
   return (
-    <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarStyle: {
-          ...styles.tabBar,
-          // borderTopColor: colors.border,
-          backgroundColor: 'transparent',
-        },
-        tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.secondaryText,
-        tabBarLabelStyle: styles.tabBarLabel,
-        tabBarItemStyle: styles.tabBarItem,
-        tabBarBackground: () => (
-          <LinearGradient
-            colors={colors.tabBarBackground}
-            style={StyleSheet.absoluteFillObject}
-          />
-        ),
-      }}
-    >
+  <Tabs
+  screenOptions={{
+    headerShown: false,
+    tabBarStyle: {
+      backgroundColor: 'transparent', // transparent background
+      position: 'absolute',
+      borderTopWidth: 0,
+      elevation: 0, // remove Android shadow
+    },
+    tabBarActiveTintColor: colors.primary,
+    tabBarInactiveTintColor: colors.secondaryText,
+    tabBarLabelStyle: styles.tabBarLabel,
+    tabBarItemStyle: styles.tabBarItem,
+    tabBarBackground: () => (
+      <LinearGradient
+        colors={theme === 'dark' ?['rgba(0,0,0 ,0.9)', 'rgba(0,0,0 ,0.7)']: ['rgba(255,255,255 ,0.9)', 'rgba(255,255,255 ,0.7)']}
+
+        style={StyleSheet.absoluteFillObject}
+      />
+    ),
+  }}
+>
+
       {/* ---- Main 5 Tabs ---- */}
       <Tabs.Screen
         name="consultancy"

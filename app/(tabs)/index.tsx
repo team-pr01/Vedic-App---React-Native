@@ -9,6 +9,10 @@ import {
   Dimensions,
   Platform,
   RefreshControl,
+  Modal,
+  Alert,
+  Button,
+  TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -20,14 +24,16 @@ import {
   AlertTriangle,
   Newspaper,
   TreePine,
+  Heart,
+  X,
 } from 'lucide-react-native';
 import { ShoppingBag } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
+import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
 import SacredTextsSection from '../../components/SacredTextsSection';
 import SettingsModal from '../../components/SettingsModal';
 import UserProfileModal from '../../components/UserProfileModal';
-import SearchBar from '../../components/SearchBar';
 import DonationModal from '../../components/DonationModal';
 import NotificationModal from '../../components/NotificationModal';
 import ShopConfirmationModal from '../../components/ShopConfirmationModal';
@@ -41,7 +47,10 @@ import { useGetAllBooksQuery } from '@/redux/features/Book/bookApi';
 import { useGetAllPushNotificationForUserQuery } from '@/redux/features/Auth/authApi';
 import { socket } from '@/utils/socket';
 import LoadingComponent from '@/components/LoadingComponent/LoadingComponent';
-import { useGetAllDonationProgramsQuery } from '@/redux/features/DonationPrograms/donationProgramApi';
+import {
+  useAddPaymentProofMutation,
+  useGetAllDonationProgramsQuery,
+} from '@/redux/features/DonationPrograms/donationProgramApi';
 import YoutubePlayer from 'react-native-youtube-iframe';
 import { getYouTubeVideoId } from '@/utils/getYouTubeVideoId';
 import YogaIcon from '@/assets/icons/yoga.svg';
@@ -51,6 +60,10 @@ import JyotishIcon from '@/assets/icons/astrology.svg';
 import ConsultancyIcon from '@/assets/icons/expert.svg';
 import Food from '@/assets/icons/food.svg';
 import ShopIcon from '@/assets/icons/shop.svg';
+import ResetPassword from '@/components/AuthPages/ResetPassword';
+import { useForm } from 'react-hook-form';
+import SkeletonLoader from '@/components/Reusable/SkeletonLoader';
+import SearchBar from '@/components/Reusable/SearchBar';
 import Header from '@/components/Reusable/HeaderMenuBar/HeaderMenuBar';
 
 export type TContent = {
@@ -58,6 +71,24 @@ export type TContent = {
   imageUrl?: string;
   videoUrl?: string;
 };
+interface DonationProgram {
+  _id: string;
+  title: string;
+  description?: string;
+  imageUrl?: string;
+  // Add other properties of a donation program if needed
+}
+
+// Define form values for the payment proof submission
+interface PaymentProofFormValues {
+  amount: string;
+  currency: string;
+  senderAccountNumber: string; // This corresponds to senderAccountNumber
+  file: string | null;
+  donationProgramId?: string;
+  donationProgramTitle?: string;
+  paymentMethod: string;
+}
 
 const width = Dimensions.get('window').width;
 
@@ -121,7 +152,7 @@ const services = [
   {
     id: 'ayurveda',
     name: 'Ayurveda',
-    icon: TreePine ,
+    icon: TreePine,
     color: '#29C743',
     gradient: ['#29C743', '#21C03C'],
     route: '/ayurveda',
@@ -202,6 +233,50 @@ const searchServices = [
   },
 ];
 
+export const paymentCards = [
+  {
+    id: 'card-1',
+    provider: 'bkash',
+    logo: '/logos/bkash.png',
+    accountName: 'Arya Kallayn Foundation',
+    accountNumber: '01812-XXXXXX-001',
+    qr: 'https://via.placeholder.com/150?text=bkash+QR',
+  },
+  {
+    id: 'card-2',
+    provider: 'Nagad',
+    logo: '/logos/nagad.png',
+    accountName: 'Arya Kallayn Foundation',
+    accountNumber: '01711-XXXXXX-002',
+    qr: 'https://via.placeholder.com/150?text=nagad+QR',
+  },
+  {
+    id: 'card-4',
+    provider: 'Stripe',
+    logo: '/logos/stripe.png',
+    accountName: 'Arya Kallayn Foundation',
+    accountNumber: 'acct_1Hxxxxxx',
+    qr: 'https://via.placeholder.com/150?text=stripe+QR',
+  },
+  {
+    id: 'card-5',
+    provider: 'PayPal',
+    logo: '/logos/paypal.png',
+    accountName: 'Arya Kallayn Foundation',
+    accountNumber: 'paypal@prtech.com',
+    qr: 'https://via.placeholder.com/150?text=paypal+QR',
+  },
+  {
+    id: 'card-6',
+    provider: 'Bank',
+    logo: '/logos/bank.png',
+    accountName: 'Arya Kallayn Foundation',
+    accountNumber: '001234567890',
+    qr: 'https://via.placeholder.com/150?text=bank+QR',
+    note: 'Standard bank transfer (IBAN not required)',
+  },
+];
+
 export default function HomeScreen() {
   const user = useSelector(useCurrentUser);
   const [filteredServices, setFilteredServices] = useState(searchServices);
@@ -258,10 +333,13 @@ export default function HomeScreen() {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showUserProfileModal, setShowUserProfileModal] = useState(false);
-  const [showDonationModal, setShowDonationModal] = useState(false);
+  const [donation, setDonation] = useState(null);
   const [showNotificationModal, setShowNotificationModal] = useState(false);
   const [showShopModal, setShowShopModal] = useState(false);
+  const [paymentOptionModalOpen, setPaymentOptionModalOpen] = useState(false);
   const [searchFilters, setSearchFilters] = useState<string[]>([]);
+  const [paymentMethod, setPaymentMethod] = useState(null);
+  const [paymentOpen, setPaymentOpen] = useState(false);
   const dispatch = useDispatch();
 
   const handleLogout = async () => {
@@ -285,7 +363,8 @@ export default function HomeScreen() {
   }, []);
 
   const handleServicePress = (serviceId: string, route?: string) => {
-    triggerHaptic(); if (route) {
+    triggerHaptic();
+    if (route) {
       router.push(route as any);
     } else {
       console.log(`Service pressed: ${serviceId}`);
@@ -325,34 +404,6 @@ export default function HomeScreen() {
     triggerHaptic();
   };
 
-  // const [panchangData, setPanchangData] = useState<any>(null);
-  // const token = useSelector((state: RootState) => state.auth.token);
-
-  // useEffect(() => {
-  //   const fetchPanchang = async () => {
-  //     try {
-  //       const headers = new Headers();
-  //       headers.set('Authorization', `Bearer ${token}`);
-
-  //       const response = await fetch(
-  //         'https://api.prokerala.com/v2/astrology/panchang?ayanamsa=1&date=2025-08-02&coordinates=23.8103,90.4125',
-  //         {
-  //           method: 'GET',
-  //           headers,
-  //         }
-  //       );
-  //       const data = await response.json();
-  //       setPanchangData(data);
-  //     } catch (error) {
-  //       console.error('Error fetching Panchang:', error);
-  //     }
-  //   };
-
-  //   fetchPanchang();
-  // }, []);
-
-  // console.log(panchangData, 'panchangData');
-
   const [currentHeroIndex, setCurrentHeroIndex] = useState(0);
   const [isManualScrolling, setIsManualScrolling] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
@@ -360,6 +411,18 @@ export default function HomeScreen() {
   // Socket io connection for notifications
   const [unreadCount, setUnreadCount] = useState(0);
   const [notifications, setNotifications] = useState<any[]>([]);
+
+  const pickCoverImage = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      quality: 1,
+    });
+
+    if (!result.canceled && result.assets?.[0]?.uri) {
+      setValue('imageUrl', result.assets[0].uri); // save picked image URI in form
+    }
+  };
   // console.log(notifications, "real time notification");
   useEffect(() => {
     socket.on('connect', () => {
@@ -376,7 +439,62 @@ export default function HomeScreen() {
       socket.off('connect');
     };
   }, []);
+  const {
+    control,
+    handleSubmit,
+    setValue,
+    watch,
+    formState: { errors },
+    reset,
+  } = useForm<PaymentProofFormValues>({
+    defaultValues: {
+      amount: '',
+      currency: 'BDT', // Default currency
+      senderAccountNumber: '',
+      paymentMethod: '',
+      donationProgramTitle: '',
+      donationProgramId: '',
+      file: null, 
+    },
+  });
+  const [addPaymentProof, { isSubmitLoading }] = useAddPaymentProofMutation();
 
+  const onSubmit = async (data) => {
+    try {
+      const formData = new FormData();
+
+      const imageUri = watch('imageUrl') || data.imageUrl;
+      if (imageUri) {
+        const filename = imageUri.split('/').pop() || 'photo.jpg';
+        const match = /\.(\w+)$/.exec(filename);
+        const type = match ? `image/${match[1]}` : 'image';
+
+        formData.append('file', {
+          uri: imageUri,
+          name: filename,
+          type,
+        } as any);
+      }
+      // Append all string fields
+      formData.append('donationProgramId', donation?.id);
+      formData.append('donationProgramTitle', donation?.title);
+      formData.append('amount', data.amount);
+      formData.append('currency', data.curreny);
+      formData.append('paymentMethod', paymentMethod?.provider);
+      formData.append('senderAccountNumber', data.accountNumber);
+
+      const response = await addPaymentProof(formData).unwrap();
+
+      if (response?.success) {
+        Alert.alert(
+          'Temple added successfully. Temple will be listed if Admin approves.'
+        );
+      }
+    } catch (error) {
+      console.error('Submit error:', error);
+      Alert.alert('Error', 'Something went wrong while adding the temple.');
+    }
+  };
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <Header />
@@ -396,71 +514,109 @@ export default function HomeScreen() {
             >
               {/* Hero Section */}
               <View style={styles.heroContainer}>
-                <ScrollView
-                  ref={scrollViewRef}
-                  horizontal
-                  pagingEnabled
-                  showsHorizontalScrollIndicator={false}
-                  onMomentumScrollEnd={(event) => {
-                    const index = Math.round(
-                      event.nativeEvent.contentOffset.x / width
-                    );
-                    setCurrentHeroIndex(index);
-                    setIsManualScrolling(false);
-                  }}
-                  onScrollBeginDrag={() => {
-                    setIsManualScrolling(true);
-                  }}
-                >
-                  {data?.data?.map((hero: TContent, index: number) => (
-                    <View key={index} style={styles.heroSlide}>
-                      {hero.videoUrl ? (
-                        <YoutubePlayer
-                          height={280}
-                          play={false}
-                          videoId={getYouTubeVideoId(hero.videoUrl)}
-                        />
-                      ) : (
-                        <Image
-                          source={{ uri: hero.imageUrl }}
-                          style={styles.heroImage}
-                        />
-                      )}
-                    </View>
-                  ))}
-                </ScrollView>
+  {isLoading ? (
+    // 🩶 Hero Skeleton Loader
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      contentContainerStyle={{ gap: 12, paddingHorizontal: 16 }}
+    >
+      <SkeletonLoader
+        width={width - 32}
+        height={230}
+        innerSkeleton={
+          <View
+            style={{
+              flex: 1,
+              justifyContent: "flex-end",
+              padding: 16,
+              backgroundColor: "rgba(0,0,0,0.05)",
+            }}
+          >
+            {/* Title placeholder */}
+            <View
+              style={{
+                width: "60%",
+                height: 18,
+                borderRadius: 6,
+                backgroundColor: "#d6d6d6",
+                marginBottom: 10,
+              }}
+            />
+            {/* Subtitle placeholder */}
+            <View
+              style={{
+                width: "80%",
+                height: 14,
+                borderRadius: 6,
+                backgroundColor: "#d6d6d6",
+              }}
+            />
+          </View>
+        }
+      />
+    </ScrollView>
+  ) : (
+    <>
+      <ScrollView
+        ref={scrollViewRef}
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        onMomentumScrollEnd={(event) => {
+          const index = Math.round(
+            event.nativeEvent.contentOffset.x / width
+          );
+          setCurrentHeroIndex(index);
+          setIsManualScrolling(false);
+        }}
+        onScrollBeginDrag={() => setIsManualScrolling(true)}
+      >
+        {data?.data?.map((hero: TContent, index: number) => (
+          <View key={index} style={styles.heroSlide}>
+            {hero.videoUrl ? (
+              <YoutubePlayer
+                height={280}
+                play={false}
+                videoId={getYouTubeVideoId(hero.videoUrl)}
+              />
+            ) : (
+              <Image
+                source={{ uri: hero.imageUrl }}
+                style={styles.heroImage}
+              />
+            )}
+          </View>
+        ))}
+      </ScrollView>
 
-                {/* Hero Indicators */}
-                <View style={styles.heroIndicators}>
-                  {data?.data?.map((_: any, index: number) => (
-                    <TouchableOpacity
-                      key={index}
-                      style={[
-                        styles.indicator,
-                        index === currentHeroIndex && [
-                          styles.activeIndicator,
-                          { backgroundColor: colors.info },
-                        ],
-                      ]}
-                      onPress={() => {
-                        scrollViewRef.current?.scrollTo({
-                          x: index * width,
-                          animated: true,
-                        });
-                        setCurrentHeroIndex(index);
-                        triggerHaptic();
-                        console.log(
-                          'Scrolling to index:',
-                          index,
-                          '=> x:',
-                          index * width
-                        );
-                        console.log('ref:', scrollViewRef.current);
-                      }}
-                    />
-                  ))}
-                </View>
-              </View>
+      {/* Hero Indicators */}
+      <View style={styles.heroIndicators}>
+        {data?.data?.map((_: any, index: number) => (
+          <TouchableOpacity
+            key={index}
+            style={[
+              styles.indicator,
+              index === currentHeroIndex && [
+                styles.activeIndicator,
+                { backgroundColor: colors.info },
+              ],
+            ]}
+            onPress={() => {
+              scrollViewRef.current?.scrollTo({
+                x: index * width,
+                animated: true,
+              });
+              setCurrentHeroIndex(index);
+              triggerHaptic();
+            }}
+          />
+        ))}
+      </View>
+    </>
+  )}
+</View>
+
 
               {/* Search Bar */}
               <SearchBar
@@ -562,81 +718,291 @@ export default function HomeScreen() {
                     {'Our Project'}
                   </Text>
                 </View>
-                <ScrollView
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={styles.projectsContent}
-                >
-                  {isProgramLoading ? (
-                    <LoadingComponent
-                      loading="Programs "
-                      color={colors.primary}
-                    />
-                  ) : (ProgramData?.data?.length || 0) === 0 ? (
-                    <Text style={{ color: colors.text }}>
-                      Projects are coming soon! Stay tuned.
-                    </Text>
-                  ) : (
-                    ProgramData?.data?.map((project: any) => (
-                      <View key={project.id} style={styles.projectCard}>
-                        <Image
-                          source={{ uri: project.imageUrl }}
-                          style={styles.projectImage}
-                        />
-                        <LinearGradient
-                          colors={['transparent', 'rgba(0,0,0,0.8)']}
-                          style={styles.projectOverlay}
-                        >
-                          <View style={styles.projectContent}>
-                            <Text style={styles.projectTitle}>
-                              {project.title}
-                            </Text>
-                            <Text style={styles.projectDescription}>
-                              {project.description}{' '}
-                            </Text>
+            <ScrollView
+  horizontal
+  showsHorizontalScrollIndicator={false}
+  contentContainerStyle={styles.projectsContent}
+>
+  {isProgramLoading ? (
+    <SkeletonLoader
+      width={300}
+      height={200}
+      innerSkeleton={
+        <View
+          style={{
+            flex: 1,
+            justifyContent: "flex-end",
+            padding: 12,
+            backgroundColor: "rgba(0,0,0,0.05)",
+          }}
+        >
+          {/* Title placeholder */}
+          <View
+            style={{
+              width: "70%",
+              height: 16,
+              borderRadius: 8,
+              backgroundColor: "#d6d6d6",
+              marginBottom: 6,
+            }}
+          />
+          {/* Description placeholder */}
+          <View
+            style={{
+              width: "90%",
+              height: 12,
+              borderRadius: 8,
+              backgroundColor: "#d6d6d6",
+              marginBottom: 6,
+            }}
+          />
+          <View
+            style={{
+              width: "50%",
+              height: 12,
+              borderRadius: 8,
+              backgroundColor: "#d6d6d6",
+            }}
+          />
+        </View>
+      }
+    />
+  ) : (ProgramData?.data?.length || 0) === 0 ? (
+    <Text style={{ color: colors.text }}>
+      Projects are coming soon! Stay tuned.
+    </Text>
+  ) : (
+    ProgramData?.data?.map((project: any) => (
+      <View key={project.id} style={styles.projectCard}>
+        <Image
+          source={{ uri: project.imageUrl }}
+          style={styles.projectImage}
+        />
+        <LinearGradient
+          colors={["transparent", "rgba(0,0,0,0.8)"]}
+          style={styles.projectOverlay}
+        >
+          <View style={styles.projectContent}>
+            <Text style={styles.projectTitle}>{project.title}</Text>
+            <Text style={styles.projectDescription}>{project.description}</Text>
 
-                            <View style={styles.projectProgress}>
-                              {/* <View style={styles.progressInfo}>
-                            <Text style={styles.progressText}>
-                              Raised: ৳
-                              {project.collectedAmount.toLocaleString()}
-                            </Text>
-                            <Text style={styles.progressGoal}>
-                              Goal: ৳{project.budget.toLocaleString()}
-                            </Text>
-                          </View>
-                          <View style={styles.progressBar}>
-                            <View
-                              style={[
-                                styles.progressFill,
-                                {
-                                  width: `${
-                                    (project.collectedAmount / project.budget) *
-                                    100
-                                  }%`,
-                                },
-                              ]}
-                            />
-                          </View> */}
-                              {/* <Text style={styles.supportersText}>
-                              {project.supporters} supporters
-                            </Text> */}
+            <View style={styles.projectProgress}></View>
+
+            <TouchableOpacity
+              style={styles.donateButton}
+              onPress={() => {
+                setPaymentOptionModalOpen(true);
+                setDonation(project);
+              }}
+            >
+              <Heart size={16} color="#FFFFFF" fill="#FFFFFF" />
+              <Text style={styles.donateText}>Donate Now</Text>
+            </TouchableOpacity>
+          </View>
+        </LinearGradient>
+      </View>
+    ))
+  )}
+</ScrollView>
+
+              </View>
+
+              {paymentOptionModalOpen && (
+                <Modal
+                  visible={paymentOptionModalOpen}
+                  transparent
+                  animationType="fade"
+                  onRequestClose={() => setPaymentOptionModalOpen(false)}
+                >
+                  <View style={styles.modalOverlay}>
+                    {' '}
+                    {/* This will make the background semi-transparent */}
+                    <View style={styles.paymentOptionModalContent}>
+                      {' '}
+                      {/* This will be your actual modal box */}
+                      <View
+                        style={[
+                          styles.modalHeader,
+                          { borderBottomColor: colors.border },
+                        ]}
+                      >
+                        <Text
+                          style={[styles.modalTitle, { color: colors.text }]}
+                        >
+                          Select payment method
+                        </Text>
+                        <TouchableOpacity
+                          onPress={() => setPaymentOptionModalOpen(false)}
+                        >
+                          <X size={24} color={colors.secondaryText} />
+                        </TouchableOpacity>
+                      </View>
+                      {/* Add your payment options components here */}
+                      <ScrollView contentContainerStyle={styles.container1}>
+                        {paymentCards.map((card) => (
+                          <TouchableOpacity
+                            onPress={() => {
+                              setPaymentMethod(card);
+                              setPaymentOpen(true);
+                              setPaymentOptionModalOpen(false);
+                            }}
+                            key={card.id}
+                            style={styles.card}
+                          >
+                            {/* Left side */}
+                            <View style={styles.leftSection}>
+                              <View>
+                                <Image
+                                  source={{ uri: card.logo }}
+                                  style={styles.logo}
+                                />
+                                <Text style={styles.accountName}>
+                                  {card.accountName}
+                                </Text>
+                                <Text style={styles.accountNumber}>
+                                  {card.accountNumber}
+                                </Text>
+                              </View>
                             </View>
 
-                            {/* <TouchableOpacity
-                            style={styles.donateButton}
-                            onPress={() => handleProjectDonate(project)}
-                          >
-                            <Heart size={16} color="#FFFFFF" fill="#FFFFFF" />
-                            <Text style={styles.donateText}>Donate Now</Text>
-                          </TouchableOpacity> */}
-                          </View>
-                        </LinearGradient>
+                            {/* Right side (QR) */}
+                            <View style={styles.qrBox1}>
+                              <Image
+                                source={{ uri: card.qr }}
+                                style={styles.qrImage}
+                              />
+                            </View>
+                          </TouchableOpacity>
+                        ))}
+                      </ScrollView>
+                    </View>
+                  </View>
+                </Modal>
+              )}
+
+              {paymentOpen && (
+                <Modal
+                  visible={paymentOpen}
+                  transparent
+                  animationType="fade"
+                  onRequestClose={() => setPaymentOpen(false)}
+                >
+                  <View style={styles.modalOverlay}>
+                    {' '}
+                    {/* This will make the background semi-transparent */}
+                    <View style={styles.paymentOptionModalContent}>
+                      {' '}
+                      {/* This will be your actual modal box */}
+                      <View
+                        style={[
+                          styles.modalHeader,
+                          { borderBottomColor: colors.border },
+                        ]}
+                      >
+                        <Text
+                          style={[styles.modalTitle, { color: colors.text }]}
+                        >
+                          Donate
+                        </Text>
+                        <TouchableOpacity onPress={() => setPaymentOpen(false)}>
+                          <X size={24} color={colors.secondaryText} />
+                        </TouchableOpacity>
                       </View>
-                    ))
-                  )}
-                </ScrollView>
-              </View>
+                      {/* Add your payment options components here */}
+                      <ScrollView contentContainerStyle={styles.container1}>
+                        <View
+                          style={{
+                            width: '100%',
+                            flexDirection: 'column',
+                            alignContent: 'flex-start',
+                          }}
+                        >
+                          {/* Left side */}
+                          <View style={styles.leftSection1}>
+                            <View>
+                              <Image
+                                source={{ uri: paymentMethod?.logo }}
+                                style={styles.logo}
+                              />
+                              <Text style={styles.accountName}>
+                                {paymentMethod?.accountName}
+                              </Text>
+                              <Text style={styles.accountNumber}>
+                                {paymentMethod?.accountNumber}
+                              </Text>
+                            </View>
+                          </View>
+
+                          {/* Right side (QR) */}
+                          <View style={styles.qrBox}>
+                            <Image
+                              source={{ uri: paymentMethod?.qr }}
+                              style={styles.qrImage1}
+                            />
+                          </View>
+                          <View>
+                            <Input
+                              label="Currency"
+                              name="currency"
+                              setValue={setValue}
+                              watch={watch}
+                            />
+                            <Input
+                              label="Amount"
+                              name="amount"
+                              setValue={setValue}
+                              watch={watch}
+                            />
+                            <View
+                              style={{ marginBottom: 16, position: 'relative' }}
+                            >
+                              <Text style={styles.label}>Pick Cover Image</Text>
+                              <Button
+                                title="Pick Image from Gallery"
+                                onPress={pickCoverImage}
+                              />
+
+                              {watch('file') && (
+                                <Image
+                                  source={{ uri: watch('file') }}
+                                  style={{
+                                    width: 200,
+                                    height: 200,
+                                    marginTop: 10,
+                                    borderRadius: 8,
+                                  }}
+                                />
+                              )}
+
+                              {watch('file') && (
+                                <TouchableOpacity
+                                  style={styles.removeButton}
+                                  onPress={() => setValue('file', '')}
+                                >
+                                  <Text
+                                    style={[
+                                      styles.removeText,
+                                      { color: '#FF0000' },
+                                    ]}
+                                  >
+                                    ×
+                                  </Text>
+                                </TouchableOpacity>
+                              )}
+                            </View>
+                            <View style={styles.buttonContainer}>
+                              <Button
+                                title={isSubmitLoading ? 'Submitting...' : 'Submit'}
+                                onPress={handleSubmit(onSubmit)}
+                              />
+                            </View>
+                          </View>
+                        </View>
+                      </ScrollView>
+                    </View>
+                  </View>
+                </Modal>
+              )}
 
               <View style={styles.bottomSpacing} />
             </ScrollView>
@@ -646,10 +1012,40 @@ export default function HomeScreen() {
     </SafeAreaView>
   );
 }
+const Input = ({
+  label,
+  name,
+  watch,
+  setValue,
+  multiline = false,
+  keyboardType = 'default',
+}: {
+  label: string;
+  name: any;
+  watch: any;
+  setValue: any;
+  multiline?: boolean;
+  keyboardType?: 'default' | 'numeric' | 'email-address';
+}) => {
+  const value = watch(name);
+
+  return (
+    <View style={styles.inputGroup}>
+      <Text style={styles.label}>{label}</Text>
+      <TextInput
+        value={value}
+        multiline={multiline}
+        keyboardType={keyboardType}
+        onChangeText={(text) => setValue(name, text)}
+        style={[styles.input, multiline && styles.multiline]}
+      />
+    </View>
+  );
+};
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
+  container1: {
+    padding: 20,
   },
   content: {
     flex: 1,
@@ -832,6 +1228,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 4,
     elevation: 4,
+    marginBottom: 10,
   },
   donateText: {
     fontSize: 14,
@@ -840,5 +1237,143 @@ const styles = StyleSheet.create({
   },
   bottomSpacing: {
     height: 20,
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)', // Semi-transparent background
+  },
+  paymentOptionModalContent: {
+    width: '80%', // Adjust width as needed
+    backgroundColor: 'white',
+    borderRadius: 10,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  container: {
+    padding: 16,
+    backgroundColor: '#f5f5f5',
+  },
+  card: {
+    width: '100%',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  leftSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  leftSection1: {
+    width: '100%',
+  },
+  logo: {
+    width: 40,
+    height: 40,
+    marginRight: 8,
+    borderRadius: 6,
+    backgroundColor: '#eee',
+  },
+  accountName: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333',
+  },
+  accountNumber: {
+    fontSize: 12,
+    color: '#777',
+    marginTop: 2,
+  },
+  qrBox: {
+    width: '100%',
+    backgroundColor: '#f9f9f9',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 10,
+  },
+  qrBox1: {
+    width: 70,
+    backgroundColor: '#f9f9f9',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  qrImage: {
+    width: 60,
+    height: 60,
+    resizeMode: 'contain',
+  },
+  qrImage1: {
+    width: 250,
+    height: 250,
+    resizeMode: 'contain',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E2E8F0',
+    width: '100%',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#2D3748',
+  },
+  removeText: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#FF0000',
+  },
+  removeButton: {
+    position: 'absolute',
+    top: 70,
+    right: 140,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  label: {
+    marginBottom: 5,
+    fontWeight: 'bold',
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    padding: 10,
+    borderRadius: 6,
+  },
+  multiline: {
+    height: 100,
+    textAlignVertical: 'top',
+  },
+   buttonContainer: {
+    marginTop: 20,
+    marginBottom: 35,
+  },
+   inputGroup: {
+    marginBottom: 15,
   },
 });

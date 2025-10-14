@@ -48,6 +48,7 @@ import { useSelector } from 'react-redux';
 import { useCurrentUser } from '@/redux/features/Auth/authSlice';
 import Header from '@/components/Reusable/HeaderMenuBar/HeaderMenuBar';
 import AppHeader from '@/components/Reusable/AppHeader/AppHeader';
+import Reels from '@/components/ReelsPage/Reels';
 
 
 interface RealVideo {
@@ -467,45 +468,46 @@ export default function LearnScreen() {
             {isReelsLoading ? (
               <LoadingComponent loading=" " color={colors.success} />
             ) : (
-              reels?.data.map((video: TReels, index: number) => (
-                <TouchableOpacity
-                  key={index}
-                  style={[
-                    styles.videoCard,
-                    {
-                      backgroundColor: colors.card,
-                      shadowColor: colors.cardShadow,
-                    },
-                  ]}
-                >
-                  <View style={styles.programImageContainer}>
-                    <YoutubePlayer
-                      height={200}
-                      play={playingCardIndex === index}
-                      videoId={getYouTubeVideoId(video?.videoUrl) || ''}
-                      onChangeState={(state: any) => {
-                        if (state === 'ended') setPlayingCardIndex(null);
-                      }}
-                    />
-                  </View>
+              // reels?.data.map((video: TReels, index: number) => (
+              //   <TouchableOpacity
+              //     key={index}
+              //     style={[
+              //       styles.videoCard,
+              //       {
+              //         backgroundColor: colors.card,
+              //         shadowColor: colors.cardShadow,
+              //       },
+              //     ]}
+              //   >
+              //     <View style={styles.programImageContainer}>
+              //       <YoutubePlayer
+              //         height={200}
+              //         play={playingCardIndex === index}
+              //         videoId={getYouTubeVideoId(video?.videoUrl) || ''}
+              //         onChangeState={(state: any) => {
+              //           if (state === 'ended') setPlayingCardIndex(null);
+              //         }}
+              //       />
+              //     </View>
 
-                  <View style={styles.videoInfo}>
-                    <Text style={[styles.videoTitle, { color: colors.text }]}>
-                      {video.title}
-                    </Text>
-                    <View style={styles.videoMeta}>
-                      <Text
-                        style={[
-                          styles.videoInstructor,
-                          { color: colors.secondaryText },
-                        ]}
-                      >
-                        {video.category}
-                      </Text>
-                    </View>
-                  </View>
-                </TouchableOpacity>
-              ))
+              //     <View style={styles.videoInfo}>
+              //       <Text style={[styles.videoTitle, { color: colors.text }]}>
+              //         {video.title}
+              //       </Text>
+              //       <View style={styles.videoMeta}>
+              //         <Text
+              //           style={[
+              //             styles.videoInstructor,
+              //             { color: colors.secondaryText },
+              //           ]}
+              //         >
+              //           {video.category}
+              //         </Text>
+              //       </View>
+              //     </View>
+              //   </TouchableOpacity>
+              // ))
+              <Reels/>
             )}
           </View>
         );

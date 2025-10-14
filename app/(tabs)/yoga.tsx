@@ -14,7 +14,7 @@ import { useThemeColors } from '@/hooks/useThemeColors';
 import { useGetAllYogaQuery } from '@/redux/features/Yoga/yogaApi';
 import { TYoga } from '@/types';
 import { useGetAllConsultancyServicesQuery } from '@/redux/features/Consultancy/consultancyApi';
-import Experts from '@/components/Experts';
+import Experts from '@/components/Reusable/Experts';
 import AllYogaPrograms from '@/components/YogaPage/AllYogaPrograms';
 import LoadingComponent from '@/components/LoadingComponent/LoadingComponent';
 import { PullToRefreshWrapper } from '@/components/Reusable/PullToRefreshWrapper/PullToRefreshWrapper';

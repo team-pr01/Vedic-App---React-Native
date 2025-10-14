@@ -40,7 +40,7 @@ import { PullToRefreshWrapper } from '@/components/Reusable/PullToRefreshWrapper
 import AppHeader from '@/components/Reusable/AppHeader/AppHeader';
 import Categories from '@/components/Reusable/Categories/Categories';
 import Header from '@/components/Reusable/HeaderMenuBar/HeaderMenuBar';
-import Experts from '@/components/Experts';
+import Experts from '@/components/Reusable/Experts';
 import LoadingComponent from '@/components/LoadingComponent/LoadingComponent';
 import { formatDate } from '@/utils/formatDate';
 import { getYouTubeVideoId } from '@/utils/getYouTubeVideoId';
@@ -62,7 +62,7 @@ export default function AyurvedaPage() {
   const [isArticleModalOpen, setIsArticleModalOpen] = useState(false);
   const [selectedRecipe, setSelectedRecipe] = useState<any | null>(null);
   const [playingCardIndex, setPlayingCardIndex] = useState<number | null>(null);
-  const { data: categoryData, refetch: refetchCategories } =
+  const { data: categoryData ,isLoading:isLoadingCategories, refetch: refetchCategories } =
     useGetAllCategoriesQuery({});
   const [isListening, setIsListening] = useState(false);
   const filteredExperts =
@@ -214,6 +214,7 @@ export default function AyurvedaPage() {
                 selectedCategory={selectedCategory}
                 allCategories={allCategories}
                 bgColor={'#38A169'}
+                isLoading={isLoadingCategories}
               />
 
               {/* Experts Section */}

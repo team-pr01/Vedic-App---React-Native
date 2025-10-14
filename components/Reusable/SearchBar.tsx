@@ -2,8 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { View, TextInput, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import { Search, Mic, Filter, X, CircleStop as StopCircle } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
-import FilterModal from './FilterModal';
 import { useThemeColors } from '@/hooks/useThemeColors';
+import FilterModal from '../FilterModal';
 
 interface SearchBarProps {
   placeholderText?: string;

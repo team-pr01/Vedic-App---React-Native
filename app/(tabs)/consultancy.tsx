@@ -58,7 +58,7 @@ export default function ConsultancyPage() {
     category: selectedCategory,
     keyword: searchQuery,
   });
-  const { data: categoryData, refetch: refetchCategories } =
+  const { data: categoryData,isLoading:isLoadingCategories, refetch: refetchCategories } =
     useGetAllCategoriesQuery({});
   const [refreshing, setRefreshing] = useState(false);
 
@@ -284,6 +284,7 @@ export default function ConsultancyPage() {
                 setSelectedCategory={setSelectedCategory}
                 selectedCategory={selectedCategory}
                 allCategories={allCategories}
+                 isLoading={isLoadingCategories}
                 bgColor={'#DD6B20'}
               />
 
