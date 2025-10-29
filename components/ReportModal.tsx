@@ -1,14 +1,23 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, TextInput, Modal } from 'react-native';
-import { X, Flag, CircleAlert as AlertCircle } from 'lucide-react-native';
-import { ReportSubmission } from '../types';
+import { X, Flag, Pyramid } from 'lucide-react-native';
+import { useForm, Controller } from 'react-hook-form';
+import { useReportMantraMutation } from '@/redux/features/Book/bookApi';
 
 interface ReportModalProps {
   isOpen: boolean;
   onClose: () => void;
   verseId: string;
   vedaTitle: string;
-  onSubmitReport: (submission: ReportSubmission) => void;
+  originalText: string;
+  translation: string;
+  bookId:string
+  languageCode:string
+}
+
+interface ReportFormData {
+  reason: string;
+  feedback: string;
 }
 
 const REPORT_REASONS = [
@@ -16,51 +25,60 @@ const REPORT_REASONS = [
   'Inappropriate content',
   'Technical error',
   'Missing information',
-  'Other'
+  'Other',
 ];
 
-export default function ReportModal({ 
-  isOpen, 
-  onClose, 
-  verseId, 
-  vedaTitle, 
-  onSubmitReport 
+export default function ReportModal({
+  isOpen,
+  onClose,
+  verseId,
+  vedaTitle,
+  originalText,
+  translation,
+  bookId,
+  languageCode
 }: ReportModalProps) {
-  const [selectedReason, setSelectedReason] = useState<string>('');
-  const [feedback, setFeedback] = useState<string>('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [reportMantra, { isLoading }] = useReportMantraMutation();
 
-  const handleSubmit = async () => {
-    if (!selectedReason.trim()) return;
-    
-    setIsSubmitting(true);
-    
+  const {
+    control,
+    handleSubmit,
+    watch,
+    reset,
+    formState: { errors },
+  } = useForm<ReportFormData>({
+    defaultValues: { reason: '', feedback: '' },
+  });
+
+  const selectedReason = watch('reason');
+
+  const onSubmit = async (data: ReportFormData) => {
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
+      const payload={
+        bookId: bookId || '',
+        textId: verseId,
+        originalText: originalText,
+        translation: translation,
+        reason: data.reason,
+        feedback: data.feedback.trim(),
+        languageCode:languageCode
+      }
+      console.log(payload)
+      const res=await reportMantra(payload).unwrap();
       
-      onSubmitReport({
-        verseId,
-        reason: selectedReason,
-        feedback: feedback.trim()
-      });
-      
-      // Reset form
-      setSelectedReason('');
-      setFeedback('');
-    } finally {
-      setIsSubmitting(false);
+      reset();
+      console.log(res)
+      onClose();
+    } catch (error) {
+      console.error('Report submission failed:', error);
     }
   };
 
   return (
-    <Modal
-      visible={isOpen}
-      transparent
-      animationType="fade"
-      onRequestClose={onClose}
-    >
+    <Modal visible={isOpen} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.overlay}>
         <View style={styles.modal}>
+          {/* Header */}
           <View style={styles.header}>
             <View style={styles.headerLeft}>
               <Flag size={20} color="#EF4444" />
@@ -71,65 +89,81 @@ export default function ReportModal({
             </TouchableOpacity>
           </View>
 
+          {/* Content */}
           <View style={styles.content}>
-            <View style={styles.verseInfo}>
-              <Text style={styles.verseText}>Verse: {verseId}</Text>
-              <Text style={styles.vedaText}>From: {vedaTitle}</Text>
-            </View>
-
             <Text style={styles.sectionTitle}>What's the issue?</Text>
-            <View style={styles.reasonsList}>
-              {REPORT_REASONS.map((reason) => (
-                <TouchableOpacity
-                  key={reason}
-                  style={[
-                    styles.reasonItem,
-                    selectedReason === reason && styles.reasonItemSelected
-                  ]}
-                  onPress={() => setSelectedReason(reason)}
-                >
-                  <View style={[
-                    styles.radioButton,
-                    selectedReason === reason && styles.radioButtonSelected
-                  ]} />
-                  <Text style={[
-                    styles.reasonText,
-                    selectedReason === reason && styles.reasonTextSelected
-                  ]}>
-                    {reason}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
 
-            <Text style={styles.sectionTitle}>Additional feedback (optional)</Text>
-            <TextInput
-              style={styles.feedbackInput}
-              placeholder="Please provide more details about the issue..."
-              value={feedback}
-              onChangeText={setFeedback}
-              multiline
-              numberOfLines={4}
-              textAlignVertical="top"
+            <Controller
+              control={control}
+              name="reason"
+              rules={{ required: 'Please select a reason.' }}
+              render={({ field: { onChange, value } }) => (
+                <View style={styles.reasonsList}>
+                  {REPORT_REASONS.map((reason) => (
+                    <TouchableOpacity
+                      key={reason}
+                      style={[
+                        styles.reasonItem,
+                        value === reason && styles.reasonItemSelected,
+                      ]}
+                      onPress={() => onChange(reason)}
+                    >
+                      <View
+                        style={[
+                          styles.radioButton,
+                          value === reason && styles.radioButtonSelected,
+                        ]}
+                      />
+                      <Text
+                        style={[
+                          styles.reasonText,
+                          value === reason && styles.reasonTextSelected,
+                        ]}
+                      >
+                        {reason}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
+            />
+            {errors.reason && (
+              <Text style={styles.errorText}>{errors.reason.message}</Text>
+            )}
+
+            <Text style={styles.sectionTitle}>Additional feedback</Text>
+            <Controller
+              control={control}
+              name="feedback"
+              render={({ field: { onChange, value } }) => (
+                <TextInput
+                  style={styles.feedbackInput}
+                  placeholder="Please provide more details..."
+                  value={value}
+                  onChangeText={onChange}
+                  multiline
+                  textAlignVertical="top"
+                />
+              )}
             />
 
+            {/* Actions */}
             <View style={styles.actions}>
-              <TouchableOpacity
-                style={styles.cancelButton}
-                onPress={onClose}
-              >
+              <TouchableOpacity onPress={onClose} style={styles.cancelButton}>
                 <Text style={styles.cancelButtonText}>Cancel</Text>
               </TouchableOpacity>
+
               <TouchableOpacity
+                onPress={handleSubmit(onSubmit)}
+                disabled={!selectedReason.trim() || isLoading}
                 style={[
                   styles.submitButton,
-                  (!selectedReason.trim() || isSubmitting) && styles.submitButtonDisabled
+                  (!selectedReason.trim() || isLoading) &&
+                    styles.submitButtonDisabled,
                 ]}
-                onPress={handleSubmit}
-                disabled={!selectedReason.trim() || isSubmitting}
               >
                 <Text style={styles.submitButtonText}>
-                  {isSubmitting ? 'Submitting...' : 'Submit Report'}
+                  {isLoading ? 'Submitting...' : 'Submit Report'}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -139,6 +173,7 @@ export default function ReportModal({
     </Modal>
   );
 }
+
 
 const styles = StyleSheet.create({
   overlay: {

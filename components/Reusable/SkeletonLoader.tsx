@@ -8,10 +8,11 @@ type SkeletonLoaderProps = {
   innerSkeleton?: JSX.Element; 
   borderRadius?: number;
   direction?: "row" | "column";
+  array?:number[]
 
 };
 
-const SkeletonLoader = ({ width, height, innerSkeleton,borderRadius=16, direction="row" }: SkeletonLoaderProps) => {
+const SkeletonLoader = ({ width, height, innerSkeleton,borderRadius=16, direction="row",array=[1,2,3] }: SkeletonLoaderProps) => {
   const shimmerValue = useRef(new Animated.Value(0)).current;
   const colors =useThemeColors()
 
@@ -39,7 +40,7 @@ const SkeletonLoader = ({ width, height, innerSkeleton,borderRadius=16, directio
 
   return (
     <View style={{ flexDirection: direction, gap: 15 }}>
-      {[1, 2, 3].map((_, i) => (
+      {array.map((_, i) => (
         <Animated.View
           key={i}
           style={{

@@ -39,6 +39,7 @@ import AppHeader from '@/components/Reusable/AppHeader/AppHeader';
 import ReportModal from '@/components/ReportModal';
 import { ReportSubmission } from '@/types';
 import { allLanguages } from '@/redux/features/Language/languageSlice';
+import SkeletonLoader from '@/components/Reusable/SkeletonLoader';
 
 function VedaReaderContent() {
   const { vedaId, textName } = useLocalSearchParams<{
@@ -60,7 +61,7 @@ function VedaReaderContent() {
   const [showLanguageModal, setShowLanguageModal] = useState(false);
   const [languageSearchTerm, setLanguageSearchTerm] = useState('');
   const [targetLanguage, setTargetLanguage] = useState({
-    name: 'English',
+    name: 'select language',
     code: 'en',
   });
   const [currentTranslation, setCurrentTranslation] = useState();
@@ -87,10 +88,10 @@ function VedaReaderContent() {
   useEffect(() => {
     if (veda?.data?.length) {
       // 1️⃣ Flatten and normalize all locations
-      const all = veda.data.map((item: any) => {
-        const levels = item.location?.map((l: any) => l?.value).filter(Boolean);
+      const all = veda?.data?.map((item: any) => {
+        const levels = item?.location?.map((l: any) => l?.value).filter(Boolean);
         return {
-          locationKey: levels.join('.'), // e.g., "1.2" or "1.2.3"
+          locationKey: levels?.join('.'), // e.g., "1.2" or "1.2.3"
           levels,
         };
       });
@@ -109,7 +110,6 @@ function VedaReaderContent() {
       setFlattenedVerses(all);
     }
   }, [veda]);
-
   const [currentVerseIndex, setCurrentVerseIndex] = useState<number>(-1);
 
   useEffect(() => {
@@ -117,7 +117,7 @@ function VedaReaderContent() {
 
     const currentKey = [currentSection, currentSubSection, currentVerse]
       .filter(Boolean)
-      .join('.'); // e.g., "1.2" or "1.2.3"
+      .join('.'); 
 
     const idx = flattenedVerses.findIndex((v) => v.locationKey === currentKey);
     setCurrentVerseIndex(idx);
@@ -265,10 +265,9 @@ function VedaReaderContent() {
       availableTranslationLanguageCodes.includes(
         targetLanguage.code.toLowerCase()
       )
-    ) 
+    )
       getTranslationByLang(targetLanguage.code);
-    
-  }, [CurrentVeda, targetLanguage,veda]);
+  }, [CurrentVeda, targetLanguage, veda]);
 
   const triggerHaptic = () => {
     if (Platform.OS !== 'web') {
@@ -606,7 +605,101 @@ function VedaReaderContent() {
             </View>
           )}
         </View>
-        {verseData ? (
+        {isVedaLoading  ||isLoading? (
+          <View>
+            <SkeletonLoader
+            array={[1]}
+                     direction='column'
+                    height={280}
+                    width={'100%'}
+                    innerSkeleton={
+                      <View
+                        style={{
+                          padding: 15,
+                          justifyContent: 'space-between',
+                          flex: 1,
+                        }}
+                      >
+                        <View style={{justifyContent: "center",}}>
+                          <View
+                            style={{
+                              width: '100%',
+                              height: 26,
+                              backgroundColor: '#e0e0e0',
+                              borderRadius: 8,
+                              marginBottom: 8,
+                            }}
+                          />
+                          <View
+                            style={{
+                              width: '80%',
+                              height: 26,
+                              backgroundColor: '#e0e0e0',
+                              borderRadius: 8,
+                              marginBottom: 8,
+                            }}
+                          />
+                          <View
+                            style={{
+                              width: '90%',
+                              height: 26,
+                              backgroundColor: '#e0e0e0',
+                              borderRadius: 8,
+                              marginBottom: 18,
+                            }}
+                          />
+                          <View style={{ flexDirection: 'row', gap: 6 ,justifyContent:"space-between"}}>
+                            <View
+                              style={{
+                                width: '30%',
+                                height: 43,
+                                backgroundColor: '#e0e0e0',
+                                borderRadius: 32,
+                              }}
+                            />
+                            <View
+                              style={{
+                                width: 43,
+                                height: 43,
+                                backgroundColor: '#e0e0e0',
+                                borderRadius: 43,
+                              }}
+                            />
+                          </View>
+                        </View>
+
+                        <View
+                          style={{
+                            width: '100%',
+                            height: 16,
+                            backgroundColor: '#d6d6d6',
+                            borderRadius: 8,
+                            marginTop: 10,
+                          }}
+                        />
+                        <View
+                          style={{
+                            width: '100%',
+                            height: 16,
+                            backgroundColor: '#d6d6d6',
+                            borderRadius: 8,
+                            marginTop: 10,
+                          }}
+                        />
+                        <View
+                          style={{
+                            width: '100%',
+                            height: 16,
+                            backgroundColor: '#d6d6d6',
+                            borderRadius: 8,
+                            marginTop: 10,
+                          }}
+                        />
+                      </View>
+                    }
+                  />
+          </View>
+        ) : verseData ? (
           <View
             style={[
               styles.verseContainer,
@@ -642,7 +735,7 @@ function VedaReaderContent() {
 
               <TouchableOpacity
                 style={styles.reportButton}
-                // onPress={() => handleOpenReportModal(currentVerse)}
+                onPress={() => handleOpenReportModal(verseData)}
               >
                 <Flag size={16} color="#EF4444" />
               </TouchableOpacity>
@@ -716,7 +809,7 @@ function VedaReaderContent() {
                           </View>
                         )} */}
 
-                {currentTranslation && (
+                {currentTranslation !=currentTranslation && (
                   <View style={styles.translationSection}>
                     <Text
                       style={[
@@ -729,7 +822,7 @@ function VedaReaderContent() {
                     <Text
                       style={[styles.translationText, { color: colors.text }]}
                     >
-                      {currentTranslation}
+                   
                     </Text>
                   </View>
                 )}
@@ -737,7 +830,7 @@ function VedaReaderContent() {
                   <Text
                     style={[styles.translationText, { color: colors.text }]}
                   >
-                    {/* {currentTranslation} */}
+                    {currentTranslation}
                   </Text>
                 </View>
               </View>
@@ -861,7 +954,7 @@ function VedaReaderContent() {
                       styles.languageItem,
                       { backgroundColor: colors.background },
                     ],
-                    targetLanguage.code === lang.code && [
+                    targetLanguage?.code === lang?.code && [
                       styles.languageItemSelected,
                       { backgroundColor: colors.primary },
                     ],
@@ -876,7 +969,7 @@ function VedaReaderContent() {
                   <Text
                     style={[
                       [styles.languageItemText, { color: colors.text }],
-                      targetLanguage.code === lang.code && [
+                      targetLanguage?.code === lang?.code && [
                         styles.languageItemTextSelected,
                         { color: '#FFFFFF' },
                       ],
@@ -894,7 +987,7 @@ function VedaReaderContent() {
                   </Text>
                 </TouchableOpacity>
               ))}
-              {filteredLanguages.length === 0 && (
+              {filteredLanguages?.length === 0 && (
                 <Text
                   style={[
                     styles.noResultsText,
@@ -911,13 +1004,16 @@ function VedaReaderContent() {
       )}
 
       {/* Report Modal */}
-      {isReportModalOpen && reportingVerse && (
+      {isReportModalOpen && reportingVerse && currentTranslation && (
         <ReportModal
           isOpen={isReportModalOpen}
           onClose={handleCloseReportModal}
           verseId={reportingVerse._id}
           vedaTitle={textName}
-          onSubmitReport={handleSubmitReport}
+          bookId={vedaId}
+          originalText={verseData.originalText}
+          translation={currentTranslation}
+          languageCode={targetLanguage.code}
         />
       )}
     </View>
@@ -1063,6 +1159,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 12,
     elevation: 6,
+    paddingBottom: 30,
   },
   sanskritContainer: {
     marginBottom: 20,

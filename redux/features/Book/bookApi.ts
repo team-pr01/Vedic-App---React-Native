@@ -48,7 +48,32 @@ const bookApi = baseApi.injectEndpoints({
       },
       providesTags: ['book'],
     }),
+    reportMantra: builder.mutation<
+      any,
+      {
+        bookId: string;
+        textId: string;
+        originalText: string;
+        translation: string;
+        reason: string;
+        feedback: string;
+        languageCode: string;
+      }
+    >({
+      query: (body) => ({
+        url: '/reportMantra/report',
+        method: 'POST',
+        body,
+        credentials: 'include',
+      }),
+      invalidatesTags: ['book'],
+    }),
   }),
 });
 
-export const { useGetAllBooksQuery, useGetSingleBookQuery,useGetSingleVedaQuery } = bookApi;
+export const {
+  useGetAllBooksQuery,
+  useGetSingleBookQuery,
+  useGetSingleVedaQuery,
+  useReportMantraMutation,
+} = bookApi;
