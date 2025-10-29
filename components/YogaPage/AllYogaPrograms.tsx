@@ -17,16 +17,8 @@ const AllYogaPrograms = ({ data }: { data: TYoga[] }) => {
 
   const colors = useThemeColors();
   return (
-    <View style={styles.programsContainer}>
-      <View style={styles.sectionHeader}>
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>
-          Featured Programs
-        </Text>
-        <Text style={[styles.resultsCount, { color: colors.secondaryText }]}>
-          {data?.length} program
-          {data?.length !== 1 ? 's' : ''}
-        </Text>
-      </View>
+    <View >
+      
       {data?.length > 0 ? (
         <View style={styles.programsGrid}>
           {data?.map((program: TYoga, index: number) => (

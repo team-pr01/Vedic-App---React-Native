@@ -22,6 +22,7 @@ import Header from '@/components/Reusable/HeaderMenuBar/HeaderMenuBar';
 import AppHeader from '@/components/Reusable/AppHeader/AppHeader';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Categories from '@/components/Reusable/Categories/Categories';
+import SkeletonLoader from '@/components/Reusable/SkeletonLoader';
 
 export const LEVELS = [
   { id: 'all', name: 'All Levels', color: '#718096' },
@@ -29,11 +30,15 @@ export const LEVELS = [
   { id: 'intermediate', name: 'Intermediate', color: '#F59E0B' },
   { id: 'advanced', name: 'Advanced', color: '#EF4444' },
 ];
-export const allCategories = ['beginner','intermediate',  'advanced' ,
-];
+export const allCategories = ['beginner', 'intermediate', 'advanced'];
 
 export default function YogaPage() {
-  const { data, isLoading,isFetching, refetch: refetchYoga } = useGetAllYogaQuery({});
+  const {
+    data,
+    isLoading,
+    isFetching,
+    refetch: refetchYoga,
+  } = useGetAllYogaQuery({});
   const {
     data: experts,
     isLoading: isExpertsLoading,
@@ -76,10 +81,10 @@ export default function YogaPage() {
     }
 
     if (selectedCategory) {
-  programsToFilter = programsToFilter.filter(
-    (program) => program.difficulty?.toLowerCase() === selectedCategory
-  );
-}
+      programsToFilter = programsToFilter.filter(
+        (program) => program.difficulty?.toLowerCase() === selectedCategory
+      );
+    }
 
     setFilteredPrograms(programsToFilter);
   }, [searchQuery, selectedCategory, data]);
@@ -136,13 +141,87 @@ export default function YogaPage() {
                 allCategories={allCategories}
                 bgColor={'#38A169'}
               />
+              <View style={{ paddingHorizontal: 16 }}>
+                <View style={styles.sectionHeader}>
+                  <Text style={[styles.sectionTitle, { color: colors.text }]}>
+                    Featured Programs
+                  </Text>
+                  <Text
+                    style={[
+                      styles.resultsCount,
+                      { color: colors.secondaryText },
+                    ]}
+                  >
+                    {data?.length} program
+                    {data?.length !== 1 ? 's' : ''}
+                  </Text>
+                </View>
 
-              {/* Programs Grid */}
-              {isLoading || isFetching ? (
-                <LoadingComponent loading="Programs" color={colors.success} />
-              ) : (
-                <AllYogaPrograms data={filteredPrograms} />
-              )}
+                {/* Programs Grid */}
+                {isLoading || isFetching ? (
+                  <SkeletonLoader
+                  direction='column'
+                    width={'100%'}
+                    height={300}
+                    innerSkeleton={
+                      <View
+                        style={{
+                          padding: 15,
+                          justifyContent: 'flex-end',
+                          flex: 1,
+                        }}
+                      >
+                        <View>
+                          <View
+                            style={{
+                              width: '60%',
+                              height: 16,
+                              backgroundColor: '#e0e0e0',
+                              borderRadius: 8,
+                              marginBottom: 8,
+                            }}
+                          />
+                          <View
+                            style={{
+                              width: '90%',
+                              height: 12,
+                              backgroundColor: '#e0e0e0',
+                              borderRadius: 6,
+                              marginBottom: 8,
+                            }}
+                          />
+                          <View
+                            style={{
+                              width: '20%',
+                              height: 12,
+                              backgroundColor: '#e0e0e0',
+                              borderRadius: 6,
+                            }}
+                          />
+                        </View>
+                        <View
+                          style={{
+                            flexDirection: 'row',
+                            justifyContent: 'flex-end',
+                          }}
+                        >
+                          <View
+                            style={{
+                              width: '30%',
+                              height: 20,
+                              backgroundColor: '#d6d6d6',
+                              borderRadius: 15,
+                              marginTop: 20,
+                            }}
+                          />
+                        </View>
+                      </View>
+                    }
+                  />
+                ) : (
+                  <AllYogaPrograms data={filteredPrograms} />
+                )}
+              </View>
 
               {isExpertsLoading ? (
                 <LoadingComponent loading="Experts" color={colors.success} />
@@ -204,5 +283,18 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingVertical: 20,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  resultsCount: {
+    fontSize: 14,
   },
 });

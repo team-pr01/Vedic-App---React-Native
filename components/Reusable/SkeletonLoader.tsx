@@ -1,15 +1,19 @@
+import { useThemeColors } from "@/hooks/useThemeColors";
 import { JSX, useEffect, useRef } from "react";
 import { Animated, View } from "react-native";
 
 type SkeletonLoaderProps = {
-  width: number;
+  width: any;
   height: number;
   innerSkeleton?: JSX.Element; 
   borderRadius?: number;
+  direction?: "row" | "column";
+
 };
 
-const SkeletonLoader = ({ width, height, innerSkeleton,borderRadius=16 }: SkeletonLoaderProps) => {
+const SkeletonLoader = ({ width, height, innerSkeleton,borderRadius=16, direction="row" }: SkeletonLoaderProps) => {
   const shimmerValue = useRef(new Animated.Value(0)).current;
+  const colors =useThemeColors()
 
   useEffect(() => {
     Animated.loop(
@@ -34,7 +38,7 @@ const SkeletonLoader = ({ width, height, innerSkeleton,borderRadius=16 }: Skelet
   });
 
   return (
-    <View style={{ flexDirection: "row", gap: 15 }}>
+    <View style={{ flexDirection: direction, gap: 15 }}>
       {[1, 2, 3].map((_, i) => (
         <Animated.View
           key={i}
@@ -42,7 +46,7 @@ const SkeletonLoader = ({ width, height, innerSkeleton,borderRadius=16 }: Skelet
             width,
             height,
             borderRadius,
-            backgroundColor: "#e0e0e0",
+            backgroundColor: colors.card,
             opacity,
             overflow: "hidden",
           }}

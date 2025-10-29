@@ -48,8 +48,8 @@ import {
   useGenerateKundliMutation,
   useGenerateMuhurtaMutation,
   useGetAllDailyHoroscopesQuery,
-
 } from '@/redux/features/Jyotish/dailyHoroscopeApi';
+import SkeletonLoader from '@/components/Reusable/SkeletonLoader';
 
 interface JyotishReading {
   id: string;
@@ -143,7 +143,6 @@ const AiOutputParser = ({ content }: { content: string | null }) => {
   return <View style={styles.aiContentContainer}>{lines.map(renderLine)}</View>;
 };
 // Mock AI Jyotish Service
-
 
 export default function JyotishPage() {
   const {
@@ -323,8 +322,8 @@ export default function JyotishPage() {
       setError('');
 
       const res = await generateMuhurta({
-                                  query: jyotishPrompt,
-                                }).unwrap();
+        query: jyotishPrompt,
+      }).unwrap();
       setShowAIModal(false);
       setKundliReading(res?.data);
       setShowReadingModal(true);
@@ -355,7 +354,6 @@ export default function JyotishPage() {
       }
     }
   };
-
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
@@ -676,7 +674,63 @@ export default function JyotishPage() {
                   Daily Horoscope
                 </Text>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                  {dailyHoroscope?.data?.map((horoscope, index) => (
+                  {isHoroscopeLoading? (<SkeletonLoader height={150} width={280} innerSkeleton={
+                                        <View
+                                          style={{
+                                            padding: 15,
+                                            justifyContent: 'space-between',
+                                            flex: 1,
+                                          }}
+                                        >
+                                            <View
+                                              style={{
+                                                width: '40%',
+                                                height: 16,
+                                                backgroundColor: '#e0e0e0',
+                                                borderRadius: 8,
+                                                marginBottom: 8,
+                                              }}
+                                            />
+                                              <View
+                                                style={{
+                                                  width: '90%',
+                                                  height: 12,
+                                                  backgroundColor: '#e0e0e0',
+                                                  borderRadius: 6,
+                                                   marginBottom: 8,
+                                                }}
+                                              />
+                                              <View
+                                                style={{
+                                                  width: '80%',
+                                                  height: 12,
+                                                  backgroundColor: '#e0e0e0',
+                                                  borderRadius: 6,
+                                                   marginBottom: 8,
+                                                }}
+                                              />
+                                              <View
+                                                style={{
+                                                  width: '90%',
+                                                  height: 12,
+                                                  backgroundColor: '#e0e0e0',
+                                                  borderRadius: 6,
+                                                }}
+                                              />
+                                             
+                                          
+                  
+                                          <View
+                                            style={{
+                                              width: '100%',
+                                              height: 35,
+                                              backgroundColor: '#d6d6d6',
+                                              borderRadius: 8,
+                                              marginTop: 15,
+                                            }}
+                                          />
+                                        </View>
+                                      }/> ):(dailyHoroscope?.data?.map((horoscope:any, index:number) => (
                     <View
                       key={index}
                       style={[
@@ -760,7 +814,7 @@ export default function JyotishPage() {
                         </View>
                       </View>
                     </View>
-                  ))}
+                  )))}
                 </ScrollView>
               </View>
 
@@ -1057,7 +1111,7 @@ export default function JyotishPage() {
                           )}
 
                           <TouchableOpacity
-                            onPress= {handleGenerateMuhurta}
+                            onPress={handleGenerateMuhurta}
                             disabled={isMuhurtaLoading || !jyotishPrompt.trim()}
                             style={[
                               styles.generateButton,
@@ -1095,36 +1149,42 @@ export default function JyotishPage() {
                 animationType="slide"
                 onRequestClose={() => setShowReadingModal(false)}
               >
-                 <View style={styles.modalOverlay}>
-                                <View
-                                  style={[styles.recipeModal, { backgroundColor: colors.card }]}
-                                >
-                                  <View
-                                    style={[
-                                      styles.modalHeader,
-                                      { borderBottomColor: colors.border },
-                                    ]}
-                                  >
-                                    <Text
-                                      style={[
-                                        styles.modalTitle,
-                                        { color: colors.text, flex: 1 },
-                                      ]}
-                                      numberOfLines={1}
-                                    >
-                                      AI Generated Recipe
-                                    </Text>
-                                    <TouchableOpacity
-                                      onPress={() => setShowReadingModal(false)}
-                                    >
-                                      <X size={24} color="#718096" />
-                                    </TouchableOpacity>
-                                  </View>
-                                  <ScrollView>
-                                    <AiOutputParser content={kundliReading} />
-                                  </ScrollView>
-                                </View>
-                              </View>
+                <View style={styles.modalOverlay}>
+                  <View
+                    style={[
+                      styles.recipeModal,
+                      { backgroundColor: colors.card },
+                    ]}
+                  >
+                    <View
+                      style={[
+                        styles.modalHeader,
+                        { borderBottomColor: colors.border },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.modalTitle,
+                          { color: colors.text, flex: 1 },
+                        ]}
+                        numberOfLines={1}
+                      >
+                        AI Generated{' '}
+                        {selectedReadingType === 'kundali'
+                          ? 'Kundli'
+                          : 'Muhurta'}
+                      </Text>
+                      <TouchableOpacity
+                        onPress={() => setShowReadingModal(false)}
+                      >
+                        <X size={24} color="#718096" />
+                      </TouchableOpacity>
+                    </View>
+                    <ScrollView>
+                      <AiOutputParser content={kundliReading} />
+                    </ScrollView>
+                  </View>
+                </View>
               </Modal>
             )}
 
@@ -1640,16 +1700,16 @@ const styles = StyleSheet.create({
     elevation: 10,
   },
   readingModal: {
-backgroundColor: '#FFFFFF', // ADD THIS LINE
-  borderRadius: 16,
-  width: '100%',
-  maxWidth: 500,
-  maxHeight: '90%',
-  shadowColor: '#000',
-  shadowOffset: { width: 0, height: 10 },
-  shadowOpacity: 0.25,
-  shadowRadius: 20,
-  elevation: 10, // ADD THIS LINE
+    backgroundColor: '#FFFFFF', // ADD THIS LINE
+    borderRadius: 16,
+    width: '100%',
+    maxWidth: 500,
+    maxHeight: '90%',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.25,
+    shadowRadius: 20,
+    elevation: 10, // ADD THIS LINE
   },
   expertModal: {
     backgroundColor: '#FFFFFF',
@@ -1944,7 +2004,7 @@ backgroundColor: '#FFFFFF', // ADD THIS LINE
     lineHeight: 22,
     flex: 1,
   },
-   recipeModal: {
+  recipeModal: {
     borderRadius: 16,
     width: '100%',
     maxWidth: 500,

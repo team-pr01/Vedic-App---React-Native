@@ -43,13 +43,16 @@ import { getYouTubeVideoId } from '@/utils/getYouTubeVideoId';
 import LoadingComponent from '@/components/LoadingComponent/LoadingComponent';
 import { PullToRefreshWrapper } from '@/components/Reusable/PullToRefreshWrapper/PullToRefreshWrapper';
 import { useChatMutation } from '@/redux/features/AI/aiApi';
-import { useAttendOnQuizMutation, useGetAllQuizzesQuery } from '@/redux/features/Quiz/quizApi';
+import {
+  useAttendOnQuizMutation,
+  useGetAllQuizzesQuery,
+} from '@/redux/features/Quiz/quizApi';
 import { useSelector } from 'react-redux';
 import { useCurrentUser } from '@/redux/features/Auth/authSlice';
 import Header from '@/components/Reusable/HeaderMenuBar/HeaderMenuBar';
 import AppHeader from '@/components/Reusable/AppHeader/AppHeader';
 import Reels from '@/components/ReelsPage/Reels';
-
+import SkeletonLoader from '@/components/Reusable/SkeletonLoader';
 
 interface RealVideo {
   title: string;
@@ -91,26 +94,24 @@ export type TReels = {
   updatedAt?: Date;
 };
 
-
-
 // Quiz Modal Component
 const QuizModal: React.FC<{
   quiz: any;
   onClose: () => void;
   onComplete: (score: number, total: number) => void;
 }> = ({ quiz, onClose, onComplete }) => {
-    const user = useSelector(useCurrentUser);
+  const user = useSelector(useCurrentUser);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [score, setScore] = useState(0);
   const [showResult, setShowResult] = useState(false);
-    const [answers, setAnswers] = useState<
+  const [answers, setAnswers] = useState<
     { questionId: string; selectedAnswer: string }[]
   >([]);
   const [attendOnQuiz, { isLoading: isSubmitting }] = useAttendOnQuizMutation();
- 
+
   const handleSelectAnswer = (questionId: string, selectedAnswer: string) => {
-    setSelectedAnswer(selectedAnswer)
+    setSelectedAnswer(selectedAnswer);
     setAnswers((prev) => {
       const existing = prev.find((a) => a.questionId === questionId);
       if (existing) {
@@ -121,7 +122,7 @@ const QuizModal: React.FC<{
       return [...prev, { questionId, selectedAnswer }];
     });
   };
- 
+
   const handleSubmitQuiz = async () => {
     try {
       const payload = {
@@ -134,10 +135,10 @@ const QuizModal: React.FC<{
         data: payload,
         id: quiz?._id,
       }).unwrap();
-       if(response?.success){
+      if (response?.success) {
         setShowResult(true);
-        setScore(response?.data?.score)
-       }
+        setScore(response?.data?.score);
+      }
 
       // if (response?.success) {
       //   navigate("/quiz-result", {
@@ -153,17 +154,16 @@ const QuizModal: React.FC<{
       //   });
       // }
     } catch (error) {
-      console.error("Error submitting quiz:", error);
+      console.error('Error submitting quiz:', error);
     }
   };
   const handleNext = () => {
     if (currentQuestion < quiz.questions.length - 1) {
       setCurrentQuestion(currentQuestion + 1);
-      setSelectedAnswer(null)
-     } 
-     else{
-      handleSubmitQuiz()
-     }
+      setSelectedAnswer(null);
+    } else {
+      handleSubmitQuiz();
+    }
   };
 
   return (
@@ -201,25 +201,34 @@ const QuizModal: React.FC<{
             </Text>
 
             <View style={styles.optionsContainer}>
-              {quiz.questions[currentQuestion].options.map((option:any, index:string) => (
-                <TouchableOpacity
-                  key={index}
-                  style={[
-                    styles.optionButton,
-                   selectedAnswer === String(index + 1) && styles.selectedOption,
-                  ]}
-                  onPress={() => handleSelectAnswer(quiz.questions[currentQuestion]._id, String(index+1))}
-                >
-                  <Text
+              {quiz.questions[currentQuestion].options.map(
+                (option: any, index: string) => (
+                  <TouchableOpacity
+                    key={index}
                     style={[
-                      styles.optionText,
-                      selectedAnswer === String(index + 1) && styles.selectedOption,
+                      styles.optionButton,
+                      selectedAnswer === String(index + 1) &&
+                        styles.selectedOption,
                     ]}
+                    onPress={() =>
+                      handleSelectAnswer(
+                        quiz.questions[currentQuestion]._id,
+                        String(index + 1)
+                      )
+                    }
                   >
-                    {option}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+                    <Text
+                      style={[
+                        styles.optionText,
+                        selectedAnswer === String(index + 1) &&
+                          styles.selectedOption,
+                      ]}
+                    >
+                      {option}
+                    </Text>
+                  </TouchableOpacity>
+                )
+              )}
             </View>
 
             <TouchableOpacity
@@ -255,6 +264,7 @@ const QuizModal: React.FC<{
 };
 
 export default function LearnScreen() {
+  const currentTab="ai";
   const {
     data,
     isLoading: isCourseLoading,
@@ -277,9 +287,9 @@ export default function LearnScreen() {
   const colors = useThemeColors();
   const [activeTab, setActiveTab] = useState<
     'courses' | 'videos' | 'ai' | 'quiz'
-  >('courses');
+  >(currentTab||'courses');
   const [isGeneratingQuiz, setIsGeneratingQuiz] = useState(false);
-  const [currentQuiz, setCurrentQuiz] = useState<any|null>(null);
+  const [currentQuiz, setCurrentQuiz] = useState<any | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showVideoModal, setShowVideoModal] = useState(false);
   const [selectedVideo, setSelectedVideo] = useState<RealVideo | null>(null);
@@ -287,16 +297,25 @@ export default function LearnScreen() {
   const [chatMessage, setChatMessage] = useState('');
   const [chatHistory, setChatHistory] = useState<
     { role: 'user' | 'assistant'; content: string; id: string }[]
-  >([
-    {
-      role: 'assistant',
-      content:
+    >([
+      {
+        role: 'assistant',
+        content:
         "Hello! I'm your AI learning assistant. How can I help you with your Vedic studies today?",
-      id: `initial-${Date.now()}`,
-    },
-  ]);
-
-  const chatScrollViewRef = useRef<ScrollView>(null);
+        id: `initial-${Date.now()}`,
+      },
+    ]);
+    
+    const triggerHaptic = () => {
+      if (Platform.OS !== 'web') {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      }
+    };
+    const chatScrollViewRef = useRef<ScrollView>(null);
+    const handleAIAssistant = () => {
+      triggerHaptic();
+      setShowChatModal(true);
+    };
 
   useEffect(() => {
     chatScrollViewRef.current?.scrollToEnd({ animated: true });
@@ -313,11 +332,6 @@ export default function LearnScreen() {
     }
   };
 
-  const triggerHaptic = () => {
-    if (Platform.OS !== 'web') {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
-  };
 
   const handleGenerateQuiz = async (
     topic: string,
@@ -345,10 +359,6 @@ export default function LearnScreen() {
     setShowVideoModal(true);
   };
 
-  const handleAIAssistant = () => {
-    triggerHaptic();
-    setShowChatModal(true);
-  };
   const handleSendMessage = async () => {
     // Prevent sending empty or while another message is in flight
     if (!chatMessage.trim() || isSendingMessage) return;
@@ -404,7 +414,50 @@ export default function LearnScreen() {
         return (
           <View style={styles.tabContent}>
             {isCourseLoading ? (
-              <LoadingComponent loading="Courses" color={colors.primary} />
+              <SkeletonLoader
+              direction='column'
+                height={280}
+                width={'100%'}
+                innerSkeleton={
+                  <View
+                    style={{
+                      padding: 15,
+                      justifyContent: 'flex-end',
+                      flex: 1,
+                    }}
+                  >
+                    <View>
+                      <View
+                        style={{
+                          width: '60%',
+                          height: 16,
+                          backgroundColor: '#e0e0e0',
+                          borderRadius: 8,
+                          marginBottom: 8,
+                        }}
+                      />
+                      <View
+                        style={{
+                          width: '40%',
+                          height: 12,
+                          backgroundColor: '#e0e0e0',
+                          borderRadius: 6,
+                        }}
+                      />
+                    </View>
+
+                    <View
+                      style={{
+                        width: '100%',
+                        height: 35,
+                        backgroundColor: '#d6d6d6',
+                        borderRadius: 8,
+                        marginTop: 20,
+                      }}
+                    />
+                  </View>
+                }
+              />
             ) : (
               data?.data.map((course: TCourse, index: number) => (
                 <View
@@ -507,7 +560,7 @@ export default function LearnScreen() {
               //     </View>
               //   </TouchableOpacity>
               // ))
-              <Reels/>
+              <Reels />
             )}
           </View>
         );
@@ -610,9 +663,54 @@ export default function LearnScreen() {
                   Generating your quiz...
                 </Text>
               </View>
+            ) : isLoading ? (
+              <SkeletonLoader
+              direction='column'
+                height={130}
+                width={'100%'}
+                innerSkeleton={
+                  <View
+                    style={{
+                      padding: 15,
+                      justifyContent: 'space-between',
+                      flex: 1,
+                    }}
+                  >
+                    <View>
+                      <View
+                        style={{
+                          width: '60%',
+                          height: 16,
+                          backgroundColor: '#e0e0e0',
+                          borderRadius: 8,
+                          marginBottom: 8,
+                        }}
+                      />
+                      <View
+                        style={{
+                          width: '40%',
+                          height: 12,
+                          backgroundColor: '#e0e0e0',
+                          borderRadius: 6,
+                        }}
+                      />
+                    </View>
+
+                    <View
+                      style={{
+                        width: '100%',
+                        height: 35,
+                        backgroundColor: '#d6d6d6',
+                        borderRadius: 8,
+                        marginTop: 20,
+                      }}
+                    />
+                  </View>
+                }
+              />
             ) : (
               <>
-                {quizData?.data?.map((topic:any, index:number) => (
+                {quizData?.data?.map((topic: any, index: number) => (
                   <View
                     key={index}
                     style={[
@@ -698,234 +796,250 @@ export default function LearnScreen() {
     }
   };
 
-  return ( <SafeAreaView style={{ flex: 1 }}>
+  return (
+    <SafeAreaView style={{ flex: 1 }}>
       <Header />
-    <PullToRefreshWrapper onRefresh={handleRefresh}>
-           <AppHeader title="Learn & Explore"
-           colors={['#FF6F00', '#FF8F00']}
-           />
-      <SafeAreaView
-        edges={['top', 'left', 'right']}
-        style={[styles.container, { backgroundColor: colors.background }]}
-      >
-        <ScrollView
-          style={{ flex: 1 }}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
-          }
+      <PullToRefreshWrapper onRefresh={handleRefresh}>
+        <AppHeader title="Learn & Explore" colors={['#FF6F00', '#FF8F00']} />
+        <SafeAreaView
+          edges={['top', 'left', 'right']}
+          style={[styles.container, { backgroundColor: colors.background }]}
         >
-
-          {/* Tab Navigation */}
-          <View
-            style={[
-              styles.tabContainer,
-              { backgroundColor: colors.card, shadowColor: colors.cardShadow },
-            ]}
+          <ScrollView
+            style={{ flex: 1 }}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={handleRefresh}
+              />
+            }
           >
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              {[
-                { id: 'courses', name: 'Courses' },
-                { id: 'videos', name: 'Videos' },
-                { id: 'ai', name: 'AI Assistant' },
-                { id: 'quiz', name: 'Quiz' },
-              ].map((tab) => (
-                <TouchableOpacity
-                  key={tab.id}
-                  style={[
-                    [
-                      styles.tab,
-                      {
-                        backgroundColor: colors.background,
-                        borderColor: colors.border,
-                      },
-                    ],
-                    activeTab === tab.id && styles.activeTab,
-                  ]}
-                  onPress={() => {
-                    setActiveTab(tab.id as any);
-                    triggerHaptic();
-                  }}
-                >
-                  <Text
-                    style={[
-                      [styles.tabText, { color: colors.secondaryText }],
-                      activeTab === tab.id && styles.activeTabText,
-                    ]}
-                  >
-                    {tab.name}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          </View>
-
-          {/* Content */}
-          <View
-            style={[styles.content, { backgroundColor: colors.background }]}
-          >
-            {renderTabContent()}
-          </View>
-        </ScrollView>
-
-        {/* Quiz Modal */}
-        {currentQuiz && (
-          <QuizModal
-            quiz={currentQuiz}
-            onClose={() => setCurrentQuiz(null)}
-            onComplete={handleQuizComplete}
-          />
-        )}
-
-        {/* Video Modal */}
-        {showVideoModal && selectedVideo && (
-          <Modal
-            visible={true}
-            animationType="slide"
-            presentationStyle="pageSheet"
-          >
-            <SafeAreaView style={styles.videoModalContainer}>
-              <View style={styles.videoModalHeader}>
-                <Text style={styles.videoModalTitle}>Video Player</Text>
-                <TouchableOpacity onPress={() => setShowVideoModal(false)}>
-                  <X size={24} color="#2D3748" />
-                </TouchableOpacity>
-              </View>
-
-              <View style={styles.videoPlayerContainer}>
-                <View style={styles.videoPlaceholder}>
-                  <Video size={64} color="#718096" />
-                  <Text style={styles.videoPlaceholderText}>
-                    Video: {selectedVideo.title}
-                  </Text>
-                  <Text style={styles.videoPlaceholderSubtext}>
-                    By {selectedVideo.instructor}
-                  </Text>
-                </View>
-              </View>
-            </SafeAreaView>
-          </Modal>
-        )}
-
-        {/* AI Chat Modal */}
-        {showChatModal && (
-          <Modal
-            visible={true}
-            animationType="slide"
-            presentationStyle="pageSheet"
-            onRequestClose={() => setShowChatModal(false)}
-          >
-            <KeyboardAvoidingView
-              behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-              style={{ flex: 1 }}
+            {/* Tab Navigation */}
+            <View
+              style={[
+                styles.tabContainer,
+                {
+                  backgroundColor: colors.card,
+                  shadowColor: colors.cardShadow,
+                },
+              ]}
             >
-              <SafeAreaView
-                style={[
-                  styles.chatModalContainer,
-                  { backgroundColor: colors.background },
-                ]}
-              >
-                <View
-                  style={[
-                    styles.chatModalHeader,
-                    {
-                      backgroundColor: colors.card,
-                      borderBottomColor: colors.border,
-                    },
-                  ]}
-                >
-                  <Text style={[styles.chatModalTitle, { color: colors.text }]}>
-                    AI Learning Assistant
-                  </Text>
-                  <TouchableOpacity onPress={() => setShowChatModal(false)}>
-                    <X size={24} color={colors.text} />
-                  </TouchableOpacity>
-                </View>
-
-                <ScrollView
-                  ref={chatScrollViewRef}
-                  style={[
-                    styles.chatMessages,
-                    { backgroundColor: colors.background },
-                  ]}
-                  contentContainerStyle={{ paddingBottom: 10 }}
-                >
-                  {/* --- MODIFICATION 3: Use message.id for the key prop --- */}
-                  {chatHistory.map((message) => (
-                    <View
-                      key={message.id} // Use the unique ID for the key
+              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                {[
+                  { id: 'courses', name: 'Courses' },
+                  { id: 'videos', name: 'Videos' },
+                  { id: 'ai', name: 'AI Assistant' },
+                  { id: 'quiz', name: 'Quiz' },
+                ].map((tab) => (
+                  <TouchableOpacity
+                    key={tab.id}
+                    style={[
+                      [
+                        styles.tab,
+                        {
+                          backgroundColor: colors.background,
+                          borderColor: colors.border,
+                        },
+                      ],
+                      activeTab === tab.id && styles.activeTab,
+                    ]}
+                    onPress={() => {
+                      setActiveTab(tab.id as any);
+                      triggerHaptic();
+                    }}
+                  >
+                    <Text
                       style={[
-                        styles.chatBubble,
-                        message.role === 'user'
-                          ? styles.userBubble
-                          : styles.aiBubble,
+                        [styles.tabText, { color: colors.secondaryText }],
+                        activeTab === tab.id && styles.activeTabText,
                       ]}
                     >
-                      <Text
-                        style={[
-                          styles.chatText,
-                          message.role === 'user'
-                            ? styles.userText
-                            : [styles.aiText, { color: colors.text }],
-                        ]}
-                      >
-                        {message.content}
-                      </Text>
-                    </View>
-                  ))}
-                  {/* A loading indicator can still be shown while waiting for the response */}
-                  {isSendingMessage && (
-                    <View style={[styles.chatBubble, styles.aiBubble]}>
-                      <ActivityIndicator size="small" color={colors.primary} />
-                    </View>
-                  )}
-                </ScrollView>
+                      {tab.name}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
 
-                <View
-                  style={[
-                    styles.chatInputContainer,
-                    {
-                      backgroundColor: colors.card,
-                      borderTopColor: colors.border,
-                    },
-                  ]}
-                >
-                  <TextInput
-                    style={[
-                      styles.chatInput,
-                      {
-                        backgroundColor: colors.background,
-                        color: colors.text,
-                        borderColor: colors.border,
-                      },
-                    ]}
-                    value={chatMessage}
-                    onChangeText={setChatMessage}
-                    placeholder="Ask about Vedic concepts..."
-                    placeholderTextColor={colors.secondaryText}
-                    multiline
-                  />
-                  <TouchableOpacity
-                    style={[
-                      styles.sendButton,
-                      (!chatMessage.trim() || isSendingMessage) &&
-                        styles.sendButtonDisabled,
-                    ]}
-                    onPress={handleSendMessage}
-                    disabled={!chatMessage.trim() || isSendingMessage}
-                  >
-                    {isSendingMessage ? (
-                      <Loader size={20} color="#FFFFFF" />
-                    ) : (
-                      <MessageSquare size={20} color="#FFFFFF" />
-                    )}
+            {/* Content */}
+            <View
+              style={[styles.content, { backgroundColor: colors.background }]}
+            >
+              {renderTabContent()}
+            </View>
+          </ScrollView>
+
+          {/* Quiz Modal */}
+          {currentQuiz && (
+            <QuizModal
+              quiz={currentQuiz}
+              onClose={() => setCurrentQuiz(null)}
+              onComplete={handleQuizComplete}
+            />
+          )}
+
+          {/* Video Modal */}
+          {showVideoModal && selectedVideo && (
+            <Modal
+              visible={true}
+              animationType="slide"
+              presentationStyle="pageSheet"
+            >
+              <SafeAreaView style={styles.videoModalContainer}>
+                <View style={styles.videoModalHeader}>
+                  <Text style={styles.videoModalTitle}>Video Player</Text>
+                  <TouchableOpacity onPress={() => setShowVideoModal(false)}>
+                    <X size={24} color="#2D3748" />
                   </TouchableOpacity>
                 </View>
+
+                <View style={styles.videoPlayerContainer}>
+                  <View style={styles.videoPlaceholder}>
+                    <Video size={64} color="#718096" />
+                    <Text style={styles.videoPlaceholderText}>
+                      Video: {selectedVideo.title}
+                    </Text>
+                    <Text style={styles.videoPlaceholderSubtext}>
+                      By {selectedVideo.instructor}
+                    </Text>
+                  </View>
+                </View>
               </SafeAreaView>
-            </KeyboardAvoidingView>
-          </Modal>
-        )}
-      </SafeAreaView>
-    </PullToRefreshWrapper>    </SafeAreaView>
+            </Modal>
+          )}
+
+          {/* AI Chat Modal */}
+          {showChatModal && (
+            <Modal
+              visible={true}
+              animationType="slide"
+              presentationStyle="pageSheet"
+              onRequestClose={() => setShowChatModal(false)}
+            >
+              <KeyboardAvoidingView
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                style={{ flex: 1 }}
+              >
+                <SafeAreaView
+                  style={[
+                    styles.chatModalContainer,
+                    { backgroundColor: colors.background },
+                  ]}
+                >
+                  <View
+                    style={[
+                      styles.chatModalHeader,
+                      {
+                        backgroundColor: colors.card,
+                        borderBottomColor: colors.border,
+                      },
+                    ]}
+                  >
+                    <Text
+                      style={[styles.chatModalTitle, { color: colors.text }]}
+                    >
+                      AI Learning Assistant
+                    </Text>
+                    <TouchableOpacity onPress={() => setShowChatModal(false)}>
+                      <X size={24} color={colors.text} />
+                    </TouchableOpacity>
+                  </View>
+
+                  <ScrollView
+                    ref={chatScrollViewRef}
+                    style={[
+                      styles.chatMessages,
+                      { backgroundColor: colors.background },
+                    ]}
+                    contentContainerStyle={{ paddingBottom: 10 }}
+                  >
+                    {/* --- MODIFICATION 3: Use message.id for the key prop --- */}
+                    {chatHistory.map((message) => (
+                      <View
+                        key={message.id} // Use the unique ID for the key
+                        style={[
+                          styles.chatBubble,
+                          message.role === 'user'
+                            ? {
+                                ...styles.userBubble,
+                                backgroundColor: colors.secondary,
+                              }
+                            : {
+                                ...styles.aiBubble,
+                                backgroundColor: colors.card,
+                              },
+                        ]}
+                      >
+                        <Text
+                          style={[
+                            styles.chatText,
+                            message.role === 'user'
+                              ? styles.userText
+                              : [styles.aiText, { color: colors.text }],
+                          ]}
+                        >
+                          {message.content}
+                        </Text>
+                      </View>
+                    ))}
+                    {/* A loading indicator can still be shown while waiting for the response */}
+                    {isSendingMessage && (
+                      <View style={[styles.chatBubble, styles.aiBubble]}>
+                        <ActivityIndicator
+                          size="small"
+                          color={colors.primary}
+                        />
+                      </View>
+                    )}
+                  </ScrollView>
+
+                  <View
+                    style={[
+                      styles.chatInputContainer,
+                      {
+                        backgroundColor: colors.card,
+                        borderTopColor: colors.border,
+                      },
+                    ]}
+                  >
+                    <TextInput
+                      style={[
+                        styles.chatInput,
+                        {
+                          backgroundColor: colors.background,
+                          color: colors.text,
+                          borderColor: colors.border,
+                        },
+                      ]}
+                      value={chatMessage}
+                      onChangeText={setChatMessage}
+                      placeholder="Ask about Vedic concepts..."
+                      placeholderTextColor={colors.secondaryText}
+                      multiline
+                    />
+                    <TouchableOpacity
+                      style={[
+                        styles.sendButton,
+                        (!chatMessage.trim() || isSendingMessage) &&
+                          styles.sendButtonDisabled,
+                      ]}
+                      onPress={handleSendMessage}
+                      disabled={!chatMessage.trim() || isSendingMessage}
+                    >
+                      {isSendingMessage ? (
+                        <Loader size={20} color="#FFFFFF" />
+                      ) : (
+                        <MessageSquare size={20} color="#FFFFFF" />
+                      )}
+                    </TouchableOpacity>
+                  </View>
+                </SafeAreaView>
+              </KeyboardAvoidingView>
+            </Modal>
+          )}
+        </SafeAreaView>
+      </PullToRefreshWrapper>{' '}
+    </SafeAreaView>
   );
 }
 
@@ -975,10 +1089,10 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 3,
-    justifyContent:"center"
+    justifyContent: 'center',
   },
   tab: {
-    paddingHorizontal:  16,
+    paddingHorizontal: 16,
     paddingVertical: 8,
     marginLeft: 16,
     borderRadius: 25,
@@ -1483,9 +1597,11 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 4,
   },
   aiBubble: {
-    backgroundColor: '#F3F4F6',
     alignSelf: 'flex-start',
-    borderTopLeftRadius: 4,
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    borderBottomRightRadius: 16,
+    borderBottomLeftRadius: 4,
   },
   chatText: {
     fontSize: 14,

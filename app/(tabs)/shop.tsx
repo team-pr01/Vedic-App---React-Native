@@ -37,6 +37,7 @@ import Categories from '@/components/Reusable/Categories/Categories';
 import { useGetAllProductsQuery, useUpdateProductClicksMutation } from '@/redux/features/Products/productApi';
 import Header from '@/components/Reusable/HeaderMenuBar/HeaderMenuBar';
 import AppHeader from '@/components/Reusable/AppHeader/AppHeader';
+import SkeletonLoader from '@/components/Reusable/SkeletonLoader';
 
 const { width } = Dimensions.get('window');
 
@@ -271,56 +272,130 @@ const [updateProductClicks] = useUpdateProductClicksMutation();
               setSelectedCategory={setSelectedCategory}
               selectedCategory={selectedCategory}
               allCategories={allCategories}
-              bgColor={'#DD6B20'}
+              bgColor={'#8B5CF6'}
               isLoading={isLoadingProducts}
             />
 
         {/* Products Grid */}
         <View style={styles.productsSection}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>Products</Text>
+          <View style={{ paddingVertical:8 }} />
           <View style={styles.productsGrid}>
-            {products?.data?.products?.map((product:ShopProduct) => (
-              <View key={product?._id} style={[styles.productCard, { backgroundColor: colors.card, shadowColor: colors.cardShadow }]}>
-                <View style={[styles.productImageContainer, { backgroundColor: product.imageBgColor }]}>
-                  <Image source={{ uri: product.imageUrl }} style={styles.productImage} />
-                  {product?.tags && (
-                    <View style={[styles.productTag, { backgroundColor:colors.error }]}>
-                      <Text style={styles.productTagText}>{product?.tags}</Text>
+  {isLoadingProducts ? (
+  <SkeletonLoader direction='row'  height={280} width={'48%'} innerSkeleton={
+                  <View
+                    style={{
+                      padding: 15,
+                      justifyContent: 'flex-end',
+                      flex: 1,
+                    }}
+                  >
+                    <View>
+                      <View
+                        style={{
+                          width: '60%',
+                          height: 16,
+                          backgroundColor: '#e0e0e0',
+                          borderRadius: 8,
+                          marginBottom: 8,
+                        }}
+                      />
+                      <View
+                        style={{
+                          width: '40%',
+                          height: 12,
+                          backgroundColor: '#e0e0e0',
+                          borderRadius: 6,
+                        }}
+                      />
                     </View>
-                  )}
-                </View>
-                
-                <View style={styles.productContent}>
-                  <Text style={[styles.productSubtitle, { color: colors.secondaryText }]}>{product?.category}</Text>
-                  <Text style={[styles.productName, { color: colors.text }]} numberOfLines={1}>{product?.name}</Text>
-                
-                  
-                  <View style={styles.productFooter}>
-                    <View style={[styles.priceContainer, { backgroundColor: colors.background }]}>
-                      <Text style={[styles.priceText, { color: colors.text }]}>{product.currency} {product?.price}</Text>
-                    </View>
-                    <TouchableOpacity
-                      onPress={() => handleBuyNowClick(product)}
-                      style={[styles.buyButton, { backgroundColor: colors.text }]}
-                    >
-                      <ShoppingBag size={14} color={colors.background} />
-                      <Text style={[styles.buyButtonText, { color: colors.background }]}>BUY</Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              </View>
-            ))}
-          </View>
 
-          {products?.length === 0 && (
-            <View style={styles.emptyState}>
-              <ShoppingBag size={48} color={colors.secondaryText} />
-              <Text style={[styles.emptyStateTitle, { color: colors.text }]}>No products found</Text>
-              <Text style={[styles.emptyStateText, { color: colors.secondaryText }]}>
-                Try adjusting your search or category filters
-              </Text>
+                    <View
+                      style={{
+                        width: '100%',
+                        height: 35,
+                        backgroundColor: '#d6d6d6',
+                        borderRadius: 8,
+                        marginTop: 20,
+                      }}
+                    />
+                  </View>
+                }
+/>  
+  ) : products?.length === 0 ? (
+    // 🛒 Empty state
+    <View style={styles.emptyState}>
+      <ShoppingBag size={48} color={colors.secondaryText} />
+      <Text style={[styles.emptyStateTitle, { color: colors.text }]}>
+        No products found
+      </Text>
+      <Text style={[styles.emptyStateText, { color: colors.secondaryText }]}>
+        Try adjusting your search or category filters
+      </Text>
+    </View>
+  ) : (
+    // 🛍️ Product Grid
+    products?.data?.products?.map((product: ShopProduct) => (
+      <View
+        key={product?._id}
+        style={[
+          styles.productCard,
+          { backgroundColor: colors.card, shadowColor: colors.cardShadow },
+        ]}
+      >
+        <View
+          style={[
+            styles.productImageContainer,
+            { backgroundColor: product.imageBgColor },
+          ]}
+        >
+          <Image source={{ uri: product.imageUrl }} style={styles.productImage} />
+          {product?.tags && (
+            <View
+              style={[styles.productTag, { backgroundColor: colors.error }]}
+            >
+              <Text style={styles.productTagText}>{product?.tags}</Text>
             </View>
           )}
+        </View>
+
+        <View style={styles.productContent}>
+          <Text
+            style={[styles.productSubtitle, { color: colors.secondaryText }]}
+          >
+            {product?.category}
+          </Text>
+          <Text
+            style={[styles.productName, { color: colors.text }]}
+            numberOfLines={1}
+          >
+            {product?.name}
+          </Text>
+
+          <View style={styles.productFooter}>
+            <View
+              style={[styles.priceContainer, { backgroundColor: colors.background }]}
+            >
+              <Text style={[styles.priceText, { color: colors.text }]}>
+                {product.currency} {product?.price}
+              </Text>
+            </View>
+            <TouchableOpacity
+              onPress={() => handleBuyNowClick(product)}
+              style={[styles.buyButton, { backgroundColor: colors.text }]}
+            >
+              <ShoppingBag size={14} color={colors.background} />
+              <Text style={[styles.buyButtonText, { color: colors.background }]}>
+                BUY
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    ))
+  )}
+</View>
+
         </View>
 
         <View style={styles.bottomSpacing} />

@@ -12,10 +12,10 @@ import {
   RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Search, Languages, X, Filter } from 'lucide-react-native';
+import { Search, Languages, X, Filter, Eye, Heart } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { useThemeColors } from '@/hooks/useThemeColors';
-import { useGetAllNewsQuery } from '@/redux/features/News/newsApi';
+import { useGetAllNewsQuery, useLikeNewsMutation, useViewNewsMutation } from '@/redux/features/News/newsApi';
 import { useGetAllCategoriesQuery } from '@/redux/features/Categories/categoriesApi';
 import { formatDate } from './../../utils/formatDate';
 import NewsContent from '@/components/NewsContent';
@@ -46,10 +46,13 @@ export default function NewsScreen() {
     category: selectedCategory,
     keyword: searchQuery,
   });
+  console.log(translatedArticles);
   const [currentLanguage, setCurrentLanguage] = useState<Language>(
     LANGUAGES[0]
   );
-  console.log(data?.data[0]);
+  const [likeNews, { isLoading:isLikeLoading }] = useLikeNewsMutation();
+  const [viewNews, { isLoading:isViewLoading }] = useViewNewsMutation();
+ 
   useEffect(() => {
     const langCode = currentLanguage?.code;
     if (!data?.data || !langCode) {
@@ -80,7 +83,6 @@ export default function NewsScreen() {
       .filter(Boolean); // remove nulls (articles without that language)
 
     setTranslatedArticles(filtered);
-    console.log('✅ Translated articles:', filtered);
   }, [data, currentLanguage]);
   
   const { data: categoryData,isLoading:isLoadingCategories, refetch: refetchCategories } =
@@ -94,6 +96,20 @@ export default function NewsScreen() {
   );
 
   const [refreshing, setRefreshing] = useState(false);
+    const handleLike = async (id:string) => {
+    try {
+      await likeNews(id).unwrap();
+    } catch (err) {
+      console.error('❌ Error liking news:', err);
+    }
+  };
+    const handleView = async (id:string) => {
+    try {
+      await viewNews(id).unwrap();
+    } catch (err) {
+      console.error('❌ Error viewing news:', err);
+    }
+  };
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -109,10 +125,8 @@ export default function NewsScreen() {
 
   const colors = useThemeColors();
   const [selectedNewsItem, setSelectedNewsItem] = useState<any | null>(null);
-  console.log(selectedNewsItem);
   const [isArticleModalOpen, setIsArticleModalOpen] = useState(false);
   const [showLanguageModal, setShowLanguageModal] = useState(false);
-
   const handleOpenArticleModal = (article: any, translated: any) => {
     triggerHaptic();
     setSelectedNewsItem({ article, translated });
@@ -245,6 +259,7 @@ export default function NewsScreen() {
                   translatedArticles?.map((article: any) => {
                     const translated =
                       article?.translations?.[currentLanguage.code];
+                    const userLiked = article?.likedBy?.includes(user?._id);
                     return (
                       <TouchableOpacity
                         key={article?._id}
@@ -255,8 +270,9 @@ export default function NewsScreen() {
                             shadowColor: colors.cardShadow,
                           },
                         ]}
-                        onPress={() =>
+                        onPress={() =>{
                           handleOpenArticleModal(article, translated)
+                          handleView(article._id)}
                         }
                       >
                         <Image
@@ -310,7 +326,7 @@ export default function NewsScreen() {
                               .slice(0, 100) + '...'}
                           </Text>
 
-                          {/* <View style={styles.articleMeta}>
+                          <View style={styles.articleMeta}>
                           <View style={styles.metaLeft}>
                             <View style={styles.metaItem}>
                               <Eye size={14} color={colors.secondaryText} />
@@ -330,30 +346,30 @@ export default function NewsScreen() {
                               style={styles.actionButton}
                               onPress={(e) => {
                                 e.stopPropagation();
-                                handleLoveReact(article.id);
+                                handleLike(article._id);
                               }}
                             >
                               <Heart
                                 size={20}
                                 color={
-                                  userLoved
+                                  userLiked
                                     ? colors.error
                                     : colors.secondaryText
                                 }
-                                fill={userLoved ? '#EF4444' : 'none'}
+                                fill={userLiked ? '#EF4444' : 'none'}
                               />
                               <Text
                                 style={[
                                   styles.actionText,
                                   { color: colors.secondaryText },
-                                  userLoved && { color: colors.error },
+                                  userLiked && { color: colors.error },
                                 ]}
                               >
-                                {loveCount}
+                              {article.likes}
                               </Text>
                             </TouchableOpacity>
 
-                            <TouchableOpacity
+                            {/* <TouchableOpacity
                               style={styles.actionButton}
                               onPress={(e) => {
                                 e.stopPropagation();
@@ -361,12 +377,12 @@ export default function NewsScreen() {
                               }}
                             >
                               <Share2 size={20} color={colors.secondaryText} />
-                            </TouchableOpacity>
+                            </TouchableOpacity> */}
                           </View>
-                        </View> */}
+                        </View>
 
                           <View style={styles.tagsContainer}>
-                            {article?.tags?.map(
+                            {article?.translated?.tags?.map(
                               (tag: string, index: number) => (
                                 <View
                                   key={index}
@@ -381,7 +397,7 @@ export default function NewsScreen() {
                                       { color: colors.info },
                                     ]}
                                   >
-                                    #{tag}
+                                    #333{tag}
                                   </Text>
                                 </View>
                               )

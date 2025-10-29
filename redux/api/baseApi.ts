@@ -4,7 +4,7 @@ import type {
   FetchArgs,
   FetchBaseQueryError,
 } from '@reduxjs/toolkit/query';
-import { setUser } from '../features/Auth/authSlice';
+import { logout, setUser } from '../features/Auth/authSlice';
 import { RootState } from '../store';
 
 const baseQuery = fetchBaseQuery({
@@ -28,7 +28,7 @@ const baseQueryWithRefreshToken: BaseQueryFn<
   let result = await baseQuery(args, api, extraOptions);
 
   if (result.error?.status === 401) {
-    // Try to get a new token
+   try {
     const res = await fetch(
       'https://vedic-app-server.onrender.com/api/v1/auth/refresh-token',
       {
@@ -49,7 +49,14 @@ const baseQueryWithRefreshToken: BaseQueryFn<
       // Retry the original query with new token
       result = await baseQuery(args, api, extraOptions);
     }
-  }
+  }catch (error) {
+        console.warn('Session expired, logging out user...');
+        api.dispatch(logout()); 
+        if (typeof window !== 'undefined') {
+          window.location.href = '/auth';
+        }
+      }
+    }
 
   return result;
 };
@@ -79,3 +86,4 @@ export const baseApi = createApi({
   ],
   endpoints: () => ({}),
 });
+

@@ -28,9 +28,10 @@ export default function SacredTextsSection({
 }: SacredTextsSectionProps) {
   const colors = useThemeColors();
 
-  const handleTextPress = (textId: string) => {
+  const handleTextPress = (textId: string,textName:string) => {
     onTextClick(textId);
-    router.push(`/(tabs)/veda-reader?vedaId=${textId}`);
+    router.push(`/(tabs)/veda-reader?vedaId=${textId}&textName=${textName}`);
+    console.log(textId)
   };
 
   const calculateVedaStats = (veda: VedicText) => {
@@ -171,14 +172,14 @@ if (isLoading) {
                   shadowColor: colors.cardShadow,
                 },
               ]}
-              onPress={() => handleTextPress(text._id)}
+              onPress={() => handleTextPress(text._id,text.name)}
               activeOpacity={0.8}
             >
               <Image source={{ uri: text.imageUrl }} style={styles.textImage} />
               <View style={styles.textOverlay}>
                 <View style={styles.textContent}>
-                  <Text style={styles.textTitle}>{text.title}</Text>
-                  <Text style={styles.textSubtitle}>{text.category}</Text>
+                  <Text style={styles.textTitle}>{text.name}</Text>
+                  <Text style={styles.textSubtitle}>{text.type}</Text>
                   <View style={styles.textMeta}>
                     <BookOpen size={12} color="#E2E8F0" />
                     <Text style={styles.textMetaText}>

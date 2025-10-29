@@ -250,12 +250,12 @@ export default function SettingsModal({ visible, onClose ,onLogout}: SettingsMod
             <View style={styles.section}>
               <Text style={[styles.sectionTitle, { color: colors.secondaryText }]}>GENERAL</Text>
               <View style={[styles.sectionContent, { backgroundColor: colors.card, shadowColor: colors.cardShadow }]}>
-                <SettingItem
+                {/* <SettingItem
                   icon={<Languages size={20} color={colors.primary} />}
                   label="Language"
                   value={currentLanguage.name}
                   onPress={() => setShowLanguageModal(true)}
-                />
+                /> */}
                 <SettingItem
                   icon={isDarkMode ? <Moon size={20} color={colors.primary} /> : <Sun size={20} color={colors.primary} />}
                   label="Dark Mode"

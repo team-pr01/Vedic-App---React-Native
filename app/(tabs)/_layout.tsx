@@ -123,7 +123,7 @@ export default function TabLayout() {
               style={[
                 styles.akfIcon,
                 {
-                  backgroundColor: colors.primary,
+                  backgroundColor: colors.info,
                   transform: [{ scale: focused ? 1.1 : 1 }],
                   borderColor: colors.card,
                 },

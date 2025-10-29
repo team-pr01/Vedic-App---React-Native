@@ -38,6 +38,7 @@ import { PullToRefreshWrapper } from '@/components/Reusable/PullToRefreshWrapper
 import LoadingComponent from '@/components/LoadingComponent/LoadingComponent';
 import Header from '@/components/Reusable/HeaderMenuBar/HeaderMenuBar';
 import AppHeader from '@/components/Reusable/AppHeader/AppHeader';
+import SkeletonLoader from '@/components/Reusable/SkeletonLoader';
 
 interface SanatanSthalItem {
   id: string;
@@ -87,7 +88,7 @@ export default function SanatanSthalPage() {
   const approvedTemples =
     data?.data?.filter((item: TTemple) => item.status === 'approved') || [];
   const [refreshing, setRefreshing] = useState(false);
-
+console.log(approvedTemples)
   const handleRefresh = async () => {
     setRefreshing(true);
 
@@ -157,206 +158,252 @@ export default function SanatanSthalPage() {
     }
   };
 
-  return ( <SafeAreaView style={{ flex: 1 }}>
+  return (
+    <SafeAreaView style={{ flex: 1 }}>
       <Header />
       {/* Floating Add Button */}
-          <TouchableOpacity
-            style={[styles.floatingButton, { backgroundColor: colors.info }]}
-            onPress={() => {
-              triggerHaptic();
-              setShowRegistrationModal(true);
-            }}
-          >
-            <Plus size={24} color="#FFFFFF" />
-          </TouchableOpacity>
-    <PullToRefreshWrapper onRefresh={handleRefresh}>
-      <AppHeader title="Sanatan Sthal" colors={['#00BCD4', '#00ACC1']} />
-      <ScrollView
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
-        }
+      <TouchableOpacity
+        style={[styles.floatingButton, { backgroundColor: colors.info }]}
+        onPress={() => {
+          triggerHaptic();
+          setShowRegistrationModal(true);
+        }}
       >
-        <View
-          style={[styles.container, { backgroundColor: colors.background }]}
+        <Plus size={24} color="#FFFFFF" />
+      </TouchableOpacity>
+      <PullToRefreshWrapper onRefresh={handleRefresh}>
+        <AppHeader title="Sanatan Sthal" colors={['#00BCD4', '#00ACC1']} />
+        <ScrollView
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+          }
         >
-          
-
-          <ScrollView
-            style={styles.content}
-            showsVerticalScrollIndicator={false}
+          <View
+            style={[styles.container, { backgroundColor: colors.background }]}
           >
-            {/* Search Bar */}
-            <View
-              style={[styles.searchContainer, { backgroundColor: colors.card }]}
+            <ScrollView
+              style={styles.content}
+              showsVerticalScrollIndicator={false}
             >
+              {/* Search Bar */}
               <View
                 style={[
-                  styles.searchBar,
-                  {
-                    backgroundColor: colors.background,
-                    shadowColor: colors.cardShadow,
-                  },
+                  styles.searchContainer,
+                  { backgroundColor: colors.card },
                 ]}
               >
-                <Search size={20} color={colors.secondaryText} />
-                <TextInput
-                  style={[styles.searchInput, { color: colors.text }]}
-                  placeholder="Search temples, gurukuls, organizations..."
-                  value={searchQuery}
-                  onChangeText={setSearchQuery}
-                  placeholderTextColor={colors.secondaryText}
-                />
-                <TouchableOpacity
-                  onPress={handleVoiceSearch}
+                <View
                   style={[
-                    styles.voiceButton,
-                    isListening && styles.voiceButtonActive,
+                    styles.searchBar,
+                    {
+                      backgroundColor: colors.background,
+                      shadowColor: colors.cardShadow,
+                    },
                   ]}
                 >
-                  {isListening ? (
-                    <StopCircle size={18} color="#EF4444" />
-                  ) : (
-                    <Mic size={18} color={colors.info} />
-                  )}
-                </TouchableOpacity>
+                  <Search size={20} color={colors.secondaryText} />
+                  <TextInput
+                    style={[styles.searchInput, { color: colors.text }]}
+                    placeholder="Search temples, gurukuls, organizations..."
+                    value={searchQuery}
+                    onChangeText={setSearchQuery}
+                    placeholderTextColor={colors.secondaryText}
+                  />
+                  <TouchableOpacity
+                    onPress={handleVoiceSearch}
+                    style={[
+                      styles.voiceButton,
+                      isListening && styles.voiceButtonActive,
+                    ]}
+                  >
+                    {isListening ? (
+                      <StopCircle size={18} color="#EF4444" />
+                    ) : (
+                      <Mic size={18} color={colors.info} />
+                    )}
+                  </TouchableOpacity>
+                </View>
+
+                {isListening && (
+                  <View style={styles.listeningIndicator}>
+                    <View style={styles.listeningDot} />
+                    <Text
+                      style={[
+                        styles.listeningText,
+                        { color: colors.secondaryText },
+                      ]}
+                    >
+                      Listening...
+                    </Text>
+                  </View>
+                )}
               </View>
 
-              {isListening && (
-                <View style={styles.listeningIndicator}>
-                  <View style={styles.listeningDot} />
-                  <Text
-                    style={[
-                      styles.listeningText,
-                      { color: colors.secondaryText },
-                    ]}
-                  >
-                    Listening...
-                  </Text>
-                </View>
-              )}
-            </View>
+              {/* Items List */}
+              <View style={styles.itemsContainer}>
+                <Text style={[styles.sectionTitle, { color: colors.text }]}>
+                  Sacred Places & Organizations
+                </Text>
+                <Text
+                  style={[styles.resultsCount, { color: colors.secondaryText }]}
+                >
+                  {approvedTemples?.length} place
+                  {approvedTemples?.length !== 1 ? 's' : ''} found
+                </Text>
 
-            {/* Items List */}
-            <View style={styles.itemsContainer}>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                Sacred Places & Organizations
-              </Text>
-              <Text
-                style={[styles.resultsCount, { color: colors.secondaryText }]}
-              >
-                {approvedTemples?.length} place
-                {approvedTemples?.length !== 1 ? 's' : ''} found
-              </Text>
+                {/* All temples */}
+                {isLoading ? (
+                 <SkeletonLoader    direction='column' height={280} width={'100%'} innerSkeleton={
+                                   <View
+                                     style={{
+                                       padding: 15,
+                                       justifyContent: 'flex-end',
+                                       flex: 1,
+                                     }}
+                                   >
+                                     <View>
+                                       <View
+                                         style={{
+                                           width: '60%',
+                                           height: 16,
+                                           backgroundColor: '#e0e0e0',
+                                           borderRadius: 8,
+                                           marginBottom: 8,
+                                         }}
+                                       />
+                                       <View
+                                         style={{
+                                           width: '40%',
+                                           height: 12,
+                                           backgroundColor: '#e0e0e0',
+                                           borderRadius: 6,
+                                           marginBottom: 8,
+                                         }}
+                                       />
+                                       <View
+                                         style={{
+                                           width: '60%',
+                                           height: 12,
+                                           backgroundColor: '#e0e0e0',
+                                           borderRadius: 6,
+                                         }}
+                                       />
+                                     </View>
+                 
+                                    
+                                   </View>
+                                 }
+                 />  
+                ) : (
+                  approvedTemples?.map((item: TTemple) => (
+                    <TouchableOpacity
+                      key={item?._id}
+                      style={[
+                        styles.itemCard,
+                        {
+                          backgroundColor: colors.card,
+                          shadowColor: colors.cardShadow,
+                        },
+                      ]}
+                      // onPress={() => handleItemPress(item)}
+                      activeOpacity={0.8}
+                    >
+                      <Image
+                        source={{ uri: item.imageUrl }}
+                        style={styles.itemImage}
+                      />
+                      <View style={styles.itemContent}>
+                        <View style={styles.itemHeader}>
+                          <View style={styles.itemTitleRow}>
+                            {/* {getTypeIcon(item.type)} */}
+                            <Text
+                              style={[styles.itemTitle, { color: colors.text }]}
+                            >
+                              {item?.name}
+                            </Text>
+                          </View>
+                        </View>
 
-              {/* All temples */}
-              {isLoading ? (
-                <LoadingComponent loading="Temple" color={colors.info} />
-              ) : (
-                approvedTemples?.map((item: TTemple) => (
-                  <TouchableOpacity
-                    key={item?._id}
-                    style={[
-                      styles.itemCard,
-                      {
-                        backgroundColor: colors.card,
-                        shadowColor: colors.cardShadow,
-                      },
-                    ]}
-                    // onPress={() => handleItemPress(item)}
-                    activeOpacity={0.8}
-                  >
-                    <Image
-                      source={{ uri: item.imageUrl }}
-                      style={styles.itemImage}
-                    />
-                    <View style={styles.itemContent}>
-                      <View style={styles.itemHeader}>
-                        <View style={styles.itemTitleRow}>
-                          {/* {getTypeIcon(item.type)} */}
+                        <View style={styles.locationContainer}>
+                          <MapPin size={14} color={colors.secondaryText} />
                           <Text
-                            style={[styles.itemTitle, { color: colors.text }]}
+                            style={[
+                              styles.locationText,
+                              { color: colors.secondaryText },
+                            ]}
                           >
-                            {item?.name}
+                            {item?.city}, {item?.country}
                           </Text>
                         </View>
-                      </View>
 
-                      <View style={styles.locationContainer}>
-                        <MapPin size={14} color={colors.secondaryText} />
                         <Text
                           style={[
-                            styles.locationText,
+                            styles.itemDescription,
                             { color: colors.secondaryText },
                           ]}
                         >
-                          {item?.city}, {item?.country}
+                          {item.description}
                         </Text>
-                      </View>
 
-                      <Text
-                        style={[
-                          styles.itemDescription,
-                          { color: colors.secondaryText },
-                        ]}
-                      >
-                        {item.description}
-                      </Text>
-
-                      <View style={styles.itemFooter}>
-                        <View
-                          style={[
-                            styles.typeBadge,
-                            // { backgroundColor: getTypeColor(item.type) },
-                          ]}
-                        >
-                          <Text style={styles.typeBadgeText}>
-                            Deity : {item?.mainDeity}
-                          </Text>
+                        <View style={styles.itemFooter}>
+                          <View
+                            style={[
+                              styles.typeBadge,
+                              { backgroundColor: colors.info},
+                            ]}
+                          >
+                            <Text style={styles.typeBadgeText}>
+                              Deity : {item?.mainDeity}
+                            </Text>
+                          </View>
                         </View>
                       </View>
-                    </View>
-                  </TouchableOpacity>
-                ))
-              )}
+                    </TouchableOpacity>
+                  ))
+                )}
 
-              {isLoading
-                ? ''
-                : approvedTemples?.length === 0 && (
-                    <View style={styles.emptyState}>
-                      <Text
-                        style={[styles.emptyStateTitle, { color: colors.text }]}
-                      >
-                        No places found
-                      </Text>
-                      <Text
-                        style={[
-                          styles.emptyStateText,
-                          { color: colors.secondaryText },
-                        ]}
-                      >
-                        Try adjusting your search criteria or add a new place
-                      </Text>
-                    </View>
-                  )}
-            </View>
+                {isLoading
+                  ? ''
+                  : approvedTemples?.length === 0 && (
+                      <View style={styles.emptyState}>
+                        <Text
+                          style={[
+                            styles.emptyStateTitle,
+                            { color: colors.text },
+                          ]}
+                        >
+                          No places found
+                        </Text>
+                        <Text
+                          style={[
+                            styles.emptyStateText,
+                            { color: colors.secondaryText },
+                          ]}
+                        >
+                          Try adjusting your search criteria or add a new place
+                        </Text>
+                      </View>
+                    )}
+              </View>
 
-            {/* <View style={styles.bottomSpacing} /> */}
-          </ScrollView>
+              {/* <View style={styles.bottomSpacing} /> */}
+            </ScrollView>
 
-          {/* Registration Modal */}
-          <Modal
-            visible={showRegistrationModal}
-            transparent
-            animationType="slide"
-            onRequestClose={() => setShowRegistrationModal(false)}
-          >
-            <AddTempleForm
-              setShowRegistrationModal={setShowRegistrationModal}
-            />
-          </Modal>
-        </View>
-      </ScrollView>
-    </PullToRefreshWrapper>    </SafeAreaView>
+            {/* Registration Modal */}
+            <Modal
+              visible={showRegistrationModal}
+              transparent
+              animationType="slide"
+              onRequestClose={() => setShowRegistrationModal(false)}
+            >
+              <AddTempleForm
+                setShowRegistrationModal={setShowRegistrationModal}
+              />
+            </Modal>
+          </View>
+        </ScrollView>
+      </PullToRefreshWrapper>{' '}
+    </SafeAreaView>
   );
 }
 
@@ -364,7 +411,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F7FAFC',
-    position: "relative"
+    position: 'relative',
   },
   headerContainer: {
     backgroundColor: '#00BCD4',
@@ -397,7 +444,7 @@ const styles = StyleSheet.create({
   },
   floatingButton: {
     position: 'absolute',
-    bottom: 30,
+    bottom: 55,
     right: 20,
     width: 56,
     height: 56,
@@ -464,6 +511,7 @@ const styles = StyleSheet.create({
   },
   itemsContainer: {
     paddingHorizontal: 16,
+    paddingBottom: 16,
   },
   sectionTitle: {
     fontSize: 20,

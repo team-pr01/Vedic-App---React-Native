@@ -65,6 +65,7 @@ import { useForm } from 'react-hook-form';
 import SkeletonLoader from '@/components/Reusable/SkeletonLoader';
 import SearchBar from '@/components/Reusable/SearchBar';
 import Header from '@/components/Reusable/HeaderMenuBar/HeaderMenuBar';
+import AIBanner from '@/components/AIBanner/AiBanner';
 
 export type TContent = {
   _id: string;
@@ -308,7 +309,8 @@ export default function HomeScreen() {
     isLoading: isProgramLoading,
     refetch: refetchProgramData,
   } = useGetAllDonationProgramsQuery({});
-
+  const { data: allPushNotifications, refetch: refetchAllPushNotifications } =
+    useGetAllPushNotificationForUserQuery(user?._id);
   const [refreshing, setRefreshing] = useState(false);
 
   const handleRefresh = async () => {
@@ -454,7 +456,7 @@ export default function HomeScreen() {
       paymentMethod: '',
       donationProgramTitle: '',
       donationProgramId: '',
-      file: null, 
+      file: null,
     },
   });
   const [addPaymentProof, { isSubmitLoading }] = useAddPaymentProofMutation();
@@ -496,7 +498,7 @@ export default function HomeScreen() {
     }
   };
   return (
-    <SafeAreaView style={{ flex: 1 }}>
+    <SafeAreaView style={{ flex: 1, }}>
       <Header />
       <PullToRefreshWrapper onRefresh={handleRefresh}>
         <ScrollView
@@ -514,109 +516,109 @@ export default function HomeScreen() {
             >
               {/* Hero Section */}
               <View style={styles.heroContainer}>
-  {isLoading ? (
-    // 🩶 Hero Skeleton Loader
-    <ScrollView
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      contentContainerStyle={{ gap: 12, paddingHorizontal: 16 }}
-    >
-      <SkeletonLoader
-        width={width - 32}
-        height={230}
-        innerSkeleton={
-          <View
-            style={{
-              flex: 1,
-              justifyContent: "flex-end",
-              padding: 16,
-              backgroundColor: "rgba(0,0,0,0.05)",
-            }}
-          >
-            {/* Title placeholder */}
-            <View
-              style={{
-                width: "60%",
-                height: 18,
-                borderRadius: 6,
-                backgroundColor: "#d6d6d6",
-                marginBottom: 10,
-              }}
-            />
-            {/* Subtitle placeholder */}
-            <View
-              style={{
-                width: "80%",
-                height: 14,
-                borderRadius: 6,
-                backgroundColor: "#d6d6d6",
-              }}
-            />
-          </View>
-        }
-      />
-    </ScrollView>
-  ) : (
-    <>
-      <ScrollView
-        ref={scrollViewRef}
-        horizontal
-        pagingEnabled
-        showsHorizontalScrollIndicator={false}
-        onMomentumScrollEnd={(event) => {
-          const index = Math.round(
-            event.nativeEvent.contentOffset.x / width
-          );
-          setCurrentHeroIndex(index);
-          setIsManualScrolling(false);
-        }}
-        onScrollBeginDrag={() => setIsManualScrolling(true)}
-      >
-        {data?.data?.map((hero: TContent, index: number) => (
-          <View key={index} style={styles.heroSlide}>
-            {hero.videoUrl ? (
-              <YoutubePlayer
-                height={280}
-                play={false}
-                videoId={getYouTubeVideoId(hero.videoUrl)}
-              />
-            ) : (
-              <Image
-                source={{ uri: hero.imageUrl }}
-                style={styles.heroImage}
-              />
-            )}
-          </View>
-        ))}
-      </ScrollView>
+                {isLoading ? (
+                  // 🩶 Hero Skeleton Loader
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={{ gap: 12, paddingHorizontal: 16 }}
+                  >
+                    <SkeletonLoader
+                      width={width - 32}
+                      height={230}
+                      innerSkeleton={
+                        <View
+                          style={{
+                            flex: 1,
+                            justifyContent: 'flex-end',
+                            padding: 16,
+                            backgroundColor: 'rgba(0,0,0,0.05)',
+                          }}
+                        >
+                          {/* Title placeholder */}
+                          <View
+                            style={{
+                              width: '60%',
+                              height: 18,
+                              borderRadius: 6,
+                              backgroundColor: '#d6d6d6',
+                              marginBottom: 10,
+                            }}
+                          />
+                          {/* Subtitle placeholder */}
+                          <View
+                            style={{
+                              width: '80%',
+                              height: 14,
+                              borderRadius: 6,
+                              backgroundColor: '#d6d6d6',
+                            }}
+                          />
+                        </View>
+                      }
+                    />
+                  </ScrollView>
+                ) : (
+                  <>
+                    <ScrollView
+                      ref={scrollViewRef}
+                      horizontal
+                      pagingEnabled
+                      showsHorizontalScrollIndicator={false}
+                      onMomentumScrollEnd={(event) => {
+                        const index = Math.round(
+                          event.nativeEvent.contentOffset.x / width
+                        );
+                        setCurrentHeroIndex(index);
+                        setIsManualScrolling(false);
+                      }}
+                      onScrollBeginDrag={() => setIsManualScrolling(true)}
+                    >
+                      {data?.data?.map((hero: TContent, index: number) => (
+                        <View key={index} style={styles.heroSlide}>
+                          {hero.videoUrl ? (
+                            <YoutubePlayer
+                              height={280}
+                              play={false}
+                              videoId={getYouTubeVideoId(hero.videoUrl)}
+                            />
+                          ) : (
+                            <Image
+                              source={{ uri: hero.imageUrl }}
+                              style={styles.heroImage}
+                            />
+                          )}
+                        </View>
+                      ))}
+                    </ScrollView>
 
-      {/* Hero Indicators */}
-      <View style={styles.heroIndicators}>
-        {data?.data?.map((_: any, index: number) => (
-          <TouchableOpacity
-            key={index}
-            style={[
-              styles.indicator,
-              index === currentHeroIndex && [
-                styles.activeIndicator,
-                { backgroundColor: colors.info },
-              ],
-            ]}
-            onPress={() => {
-              scrollViewRef.current?.scrollTo({
-                x: index * width,
-                animated: true,
-              });
-              setCurrentHeroIndex(index);
-              triggerHaptic();
-            }}
-          />
-        ))}
-      </View>
-    </>
-  )}
-</View>
-
+                    {/* Hero Indicators */}
+                    <View style={styles.heroIndicators}>
+                      {data?.data?.map((_: any, index: number) => (
+                        <TouchableOpacity
+                          key={index}
+                          style={[
+                            styles.indicator,
+                            index === currentHeroIndex && [
+                              styles.activeIndicator,
+                              { backgroundColor: colors.info },
+                            ],
+                          ]}
+                          onPress={() => {
+                            scrollViewRef.current?.scrollTo({
+                              x: index * width,
+                              animated: true,
+                            });
+                            setCurrentHeroIndex(index);
+                            triggerHaptic();
+                          }}
+                        />
+                      ))}
+                    </View>
+                  </>
+                )}
+              </View>
+              <AIBanner/>
 
               {/* Search Bar */}
               <SearchBar
@@ -718,93 +720,96 @@ export default function HomeScreen() {
                     {'Our Project'}
                   </Text>
                 </View>
-            <ScrollView
-  horizontal
-  showsHorizontalScrollIndicator={false}
-  contentContainerStyle={styles.projectsContent}
->
-  {isProgramLoading ? (
-    <SkeletonLoader
-      width={300}
-      height={200}
-      innerSkeleton={
-        <View
-          style={{
-            flex: 1,
-            justifyContent: "flex-end",
-            padding: 12,
-            backgroundColor: "rgba(0,0,0,0.05)",
-          }}
-        >
-          {/* Title placeholder */}
-          <View
-            style={{
-              width: "70%",
-              height: 16,
-              borderRadius: 8,
-              backgroundColor: "#d6d6d6",
-              marginBottom: 6,
-            }}
-          />
-          {/* Description placeholder */}
-          <View
-            style={{
-              width: "90%",
-              height: 12,
-              borderRadius: 8,
-              backgroundColor: "#d6d6d6",
-              marginBottom: 6,
-            }}
-          />
-          <View
-            style={{
-              width: "50%",
-              height: 12,
-              borderRadius: 8,
-              backgroundColor: "#d6d6d6",
-            }}
-          />
-        </View>
-      }
-    />
-  ) : (ProgramData?.data?.length || 0) === 0 ? (
-    <Text style={{ color: colors.text }}>
-      Projects are coming soon! Stay tuned.
-    </Text>
-  ) : (
-    ProgramData?.data?.map((project: any) => (
-      <View key={project.id} style={styles.projectCard}>
-        <Image
-          source={{ uri: project.imageUrl }}
-          style={styles.projectImage}
-        />
-        <LinearGradient
-          colors={["transparent", "rgba(0,0,0,0.8)"]}
-          style={styles.projectOverlay}
-        >
-          <View style={styles.projectContent}>
-            <Text style={styles.projectTitle}>{project.title}</Text>
-            <Text style={styles.projectDescription}>{project.description}</Text>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.projectsContent}
+                >
+                  {isProgramLoading ? (
+                    <SkeletonLoader
+                      width={300}
+                      height={200}
+                      innerSkeleton={
+                        <View
+                          style={{
+                            flex: 1,
+                            justifyContent: 'flex-end',
+                            padding: 12,
+                            backgroundColor: 'rgba(0,0,0,0.05)',
+                          }}
+                        >
+                          {/* Title placeholder */}
+                          <View
+                            style={{
+                              width: '70%',
+                              height: 16,
+                              borderRadius: 8,
+                              backgroundColor: '#d6d6d6',
+                              marginBottom: 6,
+                            }}
+                          />
+                          {/* Description placeholder */}
+                          <View
+                            style={{
+                              width: '90%',
+                              height: 12,
+                              borderRadius: 8,
+                              backgroundColor: '#d6d6d6',
+                              marginBottom: 6,
+                            }}
+                          />
+                          <View
+                            style={{
+                              width: '50%',
+                              height: 12,
+                              borderRadius: 8,
+                              backgroundColor: '#d6d6d6',
+                            }}
+                          />
+                        </View>
+                      }
+                    />
+                  ) : (ProgramData?.data?.length || 0) === 0 ? (
+                    <Text style={{ color: colors.text }}>
+                      Projects are coming soon! Stay tuned.
+                    </Text>
+                  ) : (
+                    ProgramData?.data?.map((project: any) => (
+                      <View key={project.id} style={styles.projectCard}>
+                        <Image
+                          source={{ uri: project.imageUrl }}
+                          style={styles.projectImage}
+                        />
+                        <LinearGradient
+                          colors={['transparent', 'rgba(0,0,0,0.8)']}
+                          style={styles.projectOverlay}
+                        >
+                          <View style={styles.projectContent}>
+                            <Text style={styles.projectTitle}>
+                              {project.title}
+                            </Text>
+                            <Text style={styles.projectDescription}>
+                              {project.description}
+                            </Text>
 
-            <View style={styles.projectProgress}></View>
+                            <View style={styles.projectProgress}></View>
 
-            <TouchableOpacity
-              style={styles.donateButton}
-              onPress={() => {
-                setPaymentOptionModalOpen(true);
-                setDonation(project);
-              }}
-            >
-              <Heart size={16} color="#FFFFFF" fill="#FFFFFF" />
-              <Text style={styles.donateText}>Donate Now</Text>
-            </TouchableOpacity>
-          </View>
-        </LinearGradient>
-      </View>
-    ))
-  )}
-</ScrollView>
-
+                            <TouchableOpacity
+                              style={styles.donateButton}
+                              onPress={() => {
+                                setPaymentOptionModalOpen(true);
+                                setDonation(project);
+                              }}
+                            >
+                              <Heart size={16} color="#FFFFFF" fill="#FFFFFF" />
+                              <Text style={styles.donateText}>Donate Now</Text>
+                            </TouchableOpacity>
+                          </View>
+                        </LinearGradient>
+                      </View>
+                    ))
+                  )}
+                </ScrollView>
               </View>
 
               {paymentOptionModalOpen && (
@@ -992,7 +997,9 @@ export default function HomeScreen() {
                             </View>
                             <View style={styles.buttonContainer}>
                               <Button
-                                title={isSubmitLoading ? 'Submitting...' : 'Submit'}
+                                title={
+                                  isSubmitLoading ? 'Submitting...' : 'Submit'
+                                }
                                 onPress={handleSubmit(onSubmit)}
                               />
                             </View>
@@ -1256,7 +1263,6 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   container: {
-    padding: 16,
     backgroundColor: '#f5f5f5',
   },
   card: {
@@ -1369,11 +1375,11 @@ const styles = StyleSheet.create({
     height: 100,
     textAlignVertical: 'top',
   },
-   buttonContainer: {
+  buttonContainer: {
     marginTop: 20,
     marginBottom: 35,
   },
-   inputGroup: {
+  inputGroup: {
     marginBottom: 15,
   },
 });

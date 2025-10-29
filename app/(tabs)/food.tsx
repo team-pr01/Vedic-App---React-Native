@@ -36,9 +36,8 @@ import { useGenerateRecipeMutation } from '@/redux/features/AI/aiApi';
 import Header from '@/components/Reusable/HeaderMenuBar/HeaderMenuBar';
 import AppHeader from '@/components/Reusable/AppHeader/AppHeader';
 import Categories from '@/components/Reusable/Categories/Categories';
+import SkeletonLoader from '@/components/Reusable/SkeletonLoader';
 
-// *** FIX 1: The AiRecipeParser component is defined OUTSIDE the main component ***
-// This component parses and renders the formatted text from the AI
 const AiRecipeParser = ({ content }: { content: string | null }) => {
   if (!content) return null;
 
@@ -98,8 +97,6 @@ const AiRecipeParser = ({ content }: { content: string | null }) => {
 export default function FoodPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
-
-  // *** FIX 2: Correct state variables for the AI modals and content ***
   const [showAIGeneratedModal, setShowAIGeneratedModal] = useState(false);
   const [aiGeneratedContent, setAiGeneratedContent] = useState<string | null>(
     null
@@ -119,14 +116,13 @@ export default function FoodPage() {
     category: selectedCategory,
     keyword: searchQuery,
   });
-
-              {/* Experts Section */}
-  const { data: categoryData,isLoading:isLoadingCategories, refetch: refetchCategories } =
-    useGetAllCategoriesQuery({});
-
+  const {
+    data: categoryData,
+    isLoading: isLoadingCategories,
+    refetch: refetchCategories,
+  } = useGetAllCategoriesQuery({});
   const [refreshing, setRefreshing] = useState(false);
   const colors = useThemeColors();
-
   const handleRefresh = async () => {
     setRefreshing(true);
     try {
@@ -151,18 +147,15 @@ export default function FoodPage() {
   const [isListening, setIsListening] = useState(false);
   const recognitionRef = useRef<any>(null);
 
-  // *** FIX 3: Single, correct useEffect to handle the AI recipe response ***
   useEffect(() => {
-    // Check if the API response exists and the 'data' property is a string
     if (recipeData && typeof recipeData.data === 'string') {
-      setAiGeneratedContent(recipeData.data); // Store the recipe string
-      setShowAIGeneratedModal(true); // Show the result modal
-      setShowAIModal(false); // Hide the prompt modal
-      setRecipePrompt(''); // Clear the input field
+      setAiGeneratedContent(recipeData.data);
+      setShowAIGeneratedModal(true);
+      setShowAIModal(false);
+      setRecipePrompt('');
     }
   }, [recipeData]);
 
-  // Initialize speech recognition
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const SpeechRecognition =
@@ -284,12 +277,71 @@ export default function FoodPage() {
               </View>
 
               {/* Categories */}
-          <Categories setSelectedCategory={setSelectedCategory} selectedCategory={selectedCategory} allCategories={allCategories} bgColor={"#38A169"}  isLoading={isLoadingCategories}/>
+              <Categories
+                setSelectedCategory={setSelectedCategory}
+                selectedCategory={selectedCategory}
+                allCategories={allCategories}
+                bgColor={'#38A169'}
+                isLoading={isLoadingCategories}
+              />
 
               {/* Recipes Grid */}
               <View style={styles.recipesContainer}>
-                {isLoading ||isFetching? (
-                  <LoadingComponent loading="Recipes" color={colors.success} />
+                {isLoading || isFetching ? (
+                  <SkeletonLoader
+                     direction='column'
+                    height={280}
+                    width={'100%'}
+                    innerSkeleton={
+                      <View
+                        style={{
+                          padding: 15,
+                          justifyContent: 'flex-end',
+                          flex: 1,
+                        }}
+                      >
+                        <View>
+                          <View
+                            style={{
+                              width: '60%',
+                              height: 16,
+                              backgroundColor: '#e0e0e0',
+                              borderRadius: 8,
+                              marginBottom: 8,
+                            }}
+                          />
+                          <View style={{ flexDirection: 'row', gap: 6 }}>
+                            <View
+                              style={{
+                                width: '20%',
+                                height: 12,
+                                backgroundColor: '#e0e0e0',
+                                borderRadius: 6,
+                              }}
+                            />
+                            <View
+                              style={{
+                                width: '20%',
+                                height: 12,
+                                backgroundColor: '#e0e0e0',
+                                borderRadius: 6,
+                              }}
+                            />
+                          </View>
+                        </View>
+
+                        <View
+                          style={{
+                            width: '100%',
+                            height: 35,
+                            backgroundColor: '#d6d6d6',
+                            borderRadius: 8,
+                            marginTop: 20,
+                          }}
+                        />
+                      </View>
+                    }
+                  />
                 ) : data?.data?.length === 0 ? (
                   <View style={styles.emptyState}>
                     <Text style={styles.emptyStateTitle}>No recipes found</Text>
@@ -359,7 +411,6 @@ export default function FoodPage() {
               <View style={styles.bottomSpacing} />
             </ScrollView>
 
-            {/* AI Prompt Modal */}
             <Modal
               visible={showAIModal}
               transparent
@@ -387,7 +438,6 @@ export default function FoodPage() {
                     </TouchableOpacity>
                   </View>
 
-                  {/* *** FIX 4: Removed the faulty logic that caused the "Objects are not valid" error *** */}
                   <View style={styles.aiModalContent}>
                     <Text
                       style={[
@@ -444,7 +494,6 @@ export default function FoodPage() {
               </View>
             </Modal>
 
-            {/* *** FIX 5: ADDED the modal to DISPLAY the AI-generated recipe text *** */}
             <Modal
               visible={showAIGeneratedModal}
               transparent

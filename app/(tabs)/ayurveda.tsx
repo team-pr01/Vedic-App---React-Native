@@ -45,6 +45,7 @@ import LoadingComponent from '@/components/LoadingComponent/LoadingComponent';
 import { formatDate } from '@/utils/formatDate';
 import { getYouTubeVideoId } from '@/utils/getYouTubeVideoId';
 import YoutubePlayer from 'react-native-youtube-iframe';
+import SkeletonLoader from '@/components/Reusable/SkeletonLoader';
 
 export default function AyurvedaPage() {
   const colors = useThemeColors();
@@ -220,8 +221,68 @@ export default function AyurvedaPage() {
               {/* Experts Section */}
 
               <View style={styles.recipesContainer}>
-                {isLoading || isFetching ? (
-                  <LoadingComponent loading="Ayurveda" color={colors.success} />
+                {!isLoading || isFetching ? (
+                  <SkeletonLoader
+                  direction='column'
+                    width={'100%'}
+                    height={320}
+                    innerSkeleton={
+                      <View
+                        style={{
+                          padding: 15,
+                          justifyContent: 'flex-end',
+                          flex: 1,
+                        }}
+                      > <View
+                            style={{
+                              width: '80%',
+                              height: 16,
+                              backgroundColor: '#e0e0e0',
+                              borderRadius: 6,
+                              marginBottom: 8,
+                            }}
+                          />
+                        <View style={{ flexDirection: 'row', gap: 8 }}>
+                          <View
+                            style={{
+                              width: '20%',
+                              height: 16,
+                              backgroundColor: '#e0e0e0',
+                              borderRadius: 8,
+                              marginBottom: 8,
+                            }}
+                          />
+                          <View
+                            style={{
+                              width: '20%',
+                              height: 16,
+                              backgroundColor: '#e0e0e0',
+                              borderRadius: 6,
+                              marginBottom: 8,
+                            }}
+                          />
+                          <View
+                            style={{
+                              width: '40%',
+                              height: 16,
+                              backgroundColor: '#e0e0e0',
+                              borderRadius: 6,
+                            }}
+                          />
+                        </View>
+                        
+                          <View
+                            style={{
+                              width: '100%',
+                              height: 40,
+                              backgroundColor: '#d6d6d6',
+                              borderRadius: 8,
+                              marginTop: 4,
+                            }}
+                          />
+                      </View>
+                    }
+                  />
                 ) : data?.data?.length === 0 ? (
                   <View style={styles.emptyState}>
                     <Text style={styles.emptyStateTitle}>

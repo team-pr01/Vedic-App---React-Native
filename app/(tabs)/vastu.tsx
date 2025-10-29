@@ -42,7 +42,10 @@ import { router } from 'expo-router';
 import { Video, ResizeMode, AVPlaybackStatus } from 'expo-av';
 import { useGetAllConsultancyServicesQuery } from '@/redux/features/Consultancy/consultancyApi';
 import Experts from '@/components/Reusable/Experts';
-import { useGetAllVastuQuery, useGetAllVastuTipsQuery } from '@/redux/features/Vastu/vastuApi';
+import {
+  useGetAllVastuQuery,
+  useGetAllVastuTipsQuery,
+} from '@/redux/features/Vastu/vastuApi';
 import YoutubePlayer from 'react-native-youtube-iframe';
 import { getYouTubeVideoId } from '@/utils/getYouTubeVideoId';
 import NoData from '@/components/Reusable/NoData/NoData';
@@ -52,6 +55,7 @@ import { PullToRefreshWrapper } from '@/components/Reusable/PullToRefreshWrapper
 import Header from '@/components/Reusable/HeaderMenuBar/HeaderMenuBar';
 import AppHeader from '@/components/Reusable/AppHeader/AppHeader';
 import Categories from '@/components/Reusable/Categories/Categories';
+import SkeletonLoader from '@/components/Reusable/SkeletonLoader';
 
 export type TVastu = {
   _id: string;
@@ -189,7 +193,7 @@ export default function VastuPage() {
     data?.data?.filter((expert: any) => expert.category === 'Vastu Expert') ||
     [];
   const [refreshing, setRefreshing] = useState(false);
- console.log(vastuTips?.data,"tips")
+  console.log(vastuTips?.data, 'tips');
   const handleRefresh = async () => {
     setRefreshing(true);
 
@@ -512,9 +516,28 @@ export default function VastuPage() {
                 </Text>
 
                 {isVastuLoading || isRefetchingVastu ? (
-                  <LoadingComponent
-                    loading="Vastu Videos"
-                    color={colors.vastu}
+                  <SkeletonLoader
+                    height={200}
+                    width={280}
+                    innerSkeleton={
+                      <View
+                        style={{
+                          padding: 15,
+                          justifyContent: 'flex-end',
+                          flex: 1,
+                        }}
+                      >
+                        <View
+                          style={{
+                            width: '80%',
+                            height: 16,
+                            backgroundColor: '#e0e0e0',
+                            borderRadius: 8,
+                            marginBottom: 8,
+                          }}
+                        />
+                      </View>
+                    }
                   />
                 ) : vastu?.data?.length > 0 ? (
                   <ScrollView horizontal showsHorizontalScrollIndicator={false}>
@@ -557,12 +580,80 @@ export default function VastuPage() {
                 <Text style={[styles.sectionTitle, { color: colors.text }]}>
                   Popular Vastu Tips
                 </Text>
-                {isVastuTipsLoading || isRefetchingVastuTips ? ( <LoadingComponent
-                    loading="Vastu Videos"
-                    color={colors.vastu}
-                  />): vastuTips?.data?.length > 0 ? (
+                {isVastuTipsLoading || isRefetchingVastuTips ? (
+                  <SkeletonLoader
+                    direction="column"
+                    height={160}
+                    width={'100%'}
+                    innerSkeleton={
+                      <View
+                        style={{
+                          padding: 15,
+                          justifyContent: 'space-between',
+                          flex: 1,
+                        }}
+                      >
+                        {/* Title bar */}
+                        <View
+                          style={{
+                            width: '60%',
+                            height: 26,
+                            backgroundColor: '#e0e0e0',
+                            borderRadius: 8,
+                            marginBottom: 10,
+                          }}
+                        />
+
+                        {/* Row section */}
+                        {[1, 2, 3].map((_, i) => (
+                          <View
+                            key={i}
+                            style={{
+                              flexDirection: 'row',
+                              justifyContent: 'space-between',
+                              alignItems: 'flex-start',
+                              gap: 10,
+                              marginBottom: 10,
+                            }}
+                          >
+                            {/* Circle placeholder */}
+                            <View
+                              style={{
+                                width: 14,
+                                height: 14,
+                                borderRadius: 12,
+                                backgroundColor: '#e0e0e0',
+                              }}
+                            />
+
+                            {/* Text placeholders */}
+                            <View style={{ flex: 1 }}>
+                              <View
+                                style={{
+                                  width: '90%',
+                                  height: 11,
+                                  backgroundColor: '#e0e0e0',
+                                  borderRadius: 8,
+                                  marginBottom: 6,
+                                }}
+                              />
+                              <View
+                                style={{
+                                  width: '40%',
+                                  height: 11,
+                                  backgroundColor: '#e0e0e0',
+                                  borderRadius: 6,
+                                }}
+                              />
+                            </View>
+                          </View>
+                        ))}
+                      </View>
+                    }
+                  />
+                ) : vastuTips?.data?.length > 0 ? (
                   <View style={styles.tipsContainer}>
-                    {vastuTips?.data?.map((tip, index) => (
+                    {vastuTips?.data?.map((tip: any, index: number) => (
                       <View
                         key={index}
                         style={[
@@ -574,7 +665,6 @@ export default function VastuPage() {
                         ]}
                       >
                         <View style={styles.tipHeader}>
-                      
                           <Text
                             style={[styles.tipTitle, { color: colors.text }]}
                           >
@@ -583,7 +673,7 @@ export default function VastuPage() {
                           <ChevronRight size={20} color={colors.vastu} />
                         </View>
                         <View style={styles.tipContent}>
-                          {tip.tips.map((t, i) => (
+                          {tip.tips.map((t: any, i: number) => (
                             <Text
                               key={i}
                               style={[

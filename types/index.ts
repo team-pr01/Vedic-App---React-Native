@@ -4,8 +4,8 @@ export interface VedicTextResponse {
 
 export interface VedicText {
   _id: string;
-  title: string;
-  category: string;
+  name: string;
+  type: string;
   subCategory: string;
   description: string;
   imageUrl?: string;
