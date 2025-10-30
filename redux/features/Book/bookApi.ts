@@ -60,10 +60,10 @@ const bookApi = baseApi.injectEndpoints({
         languageCode: string;
       }
     >({
-      query: (body) => ({
+      query: (data) => ({
         url: '/reportMantra/report',
         method: 'POST',
-        body,
+        body:data,
         credentials: 'include',
       }),
       invalidatesTags: ['book'],

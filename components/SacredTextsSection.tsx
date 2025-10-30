@@ -27,7 +27,6 @@ export default function SacredTextsSection({
   onTextClick,
 }: SacredTextsSectionProps) {
   const colors = useThemeColors();
-
   const handleTextPress = (textId: string,textName:string) => {
     onTextClick(textId);
     router.push(`/(tabs)/veda-reader?vedaId=${textId}&textName=${textName}`);

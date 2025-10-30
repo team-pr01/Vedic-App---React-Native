@@ -1166,7 +1166,7 @@ const styles = StyleSheet.create({
   },
   sanskritText: {
     fontSize: 20,
-    lineHeight: 32,
+    lineHeight: 26,
     color: '#2D3748',
     textAlign: 'center',
     marginBottom: 8,
@@ -1287,7 +1287,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderTopWidth: 1,
     borderTopColor: '#E2E8F0',
-    paddingTop: 16,
+    paddingBottom: 16,
+    paddingTop:10
   },
   navButton: {
     flexDirection: 'row',

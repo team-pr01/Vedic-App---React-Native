@@ -1,4 +1,4 @@
-import { baseApi } from "@/redux/api/baseApi";
+import { baseApi } from '@/redux/api/baseApi';
 
 const reelsApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
@@ -6,20 +6,27 @@ const reelsApi = baseApi.injectEndpoints({
       query: () => {
         return {
           url: `/reels`,
-          method: "GET",
-          credentials: "include",
+          method: 'GET',
+          credentials: 'include',
         };
       },
-      providesTags: ["reels"],
+      providesTags: ['reels'],
     }),
 
     getSingleReel: builder.query({
       query: (id) => ({
         url: `/reels/${id}`,
-        method: "GET",
-        credentials: "include",
+        method: 'GET',
+        credentials: 'include',
       }),
-      providesTags: ["reels"],
+      providesTags: ['reels'],
+    }),
+    likeVideo: builder.mutation({
+      query: (videoId) => ({
+        url: `/reels/like/${videoId}`,
+        method: 'PATCH',
+      }),
+      invalidatesTags: ['reels'],
     }),
   }),
 });
@@ -27,4 +34,5 @@ const reelsApi = baseApi.injectEndpoints({
 export const {
   useGetAllReelsQuery,
   useGetSingleReelQuery,
+  useLikeVideoMutation,
 } = reelsApi;

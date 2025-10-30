@@ -1,5 +1,13 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, Modal } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  TextInput,
+  Modal,
+  Alert,
+} from 'react-native';
 import { X, Flag, Pyramid } from 'lucide-react-native';
 import { useForm, Controller } from 'react-hook-form';
 import { useReportMantraMutation } from '@/redux/features/Book/bookApi';
@@ -11,8 +19,8 @@ interface ReportModalProps {
   vedaTitle: string;
   originalText: string;
   translation: string;
-  bookId:string
-  languageCode:string
+  bookId: string;
+  languageCode: string;
 }
 
 interface ReportFormData {
@@ -36,7 +44,7 @@ export default function ReportModal({
   originalText,
   translation,
   bookId,
-  languageCode
+  languageCode,
 }: ReportModalProps) {
   const [reportMantra, { isLoading }] = useReportMantraMutation();
 
@@ -54,28 +62,34 @@ export default function ReportModal({
 
   const onSubmit = async (data: ReportFormData) => {
     try {
-      const payload={
+      const payload = {
         bookId: bookId || '',
         textId: verseId,
         originalText: originalText,
         translation: translation,
         reason: data.reason,
         feedback: data.feedback.trim(),
-        languageCode:languageCode
-      }
-      console.log(payload)
-      const res=await reportMantra(payload).unwrap();
-      
-      reset();
-      console.log(res)
+        languageCode: languageCode,
+      };
+      const res = await reportMantra(payload).unwrap();
       onClose();
+      if (res?.data?.success) {
+        Alert.alert('Report Successful', 'We will update soon');
+      }
+      reset();
+      console.log(res);
     } catch (error) {
       console.error('Report submission failed:', error);
     }
   };
 
   return (
-    <Modal visible={isOpen} transparent animationType="fade" onRequestClose={onClose}>
+    <Modal
+      visible={isOpen}
+      transparent
+      animationType="fade"
+      onRequestClose={onClose}
+    >
       <View style={styles.overlay}>
         <View style={styles.modal}>
           {/* Header */}
@@ -173,7 +187,6 @@ export default function ReportModal({
     </Modal>
   );
 }
-
 
 const styles = StyleSheet.create({
   overlay: {

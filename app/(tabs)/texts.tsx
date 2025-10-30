@@ -30,12 +30,16 @@ import {
   Award,
   Loader,
   Video,
+  Heart,
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { useGetAlCoursesQuery } from '@/redux/features/Course/courseApi';
-import { useGetAllReelsQuery } from '@/redux/features/Reels/reelsApi';
+import {
+  useGetAllReelsQuery,
+  useLikeVideoMutation,
+} from '@/redux/features/Reels/reelsApi';
 // --- (1) IMPORT THE CHAT MUTATION HOOK ---
 // Note: Adjust the import path if it's different in your project structure.;
 import YoutubePlayer from 'react-native-youtube-iframe';
@@ -63,13 +67,6 @@ interface RealVideo {
   videoUrl: string;
 }
 
-interface QuizQuestion {
-  id: string;
-  question: string;
-  options: string[];
-  correctAnswer: number;
-}
-
 export type TCourse = {
   _id: string;
   imageUrl?: string;
@@ -92,6 +89,8 @@ export type TReels = {
   createdBy: string;
   createdAt?: Date;
   updatedAt?: Date;
+  likedBy: string[];
+  likes: number;
 };
 
 // Quiz Modal Component
@@ -263,8 +262,11 @@ const QuizModal: React.FC<{
   );
 };
 
+
+
 export default function LearnScreen() {
-  const currentTab="ai";
+  const user = useSelector(useCurrentUser);
+  const currentTab = 'ai';
   const {
     data,
     isLoading: isCourseLoading,
@@ -276,7 +278,6 @@ export default function LearnScreen() {
     isLoading: isReelsLoading,
     refetch: refetchReels,
   } = useGetAllReelsQuery({});
-
   const [chat, { isLoading: isSendingMessage }] = useChatMutation();
   const {
     data: quizData,
@@ -287,8 +288,10 @@ export default function LearnScreen() {
   const colors = useThemeColors();
   const [activeTab, setActiveTab] = useState<
     'courses' | 'videos' | 'ai' | 'quiz'
-  >(currentTab||'courses');
+  >(currentTab || 'courses');
   const [isGeneratingQuiz, setIsGeneratingQuiz] = useState(false);
+  const [likeVideo, { isLoading: isLikeLoading }] = useLikeVideoMutation();
+  const [currentVideo, setCurrentVideo] = useState();
   const [currentQuiz, setCurrentQuiz] = useState<any | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showVideoModal, setShowVideoModal] = useState(false);
@@ -297,25 +300,25 @@ export default function LearnScreen() {
   const [chatMessage, setChatMessage] = useState('');
   const [chatHistory, setChatHistory] = useState<
     { role: 'user' | 'assistant'; content: string; id: string }[]
-    >([
-      {
-        role: 'assistant',
-        content:
+  >([
+    {
+      role: 'assistant',
+      content:
         "Hello! I'm your AI learning assistant. How can I help you with your Vedic studies today?",
-        id: `initial-${Date.now()}`,
-      },
-    ]);
-    
-    const triggerHaptic = () => {
-      if (Platform.OS !== 'web') {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      }
-    };
-    const chatScrollViewRef = useRef<ScrollView>(null);
-    const handleAIAssistant = () => {
-      triggerHaptic();
-      setShowChatModal(true);
-    };
+      id: `initial-${Date.now()}`,
+    },
+  ]);
+
+  const triggerHaptic = () => {
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+  };
+  const chatScrollViewRef = useRef<ScrollView>(null);
+  const handleAIAssistant = () => {
+    triggerHaptic();
+    setShowChatModal(true);
+  };
 
   useEffect(() => {
     chatScrollViewRef.current?.scrollToEnd({ animated: true });
@@ -332,7 +335,14 @@ export default function LearnScreen() {
     }
   };
 
-
+  const handleLike = async (id: string) => {
+    try {
+      setCurrentVideo(id);
+      await likeVideo(id).unwrap();
+    } catch (err) {
+      console.error('❌ Error liking news:', err);
+    }
+  };
   const handleGenerateQuiz = async (
     topic: string,
     questions: any // This parameter should probably be 'quiz' or 'quizObject'
@@ -351,12 +361,6 @@ export default function LearnScreen() {
 
   const handleQuizComplete = async (score: number, totalQuestions: number) => {
     console.log(`Quiz completed with score: ${score}/${totalQuestions}`);
-  };
-
-  const handleVideoPlay = (video: RealVideo) => {
-    triggerHaptic();
-    setSelectedVideo(video);
-    setShowVideoModal(true);
   };
 
   const handleSendMessage = async () => {
@@ -415,7 +419,7 @@ export default function LearnScreen() {
           <View style={styles.tabContent}>
             {isCourseLoading ? (
               <SkeletonLoader
-              direction='column'
+                direction="column"
                 height={280}
                 width={'100%'}
                 innerSkeleton={
@@ -519,48 +523,111 @@ export default function LearnScreen() {
         return (
           <View style={styles.tabContent}>
             {isReelsLoading ? (
-              <LoadingComponent loading=" " color={colors.success} />
+              <SkeletonLoader
+                direction="column"
+                height={280}
+                width={'100%'}
+                innerSkeleton={
+                  <View
+                    style={{
+                      padding: 15,
+                      justifyContent: 'flex-end',
+                      flex: 1,
+                    }}
+                  >
+                    <View>
+                      <View
+                        style={{
+                          width: '60%',
+                          height: 16,
+                          backgroundColor: '#e0e0e0',
+                          borderRadius: 8,
+                          marginBottom: 8,
+                        }}
+                      />
+                      <View
+                        style={{
+                          width: '40%',
+                          height: 12,
+                          backgroundColor: '#e0e0e0',
+                          borderRadius: 6,
+                        }}
+                      />
+                    </View>
+                  </View>
+                }
+              />
             ) : (
-              // reels?.data.map((video: TReels, index: number) => (
-              //   <TouchableOpacity
-              //     key={index}
-              //     style={[
-              //       styles.videoCard,
-              //       {
-              //         backgroundColor: colors.card,
-              //         shadowColor: colors.cardShadow,
-              //       },
-              //     ]}
-              //   >
-              //     <View style={styles.programImageContainer}>
-              //       <YoutubePlayer
-              //         height={200}
-              //         play={playingCardIndex === index}
-              //         videoId={getYouTubeVideoId(video?.videoUrl) || ''}
-              //         onChangeState={(state: any) => {
-              //           if (state === 'ended') setPlayingCardIndex(null);
-              //         }}
-              //       />
-              //     </View>
+              reels?.data.map((video: TReels, index: number) => {
+                const userLiked = video?.likedBy?.includes(user?._id);
+                return (
+                  <View
+                    key={index}
+                    style={[
+                      styles.videoCard,
+                      {
+                        backgroundColor: colors.card,
+                        shadowColor: colors.cardShadow,
+                      },
+                    ]}
+                  >
+                    <View style={styles.programImageContainer}>
+                      <YoutubePlayer
+                        height={200}
+                        play={playingCardIndex === index}
+                        videoId={getYouTubeVideoId(video?.videoUrl) || ''}
+                        onChangeState={(state: any) => {
+                          if (state === 'ended') setPlayingCardIndex(null);
+                        }}
+                      />
+                    </View>
 
-              //     <View style={styles.videoInfo}>
-              //       <Text style={[styles.videoTitle, { color: colors.text }]}>
-              //         {video.title}
-              //       </Text>
-              //       <View style={styles.videoMeta}>
-              //         <Text
-              //           style={[
-              //             styles.videoInstructor,
-              //             { color: colors.secondaryText },
-              //           ]}
-              //         >
-              //           {video.category}
-              //         </Text>
-              //       </View>
-              //     </View>
-              //   </TouchableOpacity>
-              // ))
-              <Reels />
+                    <View style={styles.videoInfo}>
+                      <Text style={[styles.videoTitle, { color: colors.text }]}>
+                        {video.title}
+                      </Text>
+                      <View style={styles.videoMeta}>
+                        <Text
+                          style={[
+                            styles.videoInstructor,
+                            { color: colors.secondaryText },
+                          ]}
+                        >
+                          {video.category}
+                        </Text>
+                        {isLikeLoading && currentVideo === video._id ? (
+                          <LoadingComponent />
+                        ) : (
+                          <TouchableOpacity
+                            style={styles.actionButton}
+                            onPress={(e) => {
+                              e.stopPropagation();
+                              handleLike(video._id);
+                            }}
+                          >
+                            <Heart
+                              size={20}
+                              color={
+                                userLiked ? colors.error : colors.secondaryText
+                              }
+                              fill={userLiked ? '#EF4444' : 'none'}
+                            />
+                            <Text
+                              style={[
+                                styles.actionText,
+                                { color: colors.secondaryText },
+                                userLiked && { color: colors.error },
+                              ]}
+                            >
+                              {video.likes}
+                            </Text>
+                          </TouchableOpacity>
+                        )}
+                      </View>
+                    </View>
+                  </View>
+                );
+              })
             )}
           </View>
         );
@@ -665,7 +732,7 @@ export default function LearnScreen() {
               </View>
             ) : isLoading ? (
               <SkeletonLoader
-              direction='column'
+                direction="column"
                 height={130}
                 width={'100%'}
                 innerSkeleton={
@@ -1063,6 +1130,14 @@ const styles = StyleSheet.create({
   },
   backButton: {
     width: 24, // to balance the placeholder
+  },
+  actionText: {
+    fontSize: 12,
+  },
+  actionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
   headerContent: {
     flex: 1,
