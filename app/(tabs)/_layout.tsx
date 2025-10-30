@@ -35,7 +35,7 @@ export default function TabLayout() {
         if (currentSegment === "(tabs)") {
           return false;
         } else {
-          router.replace("/(tabs)");
+          router.push("/(tabs)");
           return true; 
         }
       };

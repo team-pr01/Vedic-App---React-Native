@@ -66,6 +66,7 @@ import SkeletonLoader from '@/components/Reusable/SkeletonLoader';
 import SearchBar from '@/components/Reusable/SearchBar';
 import Header from '@/components/Reusable/HeaderMenuBar/HeaderMenuBar';
 import AIBanner from '@/components/AIBanner/AiBanner';
+import VideoBanner from '@/components/VideoBanner/VideoBanner';
 
 export type TContent = {
   _id: string;
@@ -618,7 +619,7 @@ export default function HomeScreen() {
                   </>
                 )}
               </View>
-              <AIBanner/>
+              
 
               {/* Search Bar */}
               <SearchBar
@@ -1010,6 +1011,9 @@ export default function HomeScreen() {
                   </View>
                 </Modal>
               )}
+
+              <AIBanner/>
+              <VideoBanner/>
 
               <View style={styles.bottomSpacing} />
             </ScrollView>

@@ -5,8 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Provider, useSelector } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
 import { persistor, store, RootState } from '@/redux/store';
-import * as SplashScreen from "expo-splash-screen";
-
+import * as SplashScreen from 'expo-splash-screen';
 
 // Fonts
 import {
@@ -33,7 +32,6 @@ Notifications.setNotificationHandler({
     shouldSetBadge: false,
   }),
 });
-
 
 function RootLayoutNav() {
   const user = useSelector(useCurrentUser);
@@ -70,7 +68,7 @@ function RootLayoutNav() {
             console.log('Push token saved successfully');
           }
         }
-      } catch (error) { 
+      } catch (error) {
         // console.error('Error saving push token:', error);
       }
     };
@@ -103,29 +101,31 @@ function RootLayoutNav() {
       });
 
     // Cleanup listeners on unmount
-  return () => {
-    if (notificationListener.current) {
-      Notifications.removeNotificationSubscription(notificationListener.current);
-    }
-    if (responseListener.current) {
-      Notifications.removeNotificationSubscription(responseListener.current);
-    }
-  };
+    return () => {
+      if (notificationListener.current) {
+        Notifications.removeNotificationSubscription(
+          notificationListener.current
+        );
+      }
+      if (responseListener.current) {
+        Notifications.removeNotificationSubscription(responseListener.current);
+      }
+    };
   }, []);
 
   useEffect(() => {
     if (data && user) {
-    setShowWelcomePopup(true);
+      setShowWelcomePopup(true);
     }
-  },[data]);
+  }, [data]);
   useEffect(() => {
     if (!fontsLoaded && !fontError) return;
     if (!isAuthLoading) return;
 
     if (token) {
-      router.replace('/(tabs)');
+      router.push('/(tabs)');
     } else {
-      router.replace('/auth');
+      router.push('/auth');
     }
 
     SplashScreen.hideAsync();
@@ -137,10 +137,27 @@ function RootLayoutNav() {
 
   return (
     <>
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="auth" />
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          animation: 'slide_from_right',
+          gestureEnabled: true,
+        }}
+      >
+        <Stack.Screen
+          name="(tabs)"
+          options={{
+            animation: 'slide_from_right',
+          }}
+        />
+        <Stack.Screen
+          name="auth/index" // 👈 direct path, not just "auth"
+          options={{
+            animation: 'slide_from_left',
+          }}
+        />
       </Stack>
+
       <StatusBar barStyle="default" />
       <PopupNotification
         isVisible={showWelcomePopup}

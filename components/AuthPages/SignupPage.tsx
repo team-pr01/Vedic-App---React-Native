@@ -143,7 +143,7 @@ export default function SignupPage({
 
       const response = await signup(formData).unwrap();
       if (response?.success) {
-        router.replace({ pathname: '/auth', params: { mode: 'login' } });
+        router.push({ pathname: '/auth', params: { mode: 'login' } });
       }
       Alert.alert(
         'Sign up Success',

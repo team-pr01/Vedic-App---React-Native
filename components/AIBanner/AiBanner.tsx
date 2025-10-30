@@ -101,9 +101,10 @@ const styles = StyleSheet.create({
   container: {
     padding: 20,
     borderRadius: 12,
-    margin: 10,
+    marginHorizontal: 10,
     borderLeftWidth: 5,
     position: 'relative',
+    marginBottom: 30,
   },
   title: {
     fontSize: 18,

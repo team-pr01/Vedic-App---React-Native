@@ -100,7 +100,7 @@ export default function LoginPage({
         //   ),
         //   [{ text: t('ok', 'OK'), onPress: () => setShowForgotPassword(false) }]
         // );
-        router.replace({
+        router.push({
           pathname: '/auth',
           params: { mode: 'resetPassword' },
         });

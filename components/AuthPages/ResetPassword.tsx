@@ -69,7 +69,7 @@ export default function ResetPassword({
 
     try {
       const res = await resetPassword(payload).unwrap();
-       router.replace({ pathname: '/auth', params: { mode: 'login' } });
+       router.push({ pathname: '/auth', params: { mode: 'login' } });
     } catch (err: any) {
       console.error('Reset failed', err);
       setError(err.message || 'Reset failed. Please try again.');
