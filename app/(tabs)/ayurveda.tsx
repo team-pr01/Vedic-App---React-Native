@@ -221,7 +221,7 @@ export default function AyurvedaPage() {
               {/* Experts Section */}
 
               <View style={styles.recipesContainer}>
-                {!isLoading || isFetching ? (
+                {isLoading || isFetching ? (
                   <SkeletonLoader
                   direction='column'
                     width={'100%'}

@@ -1,7 +1,14 @@
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { router } from 'expo-router';
-import { Book, BookAIcon, BookCheck, BookCopy, BookDashed, BookHeadphones } from 'lucide-react-native';
+import {
+  Book,
+  BookAIcon,
+  BookCheck,
+  BookCopy,
+  BookDashed,
+  BookHeadphones,
+} from 'lucide-react-native';
 export default function AIBanner() {
   const colors = useThemeColors();
   const exampleQuestions = [
@@ -74,7 +81,12 @@ export default function AIBanner() {
           <TouchableOpacity
             key={index}
             onPress={() => {
-              router.push('/texts');
+              router.push({
+                pathname: '/texts',
+                params: {
+                  currentTabs: 'ai',
+                },
+              });
             }}
             style={[styles.exampleBubble, { backgroundColor: colors.card }]}
           >
@@ -86,9 +98,14 @@ export default function AIBanner() {
       </View>
 
       <TouchableOpacity
-      onPress={() => {
-              router.push('/texts');
-            }}
+        onPress={() => {
+          router.push({
+            pathname: '/texts',
+            params: {
+              currentTabs: 'ai',
+            },
+          });
+        }}
         style={[styles.button, { backgroundColor: colors.primary }]}
       >
         <Text style={styles.buttonText}>Chat with AI Now</Text>

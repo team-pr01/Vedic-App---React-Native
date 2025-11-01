@@ -33,7 +33,7 @@ import {
   Heart,
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { useGetAlCoursesQuery } from '@/redux/features/Course/courseApi';
 import {
@@ -265,14 +265,20 @@ const QuizModal: React.FC<{
 
 
 export default function LearnScreen() {
+  const { currentTabs} = useLocalSearchParams();
+ 
   const user = useSelector(useCurrentUser);
-  const currentTab = 'ai';
   const {
     data,
     isLoading: isCourseLoading,
     refetch: refetchCourses,
   } = useGetAlCoursesQuery({});
 
+  useEffect(()=>{
+    setActiveTab(currentTabs || "courses");
+  },[currentTabs])
+
+   console.log(currentTabs)
   const {
     data: reels,
     isLoading: isReelsLoading,
@@ -288,7 +294,7 @@ export default function LearnScreen() {
   const colors = useThemeColors();
   const [activeTab, setActiveTab] = useState<
     'courses' | 'videos' | 'ai' | 'quiz'
-  >(currentTab || 'courses');
+  >("courses");
   const [isGeneratingQuiz, setIsGeneratingQuiz] = useState(false);
   const [likeVideo, { isLoading: isLikeLoading }] = useLikeVideoMutation();
   const [currentVideo, setCurrentVideo] = useState();

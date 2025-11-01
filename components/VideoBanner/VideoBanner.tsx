@@ -50,15 +50,22 @@ export default function VideoBanner() {
       {/* Content */}
       <View style={styles.content}>
         <View style={styles.header}>
-          <View style={[styles.playIconContainer, { backgroundColor: colors.info }]}>
-            <Play color={colors.background} size={24} fill={colors.background} />
+          <View
+            style={[styles.playIconContainer, { backgroundColor: colors.info }]}
+          >
+            <Play
+              color={colors.background}
+              size={24}
+              fill={colors.background}
+            />
           </View>
           <View style={styles.textContainer}>
             <Text style={[styles.title, { color: colors.text }]}>
               Video Library
             </Text>
             <Text style={[styles.subtitle, { color: colors.secondaryText }]}>
-              Discover enlightening content on Hindu scriptures, mantras, and philosophy
+              Discover enlightening content on Hindu scriptures, mantras, and
+              philosophy
             </Text>
           </View>
         </View>
@@ -88,7 +95,12 @@ export default function VideoBanner() {
         {/* CTA Button */}
         <TouchableOpacity
           onPress={() => {
-            router.push('/texts');
+            router.push({
+              pathname: '/texts',
+              params: {
+                currentTabs: 'videos',
+              },
+            });
           }}
           style={[styles.button, { backgroundColor: colors.info }]}
         >
