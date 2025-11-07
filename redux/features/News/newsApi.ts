@@ -26,20 +26,20 @@ const newsApi = baseApi.injectEndpoints({
       }),
       providesTags: ['news'],
     }),
-    likeNews: builder.mutation({
-      query: (newsId) => ({
-        url: `news/like/${newsId}`,
-        method: 'PATCH',
+      likeNews: builder.mutation({
+        query: (newsId) => ({
+          url: `news/like/${newsId}`,
+          method: 'PATCH',
+        }),
+        invalidatesTags: ['news'],
       }),
-      invalidatesTags: ['news'],
-    }),
-    viewNews: builder.mutation({
-      query: (newsId) => ({
-        url: `news/view/${newsId}`,
-        method: 'PATCH',
+      viewNews: builder.mutation({
+        query: (newsId) => ({
+          url: `news/view/${newsId}`,
+          method: 'PATCH',
+        }),
+        invalidatesTags: ['news'],
       }),
-      invalidatesTags: ['news'],
-    }),
   }),
 });
 

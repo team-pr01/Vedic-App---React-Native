@@ -31,6 +31,8 @@ import {
   Loader,
   Video,
   Heart,
+  ChevronRight,
+  ChevronLeft,
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -262,28 +264,53 @@ const QuizModal: React.FC<{
   );
 };
 
-
-
 export default function LearnScreen() {
-  const { currentTabs} = useLocalSearchParams();
- 
+  const { currentTabs } = useLocalSearchParams();
+
   const user = useSelector(useCurrentUser);
+  const [shuffledReels, setShuffledReels] = useState<any[]>([]);
+  const [currentReelIndex, setCurrentReelIndex] = useState(0);
   const {
     data,
     isLoading: isCourseLoading,
     refetch: refetchCourses,
   } = useGetAlCoursesQuery({});
 
-  useEffect(()=>{
-    setActiveTab(currentTabs || "courses");
-  },[currentTabs])
+  useEffect(() => {
+    setActiveTab(currentTabs || 'courses');
+  }, [currentTabs]);
 
-   console.log(currentTabs)
+  console.log(currentTabs);
   const {
     data: reels,
     isLoading: isReelsLoading,
     refetch: refetchReels,
   } = useGetAllReelsQuery({});
+
+  useEffect(() => {
+    if (reels?.data?.length) {
+      const shuffled = [...reels.data].sort(() => Math.random() - 0.5);
+      setShuffledReels(shuffled);
+      setCurrentReelIndex(0); // reset to first reel
+    }
+  }, [reels]);
+
+  // 🧭 Navigation handlers
+  const handleNext = () => {
+    if (currentReelIndex < shuffledReels.length - 1) {
+      setCurrentReelIndex(currentReelIndex + 1);
+      setPlayingCardIndex(null);
+    }
+  };
+
+  const handlePrevious = () => {
+    if (currentReelIndex > 0) {
+      setCurrentReelIndex(currentReelIndex - 1);
+      setPlayingCardIndex(null);
+    }
+  };
+
+  const currentReel = shuffledReels[currentReelIndex];
   const [chat, { isLoading: isSendingMessage }] = useChatMutation();
   const {
     data: quizData,
@@ -294,7 +321,7 @@ export default function LearnScreen() {
   const colors = useThemeColors();
   const [activeTab, setActiveTab] = useState<
     'courses' | 'videos' | 'ai' | 'quiz'
-  >("courses");
+  >('courses');
   const [isGeneratingQuiz, setIsGeneratingQuiz] = useState(false);
   const [likeVideo, { isLoading: isLikeLoading }] = useLikeVideoMutation();
   const [currentVideo, setCurrentVideo] = useState();
@@ -528,18 +555,14 @@ export default function LearnScreen() {
       case 'videos':
         return (
           <View style={styles.tabContent}>
-            {isReelsLoading ? (
+            {isReelsLoading || !currentReel ? (
               <SkeletonLoader
                 direction="column"
                 height={280}
                 width={'100%'}
                 innerSkeleton={
                   <View
-                    style={{
-                      padding: 15,
-                      justifyContent: 'flex-end',
-                      flex: 1,
-                    }}
+                    style={{ padding: 15, justifyContent: 'flex-end', flex: 1 }}
                   >
                     <View>
                       <View
@@ -564,76 +587,146 @@ export default function LearnScreen() {
                 }
               />
             ) : (
-              reels?.data.map((video: TReels, index: number) => {
-                const userLiked = video?.likedBy?.includes(user?._id);
-                return (
-                  <View
-                    key={index}
-                    style={[
-                      styles.videoCard,
-                      {
-                        backgroundColor: colors.card,
-                        shadowColor: colors.cardShadow,
-                      },
-                    ]}
-                  >
-                    <View style={styles.programImageContainer}>
-                      <YoutubePlayer
-                        height={200}
-                        play={playingCardIndex === index}
-                        videoId={getYouTubeVideoId(video?.videoUrl) || ''}
-                        onChangeState={(state: any) => {
-                          if (state === 'ended') setPlayingCardIndex(null);
-                        }}
-                      />
-                    </View>
+              <View
+                style={[
+                  styles.videoCard,
+                  {
+                    backgroundColor: colors.card,
+                    shadowColor: colors.cardShadow,
+                  },
+                ]}
+              >
+                <View style={styles.programImageContainer}>
+                  <YoutubePlayer
+                    height={200}
+                    play={playingCardIndex === currentReelIndex}
+                    videoId={getYouTubeVideoId(currentReel?.videoUrl) || ''}
+                    onChangeState={(state: any) => {
+                      if (state === 'ended') setPlayingCardIndex(null);
+                    }}
+                  />
+                </View>
 
-                    <View style={styles.videoInfo}>
-                      <Text style={[styles.videoTitle, { color: colors.text }]}>
-                        {video.title}
-                      </Text>
-                      <View style={styles.videoMeta}>
+                <View style={styles.videoInfo}>
+                  <Text style={[styles.videoTitle, { color: colors.text }]}>
+                    {currentReel.title}
+                  </Text>
+
+                  <View style={styles.videoMeta}>
+                    <Text
+                      style={[
+                        styles.videoInstructor,
+                        { color: colors.secondaryText },
+                      ]}
+                    >
+                      {currentReel.category}
+                    </Text>
+
+                    {isLikeLoading && currentVideo === currentReel._id ? (
+                      <LoadingComponent />
+                    ) : (
+                      <TouchableOpacity
+                        style={styles.actionButton}
+                        onPress={(e) => {
+                          e.stopPropagation();
+                          handleLike(currentReel._id);
+                        }}
+                      >
+                        <Heart
+                          size={20}
+                          color={
+                            currentReel?.likedBy?.includes(user?._id)
+                              ? colors.error
+                              : colors.secondaryText
+                          }
+                          fill={
+                            currentReel?.likedBy?.includes(user?._id)
+                              ? '#EF4444'
+                              : 'none'
+                          }
+                        />
                         <Text
                           style={[
-                            styles.videoInstructor,
+                            styles.actionText,
                             { color: colors.secondaryText },
+                            currentReel?.likedBy?.includes(user?._id) && {
+                              color: colors.error,
+                            },
                           ]}
                         >
-                          {video.category}
+                          {currentReel.likes}
                         </Text>
-                        {isLikeLoading && currentVideo === video._id ? (
-                          <LoadingComponent />
-                        ) : (
-                          <TouchableOpacity
-                            style={styles.actionButton}
-                            onPress={(e) => {
-                              e.stopPropagation();
-                              handleLike(video._id);
-                            }}
-                          >
-                            <Heart
-                              size={20}
-                              color={
-                                userLiked ? colors.error : colors.secondaryText
-                              }
-                              fill={userLiked ? '#EF4444' : 'none'}
-                            />
-                            <Text
-                              style={[
-                                styles.actionText,
-                                { color: colors.secondaryText },
-                                userLiked && { color: colors.error },
-                              ]}
-                            >
-                              {video.likes}
-                            </Text>
-                          </TouchableOpacity>
-                        )}
-                      </View>
-                    </View>
+                      </TouchableOpacity>
+                    )}
                   </View>
-                );
-              })
+                </View>
+
+                {/* 🧭 Navigation Buttons */}
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-between', // ⬅️ centers both buttons
+                    alignItems: 'center',
+                    marginVertical: 15,
+                    gap: 20, // gives spacing between buttons (React Native 0.71+)
+                  }}
+                >
+                  <TouchableOpacity
+                    onPress={handlePrevious}
+                    disabled={currentReelIndex === 0}
+                    style={{
+                      paddingVertical: 10,
+                      paddingHorizontal: 15,
+                      opacity: currentReelIndex === 0 ? 0.5 : 1,
+                      backgroundColor: colors.primary,
+                      borderRadius: 8,
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      marginHorizontal: 10,
+                    }}
+                  >
+                    <ChevronLeft
+                      size={16}
+                      color={currentReelIndex === 0 ? colors.border : '#FFFFFF'}
+                      style={{ marginRight: 6 }}
+                    />
+                    <Text style={{ color: '#FFFFFF', fontWeight: '600' }}>
+                      Previous
+                    </Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    onPress={handleNext}
+                    disabled={currentReelIndex === shuffledReels.length - 1}
+                    style={{
+                      paddingVertical: 10,
+                      paddingHorizontal: 15,
+                      opacity:
+                        currentReelIndex === shuffledReels.length - 1 ? 0.5 : 1,
+                      backgroundColor: colors.primary,
+                      borderRadius: 8,
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      marginHorizontal: 10,
+                    }}
+                  >
+                    <Text style={{ color: '#FFFFFF', fontWeight: '600' }}>
+                      Next
+                    </Text>
+                    <ChevronRight
+                      size={16}
+                      color={
+                        currentReelIndex >= shuffledReels.length - 1
+                          ? colors.border
+                          : '#FFFFFF'
+                      }
+                      style={{ marginLeft: 6 }}
+                    />
+                  </TouchableOpacity>
+                </View>
+              </View>
             )}
           </View>
         );

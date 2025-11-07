@@ -8,23 +8,24 @@ import {
   ScrollView,
   TextInput,
   Switch,
+  Platform,
 } from 'react-native';
-import { 
-  X, 
-  Languages, 
-  Bell, 
-  Shield, 
-  Info, 
-  LogOut, 
-  User, 
-  Palette, 
-  Users, 
-  Search, 
+import {
+  X,
+  Languages,
+  Bell,
+  Shield,
+  Info,
+  LogOut,
+  User,
+  Palette,
+  Users,
+  Search,
   ChevronRight,
   Crown,
   ShoppingBag,
   Moon,
-  Sun
+  Sun,
 } from 'lucide-react-native';
 import ShopConfirmationModal from './ShopConfirmationModal';
 import { useDispatch, useSelector } from 'react-redux';
@@ -33,6 +34,8 @@ import { router } from 'expo-router';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { RootState } from '@/redux/store';
 import { toggleTheme } from '@/redux/features/Theme/themeSlice';
+import SubscriptionPage from './SubscriptionPage';
+import * as Haptics from 'expo-haptics';
 
 interface Language {
   code: string;
@@ -151,7 +154,7 @@ const languages: Language[] = [
   { code: 'lua', name: 'Tshiluba (Luba-Kasai)' },
   { code: 'rw', name: 'Ikinyarwanda (Kinyarwanda)' },
   { code: 'rn', name: 'Ikirundi (Kirundi)' },
-  { code: 'so', name: 'Af-Soomaali (Somali)' }
+  { code: 'so', name: 'Af-Soomaali (Somali)' },
 ];
 
 interface SettingsModalProps {
@@ -160,7 +163,11 @@ interface SettingsModalProps {
   onLogout: () => void;
 }
 
-export default function SettingsModal({ visible, onClose ,onLogout}: SettingsModalProps) {
+export default function SettingsModal({
+  visible,
+  onClose,
+  onLogout,
+}: SettingsModalProps) {
   const dispatch = useDispatch();
   const [currentLanguage, setCurrentLanguage] = useState(languages[0]);
   const colors = useThemeColors();
@@ -170,31 +177,38 @@ export default function SettingsModal({ visible, onClose ,onLogout}: SettingsMod
   const [languageSearchTerm, setLanguageSearchTerm] = useState('');
   const [showShopModal, setShowShopModal] = useState(false);
   const currentTheme = useSelector((state: RootState) => state.theme.theme);
+
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [showUserProfileModal, setShowUserProfileModal] = useState(false);
   const isDarkMode = currentTheme === 'dark';
-  const filteredLanguages = languages.filter(lang => 
-    lang.name.toLowerCase().includes(languageSearchTerm.toLowerCase()) ||
-    lang.code.toLowerCase().includes(languageSearchTerm.toLowerCase())
+  const filteredLanguages = languages.filter(
+    (lang) =>
+      lang.name.toLowerCase().includes(languageSearchTerm.toLowerCase()) ||
+      lang.code.toLowerCase().includes(languageSearchTerm.toLowerCase())
   );
 
-  const handleMembershipPress = () => {
-    alert('Membership plans coming soon! Upgrade to unlock premium features.');
+   const triggerHaptic = () => {
+      if (Platform.OS !== 'web') {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      }
+    };
+  
+  const handleMembershipPress = () => {triggerHaptic();
+    setShowUserProfileModal(true);
   };
 
-  
- const handleToggleTheme = (value: boolean) => {
+  const handleToggleTheme = (value: boolean) => {
     dispatch(toggleTheme());
   };
 
-
-
-  const SettingItem = ({ 
-    icon, 
-    label, 
-    value, 
-    onPress, 
-    isToggle = false, 
-    toggleValue, 
-    onToggle 
+  const SettingItem = ({
+    icon,
+    label,
+    value,
+    onPress,
+    isToggle = false,
+    toggleValue,
+    onToggle,
   }: {
     icon: React.ReactNode;
     label: string;
@@ -211,10 +225,16 @@ export default function SettingsModal({ visible, onClose ,onLogout}: SettingsMod
     >
       <View style={styles.settingLeft}>
         {icon}
-        <Text style={[styles.settingLabel, { color: colors.text }]}>{label}</Text>
+        <Text style={[styles.settingLabel, { color: colors.text }]}>
+          {label}
+        </Text>
       </View>
       <View style={styles.settingRight}>
-        {value && <Text style={[styles.settingValue, { color: colors.secondaryText }]}>{value}</Text>}
+        {value && (
+          <Text style={[styles.settingValue, { color: colors.secondaryText }]}>
+            {value}
+          </Text>
+        )}
         {isToggle && onToggle && (
           <Switch
             value={toggleValue}
@@ -223,7 +243,9 @@ export default function SettingsModal({ visible, onClose ,onLogout}: SettingsMod
             thumbColor="#FFFFFF"
           />
         )}
-        {onPress && !isToggle && <ChevronRight size={20} color={colors.secondaryText} />}
+        {onPress && !isToggle && (
+          <ChevronRight size={20} color={colors.secondaryText} />
+        )}
       </View>
     </TouchableOpacity>
   );
@@ -236,20 +258,47 @@ export default function SettingsModal({ visible, onClose ,onLogout}: SettingsMod
         presentationStyle="pageSheet"
         onRequestClose={onClose}
       >
-        <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <View
+          style={[styles.container, { backgroundColor: colors.background }]}
+        >
           {/* Header */}
-          <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
-            <Text style={[styles.headerTitle, { color: colors.text }]}>Settings</Text>
+          <View
+            style={[
+              styles.header,
+              {
+                backgroundColor: colors.card,
+                borderBottomColor: colors.border,
+              },
+            ]}
+          >
+            <Text style={[styles.headerTitle, { color: colors.text }]}>
+              Settings
+            </Text>
             <TouchableOpacity onPress={onClose} style={styles.closeButton}>
               <X size={24} color={colors.text} />
             </TouchableOpacity>
           </View>
 
-          <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+          <ScrollView
+            style={styles.content}
+            showsVerticalScrollIndicator={false}
+          >
             {/* General Section */}
             <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: colors.secondaryText }]}>GENERAL</Text>
-              <View style={[styles.sectionContent, { backgroundColor: colors.card, shadowColor: colors.cardShadow }]}>
+              <Text
+                style={[styles.sectionTitle, { color: colors.secondaryText }]}
+              >
+                GENERAL
+              </Text>
+              <View
+                style={[
+                  styles.sectionContent,
+                  {
+                    backgroundColor: colors.card,
+                    shadowColor: colors.cardShadow,
+                  },
+                ]}
+              >
                 {/* <SettingItem
                   icon={<Languages size={20} color={colors.primary} />}
                   label="Language"
@@ -257,7 +306,13 @@ export default function SettingsModal({ visible, onClose ,onLogout}: SettingsMod
                   onPress={() => setShowLanguageModal(true)}
                 /> */}
                 <SettingItem
-                  icon={isDarkMode ? <Moon size={20} color={colors.primary} /> : <Sun size={20} color={colors.primary} />}
+                  icon={
+                    isDarkMode ? (
+                      <Moon size={20} color={colors.primary} />
+                    ) : (
+                      <Sun size={20} color={colors.primary} />
+                    )
+                  }
                   label="Dark Mode"
                   isToggle={true}
                   toggleValue={isDarkMode}
@@ -273,8 +328,20 @@ export default function SettingsModal({ visible, onClose ,onLogout}: SettingsMod
 
             {/* Membership Section */}
             <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: colors.secondaryText }]}>MEMBERSHIP</Text>
-              <View style={[styles.sectionContent, { backgroundColor: colors.card, shadowColor: colors.cardShadow }]}>
+              <Text
+                style={[styles.sectionTitle, { color: colors.secondaryText }]}
+              >
+                MEMBERSHIP
+              </Text>
+              <View
+                style={[
+                  styles.sectionContent,
+                  {
+                    backgroundColor: colors.card,
+                    shadowColor: colors.cardShadow,
+                  },
+                ]}
+              >
                 <SettingItem
                   icon={<Crown size={20} color="#FFD700" />}
                   label="Membership Plans"
@@ -286,8 +353,20 @@ export default function SettingsModal({ visible, onClose ,onLogout}: SettingsMod
 
             {/* Notifications Section */}
             <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: colors.secondaryText }]}>NOTIFICATIONS</Text>
-              <View style={[styles.sectionContent, { backgroundColor: colors.card, shadowColor: colors.cardShadow }]}>
+              <Text
+                style={[styles.sectionTitle, { color: colors.secondaryText }]}
+              >
+                NOTIFICATIONS
+              </Text>
+              <View
+                style={[
+                  styles.sectionContent,
+                  {
+                    backgroundColor: colors.card,
+                    shadowColor: colors.cardShadow,
+                  },
+                ]}
+              >
                 <SettingItem
                   icon={<Bell size={20} color={colors.primary} />}
                   label="Push Notifications"
@@ -307,8 +386,20 @@ export default function SettingsModal({ visible, onClose ,onLogout}: SettingsMod
 
             {/* Account Section */}
             <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: colors.secondaryText }]}>ACCOUNT</Text>
-              <View style={[styles.sectionContent, { backgroundColor: colors.card, shadowColor: colors.cardShadow }]}>
+              <Text
+                style={[styles.sectionTitle, { color: colors.secondaryText }]}
+              >
+                ACCOUNT
+              </Text>
+              <View
+                style={[
+                  styles.sectionContent,
+                  {
+                    backgroundColor: colors.card,
+                    shadowColor: colors.cardShadow,
+                  },
+                ]}
+              >
                 <SettingItem
                   icon={<User size={20} color={colors.primary} />}
                   label="Manage Account"
@@ -324,8 +415,20 @@ export default function SettingsModal({ visible, onClose ,onLogout}: SettingsMod
 
             {/* About Section */}
             <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: colors.secondaryText }]}>ABOUT</Text>
-              <View style={[styles.sectionContent, { backgroundColor: colors.card, shadowColor: colors.cardShadow }]}>
+              <Text
+                style={[styles.sectionTitle, { color: colors.secondaryText }]}
+              >
+                ABOUT
+              </Text>
+              <View
+                style={[
+                  styles.sectionContent,
+                  {
+                    backgroundColor: colors.card,
+                    shadowColor: colors.cardShadow,
+                  },
+                ]}
+              >
                 <SettingItem
                   icon={<Info size={20} color={colors.primary} />}
                   label="About Vedic Wisdom"
@@ -341,9 +444,17 @@ export default function SettingsModal({ visible, onClose ,onLogout}: SettingsMod
 
             {/* Logout Button */}
             <View style={styles.logoutContainer}>
-              <TouchableOpacity style={[styles.logoutButton, { backgroundColor: colors.error + '20' }]} onPress={onLogout}>
+              <TouchableOpacity
+                style={[
+                  styles.logoutButton,
+                  { backgroundColor: colors.error + '20' },
+                ]}
+                onPress={onLogout}
+              >
                 <LogOut size={20} color={colors.error} />
-                <Text style={[styles.logoutText, { color: colors.error }]}>Logout</Text>
+                <Text style={[styles.logoutText, { color: colors.error }]}>
+                  Logout
+                </Text>
               </TouchableOpacity>
             </View>
           </ScrollView>
@@ -357,10 +468,22 @@ export default function SettingsModal({ visible, onClose ,onLogout}: SettingsMod
         presentationStyle="pageSheet"
         onRequestClose={() => setShowLanguageModal(false)}
       >
-        <View style={[styles.languageModal, { backgroundColor: colors.background }]}>
-          <View style={[styles.languageHeader, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
-            <Text style={[styles.languageTitle, { color: colors.primary }]}>Select Language</Text>
-            <TouchableOpacity 
+        <View
+          style={[styles.languageModal, { backgroundColor: colors.background }]}
+        >
+          <View
+            style={[
+              styles.languageHeader,
+              {
+                backgroundColor: colors.card,
+                borderBottomColor: colors.border,
+              },
+            ]}
+          >
+            <Text style={[styles.languageTitle, { color: colors.primary }]}>
+              Select Language
+            </Text>
+            <TouchableOpacity
               onPress={() => setShowLanguageModal(false)}
               style={styles.closeButton}
             >
@@ -368,8 +491,18 @@ export default function SettingsModal({ visible, onClose ,onLogout}: SettingsMod
             </TouchableOpacity>
           </View>
 
-          <View style={[styles.searchContainer, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
-            <View style={[styles.searchBar, { backgroundColor: colors.background }]}>
+          <View
+            style={[
+              styles.searchContainer,
+              {
+                backgroundColor: colors.card,
+                borderBottomColor: colors.border,
+              },
+            ]}
+          >
+            <View
+              style={[styles.searchBar, { backgroundColor: colors.background }]}
+            >
               <Search size={16} color={colors.secondaryText} />
               <TextInput
                 style={[styles.searchInput, { color: colors.text }]}
@@ -382,12 +515,15 @@ export default function SettingsModal({ visible, onClose ,onLogout}: SettingsMod
           </View>
 
           <ScrollView style={styles.languageList}>
-            {filteredLanguages.map(lang => (
+            {filteredLanguages.map((lang) => (
               <TouchableOpacity
                 key={lang.code}
                 style={[
                   styles.languageItem,
-                  currentLanguage.code === lang.code && [styles.selectedLanguageItem, { backgroundColor: colors.primary }]
+                  currentLanguage.code === lang.code && [
+                    styles.selectedLanguageItem,
+                    { backgroundColor: colors.primary },
+                  ],
                 ]}
                 onPress={() => {
                   setCurrentLanguage(lang);
@@ -395,18 +531,29 @@ export default function SettingsModal({ visible, onClose ,onLogout}: SettingsMod
                   setLanguageSearchTerm('');
                 }}
               >
-                <Text style={[
-                  styles.languageItemText,
-                  { color: colors.text },
-                  currentLanguage.code === lang.code && [styles.selectedLanguageText, { color: '#FFFFFF' }]
-                ]}>
+                <Text
+                  style={[
+                    styles.languageItemText,
+                    { color: colors.text },
+                    currentLanguage.code === lang.code && [
+                      styles.selectedLanguageText,
+                      { color: '#FFFFFF' },
+                    ],
+                  ]}
+                >
                   {lang.name}
                 </Text>
-                <Text style={[styles.languageCode, { color: colors.secondaryText }]}>({lang.code})</Text>
+                <Text
+                  style={[styles.languageCode, { color: colors.secondaryText }]}
+                >
+                  ({lang.code})
+                </Text>
               </TouchableOpacity>
             ))}
             {filteredLanguages.length === 0 && (
-              <Text style={[styles.noResultsText, { color: colors.secondaryText }]}>
+              <Text
+                style={[styles.noResultsText, { color: colors.secondaryText }]}
+              >
                 No languages found matching "{languageSearchTerm}"
               </Text>
             )}
@@ -415,9 +562,14 @@ export default function SettingsModal({ visible, onClose ,onLogout}: SettingsMod
       </Modal>
 
       {/* Shop Confirmation Modal */}
-      <ShopConfirmationModal 
+      <ShopConfirmationModal
         isVisible={showShopModal}
         onClose={() => setShowShopModal(false)}
+      />
+      <SubscriptionPage
+        visible={showUserProfileModal}
+        onClose={() => setShowUserProfileModal(false)}
+        onNavigateToSettings={() => setShowSettingsModal(false)}
       />
     </>
   );

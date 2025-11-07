@@ -309,13 +309,7 @@ function VedaReaderContent() {
         lang.name.toLowerCase().includes(languageSearchTerm.toLowerCase())
     );
   }, [allLanguages, availableLanguageCodes, languageSearchTerm]);
-  const handleSubmitReport = (submission: ReportSubmission) => {
-    // In a real app, this would send to your backend
-    alert(
-      `Report for verse ${submission.verseId} submitted. Thank you for your feedback!`
-    );
-    handleCloseReportModal();
-  };
+ 
 
   if (isVedaLoading) {
     return <LoadingComponent loading="Vedic Text..." color={colors.primary} />;
