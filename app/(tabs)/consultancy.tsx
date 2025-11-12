@@ -39,6 +39,9 @@ import { useThemeColors } from '@/hooks/useThemeColors';
 import Header from '@/components/Reusable/HeaderMenuBar/HeaderMenuBar';
 import AppHeader from '@/components/Reusable/AppHeader/AppHeader';
 import Categories from '@/components/Reusable/Categories/Categories';
+import BookingModal from '@/components/ConsultancyPage/BookingModal';
+import SuccessModal from '@/components/ConsultancyPage/SuccessModal';
+import DoctorList from '@/components/ConsultancyPage/DoctorList';
 
 const triggerHaptic = () => {
   if (Platform.OS !== 'web') {
@@ -58,8 +61,11 @@ export default function ConsultancyPage() {
     category: selectedCategory,
     keyword: searchQuery,
   });
-  const { data: categoryData,isLoading:isLoadingCategories, refetch: refetchCategories } =
-    useGetAllCategoriesQuery({});
+  const {
+    data: categoryData,
+    isLoading: isLoadingCategories,
+    refetch: refetchCategories,
+  } = useGetAllCategoriesQuery({});
   const [refreshing, setRefreshing] = useState(false);
 
   const handleRefresh = async () => {
@@ -171,6 +177,7 @@ export default function ConsultancyPage() {
         category: selectedDoctor.specialty,
       };
       await bookConsultation(bookingData).unwrap();
+      console.log("booking sucess full")
     } catch (err) {
       console.log('Failed to initiate booking:', err);
     }
@@ -284,167 +291,43 @@ export default function ConsultancyPage() {
                 setSelectedCategory={setSelectedCategory}
                 selectedCategory={selectedCategory}
                 allCategories={allCategories}
-                 isLoading={isLoadingCategories}
+                isLoading={isLoadingCategories}
                 bgColor={'#DD6B20'}
               />
 
               {/* Doctors List */}
-              <View style={styles.section}>
-                <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                  Available Experts
-                </Text>
+              <DoctorList
+                data={data}
+                isLoading={isLoading}
+                isFetching={isFetching}
+                colors={colors}
+                onBookPress={(doctor) => {
+                  setSelectedDoctor(doctor);
+                  setShowBookingModal(true);
+                }}
+              />
 
-                {isLoading || isFetching ? (
-                  <View style={styles.loaderContainer}>
-                    <ActivityIndicator size="large" color={colors.primary} />
-                  </View>
-                ) : data?.data?.length > 0 ? (
-                  <View style={styles.doctorsContainer}>
-                    {data.data.map((doctor: TConsultancyService) => (
-                      <TouchableOpacity
-                        key={doctor._id}
-                        style={[
-                          styles.doctorCard,
-                          {
-                            backgroundColor: colors.card,
-                            shadowColor: colors.cardShadow,
-                          },
-                        ]}
-                        activeOpacity={0.8}
-                      >
-                        <Image
-                          source={{ uri: doctor.imageUrl }}
-                          style={styles.doctorImage}
-                        />
-                        <View style={styles.doctorInfo}>
-                          <Text
-                            style={[styles.doctorName, { color: colors.text }]}
-                          >
-                            {doctor.name}
-                          </Text>
-                          <Text
-                            style={[
-                              styles.doctorSpeciality,
-                              { color: colors.primary },
-                            ]}
-                          >
-                            {doctor.specialty}
-                          </Text>
-                          <Text
-                            style={[
-                              styles.doctorExperience,
-                              { color: colors.secondaryText },
-                            ]}
-                          >
-                            {doctor.experience} experience
-                          </Text>
+              <BookingModal
+                visible={showBookingModal}
+                colors={colors}
+                selectedDoctor={selectedDoctor}
+                consultationIssue={consultationIssue}
+                setConsultationIssue={setConsultationIssue}
+                error={error}
+                handleBookConsultation={handleBookConsultation}
+                setShowBookingModal={setShowBookingModal}
+                isBooking={isBooking}
+              />
 
-                          <View style={styles.doctorMeta}>
-                            <View
-                              style={{
-                                flexDirection: 'row',
-                                justifyContent: 'center',
-                                alignItems: 'flex-start',
-                                gap: 10,
-                              }}
-                            >
-                              <View style={styles.availabilityContainer}>
-                                <Clock size={14} color={colors.success} />
-                                <Text
-                                  style={[
-                                    styles.availabilityText,
-                                    { color: colors.success },
-                                  ]}
-                                >
-                                  {doctor.availableTime}
-                                </Text>
-                              </View>
-                              <View style={styles.ratingContainer}>
-                                <Star
-                                  size={16}
-                                  color={colors.warning}
-                                  fill={colors.warning}
-                                />
-                                <Text
-                                  style={[
-                                    styles.ratingText,
-                                    { color: colors.text },
-                                  ]}
-                                >
-                                  {doctor.rating}
-                                </Text>
-                              </View>
-                            </View>
-
-                            <Text
-                              style={[
-                                styles.doctorPrice,
-                                { color: colors.success },
-                              ]}
-                            >
-                              ৳{doctor.fees}
-                            </Text>
-                          </View>
-
-                          <View style={styles.consultationTypes}>
-                            {doctor.availabilityType
-                              .slice(0, 3)
-                              .map((type: string) => (
-                                <View
-                                  key={type}
-                                  style={[
-                                    styles.typeChip,
-                                    { backgroundColor: colors.background },
-                                  ]}
-                                >
-                                  <Text
-                                    style={[
-                                      styles.typeChipText,
-                                      { color: colors.secondaryText },
-                                    ]}
-                                  >
-                                    {type}
-                                  </Text>
-                                </View>
-                              ))}
-                          </View>
-                          <View
-                            style={{
-                              flexDirection: 'row',
-                              justifyContent: 'flex-end',
-                              marginTop: 5,
-                            }}
-                          >
-                            <TouchableOpacity
-                              onPress={() => {
-                                setShowBookingModal(true);
-                                setSelectedDoctor(doctor);
-                              }}
-                              style={{
-                                backgroundColor: colors.primary,
-                                width: 150,
-                                paddingVertical: 7,
-                                paddingHorizontal: 10,
-                                borderRadius: 7,
-                                flexDirection: 'row',
-                                justifyContent: 'center',
-                                alignContent: 'center',
-                                marginTop: 5,
-                              }}
-                            >
-                              <Text style={{ color: 'white' }}>
-                                Book Appointment
-                              </Text>
-                            </TouchableOpacity>
-                          </View>
-                        </View>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                ) : (
-                  <NoData message="No experts found" />
-                )}
-              </View>
+              <SuccessModal
+                visible={showSuccessModal}
+                selectedDoctor={selectedDoctor}
+                colors={colors}
+                onDone={() => {
+                  triggerHaptic();
+                  setShowSuccessModal(false);
+                }}
+              />
 
               <View style={styles.bottomSpacing} />
             </ScrollView>
@@ -589,131 +472,6 @@ export default function ConsultancyPage() {
               </Modal>
             )} */}
 
-            {/* Booking Modal */}
-            {showBookingModal && selectedDoctor && (
-              <Modal
-                visible={showBookingModal}
-                transparent
-                animationType="slide"
-                onRequestClose={() => setShowBookingModal(false)}
-              >
-                <View style={styles.modalOverlay}>
-                  <View
-                    style={[
-                      styles.bookingModal,
-                      { backgroundColor: colors.card },
-                    ]}
-                  >
-                    <View
-                      style={[
-                        styles.modalHeader,
-                        { borderBottomColor: colors.border },
-                      ]}
-                    >
-                      <Text style={[styles.modalTitle, { color: colors.text }]}>
-                        Book Consultation
-                      </Text>
-                      <TouchableOpacity
-                        onPress={() => setShowBookingModal(false)}
-                      >
-                        <X size={24} color={colors.secondaryText} />
-                      </TouchableOpacity>
-                    </View>
-
-                    <ScrollView>
-                      <View
-                        style={[
-                          styles.doctorSummary,
-                          { backgroundColor: colors.background },
-                        ]}
-                      >
-                        <View style={styles.doctorSummaryInfo}>
-                          <Text
-                            style={[
-                              styles.doctorSummaryName,
-                              { color: colors.text },
-                            ]}
-                          >
-                            {selectedDoctor.name}
-                          </Text>
-                          <Text
-                            style={[
-                              styles.doctorSummarySpeciality,
-                              { color: colors.primary },
-                            ]}
-                          >
-                            {selectedDoctor.specialty}
-                          </Text>
-                          <Text
-                            style={[
-                              styles.doctorSummaryPrice,
-                              { color: colors.success },
-                            ]}
-                          >
-                            ৳{selectedDoctor.fees} per session
-                          </Text>
-                        </View>
-                      </View>
-
-                      <View style={styles.formSection}>
-                        <Text
-                          style={[styles.formLabel, { color: colors.text }]}
-                        >
-                          Your Concern *
-                        </Text>
-                        <TextInput
-                          style={[
-                            styles.formInput,
-                            styles.textArea,
-                            {
-                              borderColor: colors.border,
-                              color: colors.text,
-                              backgroundColor: colors.background,
-                            },
-                          ]}
-                          value={consultationIssue}
-                          onChangeText={setConsultationIssue}
-                          placeholder="Describe your health concern or symptoms..."
-                          multiline
-                          numberOfLines={4}
-                          textAlignVertical="top"
-                          placeholderTextColor={colors.secondaryText}
-                        />
-                      </View>
-                      {error && (
-                        <View
-                          style={[
-                            styles.errorContainer,
-                            { backgroundColor: `${colors.error}20` },
-                          ]}
-                        >
-                          <AlertTriangle size={16} color={colors.error} />
-                          <Text
-                            style={[styles.errorText, { color: colors.error }]}
-                          >
-                            {error}
-                          </Text>
-                        </View>
-                      )}
-
-                      <TouchableOpacity
-                        onPress={handleBookConsultation}
-                        style={[
-                          styles.proceedButton,
-                          { backgroundColor: colors.primary },
-                        ]}
-                      >
-                        <Text style={styles.proceedButtonText}>
-                          {isBooking ? 'Booking...' : 'Book Appointment'}
-                        </Text>
-                        <ChevronRight size={20} color="#FFFFFF" />
-                      </TouchableOpacity>
-                    </ScrollView>
-                  </View>
-                </View>
-              </Modal>
-            )}
-
             {/* Payment Modal */}
             {/* {showPaymentModal && selectedDoctor && (
               <Modal
@@ -813,55 +571,6 @@ export default function ConsultancyPage() {
                 </View>
               </Modal>
             )} */}
-
-            {/* Success Modal */}
-            {showSuccessModal && selectedDoctor && (
-              <Modal
-                visible={showSuccessModal}
-                transparent
-                animationType="fade"
-                onRequestClose={() => setShowSuccessModal(false)}
-              >
-                <View style={styles.modalOverlay}>
-                  <View
-                    style={[
-                      styles.successModal,
-                      { backgroundColor: colors.card },
-                    ]}
-                  >
-                    <View style={styles.successIcon}>
-                      <CheckCircle size={64} color={colors.success} />
-                    </View>
-                    <Text
-                      style={[styles.successTitle, { color: colors.success }]}
-                    >
-                      Booking Confirmed!
-                    </Text>
-                    <Text
-                      style={[
-                        styles.successMessage,
-                        { color: colors.secondaryText },
-                      ]}
-                    >
-                      Your consultation with {selectedDoctor.name} has been
-                      booked successfully. You will connect with you shortly
-                    </Text>
-                    <TouchableOpacity
-                      onPress={() => {
-                        triggerHaptic();
-                        setShowSuccessModal(false);
-                      }}
-                      style={[
-                        styles.successButton,
-                        { backgroundColor: colors.success },
-                      ]}
-                    >
-                      <Text style={styles.successButtonText}>Done</Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              </Modal>
-            )}
           </View>
         </ScrollView>
       </PullToRefreshWrapper>

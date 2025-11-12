@@ -894,11 +894,7 @@ export default function HomeScreen() {
                   onRequestClose={() => setPaymentOpen(false)}
                 >
                   <View style={styles.modalOverlay}>
-                    {' '}
-                    {/* This will make the background semi-transparent */}
                     <View style={styles.paymentOptionModalContent}>
-                      {' '}
-                      {/* This will be your actual modal box */}
                       <View
                         style={[
                           styles.modalHeader,
