@@ -14,7 +14,6 @@ import { useThemeColors } from '@/hooks/useThemeColors';
 import { useGetAllYogaQuery } from '@/redux/features/Yoga/yogaApi';
 import { TYoga } from '@/types';
 import { useGetAllConsultancyServicesQuery } from '@/redux/features/Consultancy/consultancyApi';
-import Experts from '@/components/Reusable/Experts';
 import AllYogaPrograms from '@/components/YogaPage/AllYogaPrograms';
 import LoadingComponent from '@/components/LoadingComponent/LoadingComponent';
 import { PullToRefreshWrapper } from '@/components/Reusable/PullToRefreshWrapper/PullToRefreshWrapper';
@@ -23,6 +22,7 @@ import AppHeader from '@/components/Reusable/AppHeader/AppHeader';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Categories from '@/components/Reusable/Categories/Categories';
 import SkeletonLoader from '@/components/Reusable/SkeletonLoader';
+import Experts from '@/components/ConsultancyPage/Experts';
 
 export const LEVELS = [
   { id: 'all', name: 'All Levels', color: '#718096' },
@@ -56,10 +56,7 @@ export default function YogaPage() {
     } finally {
       setRefreshing(false);
     }
-  };
-  const filteredExperts =
-    experts?.data?.filter((expert: any) => expert.category === 'Yoga Expert') ||
-    [];
+  };;
   const [searchQuery, setSearchQuery] = useState('');
   const colors = useThemeColors();
 
@@ -223,15 +220,7 @@ export default function YogaPage() {
                 )}
               </View>
 
-              {isExpertsLoading ? (
-                <LoadingComponent loading="Experts" color={colors.success} />
-              ) : (
-                <Experts
-                  data={filteredExperts}
-                  title={'Yoga'}
-                  isLoading={isLoading}
-                />
-              )}
+              <Experts defaultCategory='Yoga Expert' />
             </ScrollView>
           </View>
         </ScrollView>

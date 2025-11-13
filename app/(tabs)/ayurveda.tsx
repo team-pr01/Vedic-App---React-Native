@@ -40,12 +40,12 @@ import { PullToRefreshWrapper } from '@/components/Reusable/PullToRefreshWrapper
 import AppHeader from '@/components/Reusable/AppHeader/AppHeader';
 import Categories from '@/components/Reusable/Categories/Categories';
 import Header from '@/components/Reusable/HeaderMenuBar/HeaderMenuBar';
-import Experts from '@/components/Reusable/Experts';
 import LoadingComponent from '@/components/LoadingComponent/LoadingComponent';
 import { formatDate } from '@/utils/formatDate';
 import { getYouTubeVideoId } from '@/utils/getYouTubeVideoId';
 import YoutubePlayer from 'react-native-youtube-iframe';
 import SkeletonLoader from '@/components/Reusable/SkeletonLoader';
+import Experts from '@/components/ConsultancyPage/Experts';
 
 export default function AyurvedaPage() {
   const colors = useThemeColors();
@@ -66,10 +66,6 @@ export default function AyurvedaPage() {
   const { data: categoryData ,isLoading:isLoadingCategories, refetch: refetchCategories } =
     useGetAllCategoriesQuery({});
   const [isListening, setIsListening] = useState(false);
-  const filteredExperts =
-    data?.data?.filter(
-      (expert: any) => expert.category === 'Ayurveda Expert'
-    ) || [];
   const recognitionRef = useRef<any>(null);
 
   const triggerHaptic = () => {
@@ -436,11 +432,12 @@ export default function AyurvedaPage() {
                 style={styles.content}
                 showsVerticalScrollIndicator={false}
               ></ScrollView>
-              <Experts
+              {/* <Experts
                 data={filteredExperts}
                 title={'Ayurveda'}
                 isLoading={isLoading}
-              />
+              /> */}
+              <Experts defaultCategory='Ayurveda Expert' />
 
               <View style={styles.bottomSpacing} />
             </ScrollView>

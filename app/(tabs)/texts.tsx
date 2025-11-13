@@ -279,8 +279,6 @@ export default function LearnScreen() {
   useEffect(() => {
     setActiveTab(currentTabs || 'courses');
   }, [currentTabs]);
-
-  console.log(currentTabs);
   const {
     data: reels,
     isLoading: isReelsLoading,

@@ -282,10 +282,10 @@ const Input = ({
   keyboardType?: 'default' | 'numeric' | 'email-address';
 }) => {
   const value = watch(name);
-
+  const colors=useThemeColors()
   return (
     <View style={styles.inputGroup}>
-      <Text style={styles.label}>{label}</Text>
+      <Text style={[styles.label,{color:colors.text}]}>{label}</Text>
       <TextInput
         value={value}
         multiline={multiline}

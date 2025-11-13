@@ -38,10 +38,8 @@ import {
   Phone,
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
-import { router } from 'expo-router';
 import { Video, ResizeMode, AVPlaybackStatus } from 'expo-av';
 import { useGetAllConsultancyServicesQuery } from '@/redux/features/Consultancy/consultancyApi';
-import Experts from '@/components/Reusable/Experts';
 import {
   useGetAllVastuQuery,
   useGetAllVastuTipsQuery,
@@ -50,12 +48,12 @@ import YoutubePlayer from 'react-native-youtube-iframe';
 import { getYouTubeVideoId } from '@/utils/getYouTubeVideoId';
 import NoData from '@/components/Reusable/NoData/NoData';
 import { useThemeColors } from '@/hooks/useThemeColors';
-import LoadingComponent from '@/components/LoadingComponent/LoadingComponent';
 import { PullToRefreshWrapper } from '@/components/Reusable/PullToRefreshWrapper/PullToRefreshWrapper';
 import Header from '@/components/Reusable/HeaderMenuBar/HeaderMenuBar';
 import AppHeader from '@/components/Reusable/AppHeader/AppHeader';
 import Categories from '@/components/Reusable/Categories/Categories';
 import SkeletonLoader from '@/components/Reusable/SkeletonLoader';
+import Experts from '@/components/ConsultancyPage/Experts';
 
 export type TVastu = {
   _id: string;
@@ -189,16 +187,13 @@ export default function VastuPage() {
     isLoading,
     refetch: refetchConsultancy,
   } = useGetAllConsultancyServicesQuery({});
-  const filteredExperts =
-    data?.data?.filter((expert: any) => expert.category === 'Vastu Expert') ||
-    [];
   const [refreshing, setRefreshing] = useState(false);
   console.log(vastuTips?.data, 'tips');
   const handleRefresh = async () => {
     setRefreshing(true);
 
     try {
-      await Promise.all([refetchVastu(), refetchConsultancy()]);
+      await Promise.all([refetchVastu(), refetchVastuTips()]);
     } catch (error) {
       console.error('Error while refreshing:', error);
     } finally {
@@ -697,11 +692,7 @@ export default function VastuPage() {
                 )}
               </View>
 
-              <Experts
-                data={filteredExperts}
-                title={'Vastu'}
-                isLoading={isLoading}
-              />
+            
             </ScrollView>
 
             {/* AI Analysis Modal */}
@@ -903,7 +894,7 @@ export default function VastuPage() {
                             )
                           )}
                         </View>
-
+{/* 
                         <TouchableOpacity
                           style={[
                             styles.saveAnalysisButton,
@@ -919,7 +910,7 @@ export default function VastuPage() {
                           >
                             Save Analysis
                           </Text>
-                        </TouchableOpacity>
+                        </TouchableOpacity> */}
                       </View>
                     </ScrollView>
                   </View>
@@ -927,151 +918,7 @@ export default function VastuPage() {
               </Modal>
             )}
 
-            {/* Expert Booking Modal */}
-            {showExpertModal && selectedExpert && (
-              <Modal
-                visible={showExpertModal}
-                transparent
-                animationType="slide"
-                onRequestClose={() => setShowExpertModal(false)}
-              >
-                <View style={styles.modalOverlay}>
-                  <View
-                    style={[
-                      styles.expertModal,
-                      { backgroundColor: colors.card },
-                    ]}
-                  >
-                    <View
-                      style={[
-                        styles.modalHeader,
-                        { borderBottomColor: colors.border },
-                      ]}
-                    >
-                      <Text style={[styles.modalTitle, { color: colors.text }]}>
-                        Book Consultation
-                      </Text>
-                      <TouchableOpacity
-                        onPress={() => setShowExpertModal(false)}
-                      >
-                        <X size={24} color={colors.secondaryText} />
-                      </TouchableOpacity>
-                    </View>
-
-                    <View style={styles.expertModalContent}>
-                      <View style={styles.expertDetails}>
-                        <Image
-                          source={{ uri: selectedExpert.image }}
-                          style={styles.expertModalImage}
-                        />
-                        <View style={styles.expertModalInfo}>
-                          <Text
-                            style={[
-                              styles.expertModalName,
-                              { color: colors.text },
-                            ]}
-                          >
-                            {selectedExpert.name}
-                          </Text>
-                          <Text
-                            style={[
-                              styles.expertModalSpeciality,
-                              { color: colors.vastu },
-                            ]}
-                          >
-                            {selectedExpert.speciality}
-                          </Text>
-                          <View style={styles.expertModalMeta}>
-                            <View style={styles.ratingContainer}>
-                              <Star
-                                size={16}
-                                color={colors.warning}
-                                fill={colors.warning}
-                              />
-                              <Text
-                                style={[
-                                  styles.ratingText,
-                                  { color: colors.text },
-                                ]}
-                              >
-                                {selectedExpert.rating}
-                              </Text>
-                            </View>
-                            <Text
-                              style={[
-                                styles.expertModalPrice,
-                                { color: colors.success },
-                              ]}
-                            >
-                              {selectedExpert.price}
-                            </Text>
-                          </View>
-                        </View>
-                      </View>
-
-                      <View
-                        style={[
-                          styles.bookingInfo,
-                          { backgroundColor: colors.background },
-                        ]}
-                      >
-                        <View style={styles.bookingItem}>
-                          <Calendar size={20} color={colors.vastu} />
-                          <Text
-                            style={[
-                              styles.bookingText,
-                              { color: colors.secondaryText },
-                            ]}
-                          >
-                            Next Available: {selectedExpert.nextAvailable}
-                          </Text>
-                        </View>
-                        <View style={styles.bookingItem}>
-                          <Clock size={20} color={colors.vastu} />
-                          <Text
-                            style={[
-                              styles.bookingText,
-                              { color: colors.secondaryText },
-                            ]}
-                          >
-                            Duration: 60 minutes
-                          </Text>
-                        </View>
-                        <View style={styles.bookingItem}>
-                          <Phone size={20} color={colors.vastu} />
-                          <Text
-                            style={[
-                              styles.bookingText,
-                              { color: colors.secondaryText },
-                            ]}
-                          >
-                            Video/Phone Consultation
-                          </Text>
-                        </View>
-                      </View>
-
-                      <TouchableOpacity
-                        style={[
-                          styles.bookButton,
-                          { backgroundColor: colors.vastu },
-                        ]}
-                        onPress={() => {
-                          triggerHaptic();
-                          alert(
-                            `Booking confirmed with ${selectedExpert.name}!`
-                          );
-                          setShowExpertModal(false);
-                        }}
-                      >
-                        <Text style={styles.bookButtonText}>
-                          Book Now - {selectedExpert.price}
-                        </Text>
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-                </View>
-              </Modal>
-            )}
+           <Experts defaultCategory='Vastu Expert' />
           </View>
         </ScrollView>
       </PullToRefreshWrapper>{' '}

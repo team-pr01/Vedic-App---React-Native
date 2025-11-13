@@ -17,6 +17,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import * as ImagePicker from 'expo-image-picker';
 import { useForm } from 'react-hook-form';
+import { useSubscribeMutation } from '@/redux/features/Subscription/subscriptionApi';
 
 const { width } = Dimensions.get('window');
 
@@ -89,7 +90,11 @@ const plans = [
       { text: 'Cooking Videos – Unlimited', included: true },
       { text: 'Ayurveda Videos – Unlimited', included: true },
       { text: 'Yoga Videos – Unlimited', included: true },
-      { text: 'Vastu Videos – Unlimited (No AI support)', included: true, note: true },
+      {
+        text: 'Vastu Videos – Unlimited (No AI support)',
+        included: true,
+        note: true,
+      },
       { text: 'Unlimited quizzes per month', included: true },
       { text: 'AI Chat: 5/day', included: true, limited: true },
       { text: 'AI Recipes: 5/month', included: true, limited: true },
@@ -167,26 +172,29 @@ export default function SubscriptionPage({
   const [paymentOpen, setPaymentOpen] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<any>(null);
   const [paymentMethod, setPaymentMethod] = useState<any>(null);
-
+  const [Subscribe, { isLoading: isSubscribing }] = useSubscribeMutation();
   const { watch, setValue, handleSubmit, reset } = useForm({
-    defaultValues: { currency: '', amount: '', file: null },
+    defaultValues: {accountNumber: '', amount: '', },
   });
 
-  const pickCoverImage = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      quality: 1,
-    });
-    if (!result.canceled && result.assets?.[0]?.uri) {
-      setValue('file', result.assets[0].uri);
+  const onSubmit = async (data:any) => {
+    try {
+      const payload = {
+        paymentMethod: paymentMethod.provider,
+        amount: data.amount,
+        subscriptionPlanName: selectedPlan?.name || null,
+        senderAccountNumber: data.accountNumber || null,
+      };
+      console.log(payload)
+      const res = await Subscribe(payload).unwrap();
+      if (res.success) {
+        reset();
+        setPaymentOpen(false);
+        Alert.alert('Payment successful! Welcome to our subscription plan.');
+      }
+    } catch (err) {
+      console.error('Payment submission error:', err);
     }
-  };
-
-  const onSubmit = (data: any) => {
-    Alert.alert('Success', `Payment submitted for ${selectedPlan?.name}`);
-    reset();
-    setPaymentOpen(false);
   };
 
   const FeatureIcon = ({ included, limited, warning, note }: any) => {
@@ -210,22 +218,19 @@ export default function SubscriptionPage({
           </TouchableOpacity>
         </View>
 
-        <ScrollView 
+        <ScrollView
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
           <Text style={[styles.subtitle, { color: colors.secondaryText }]}>
             Select the perfect plan for your spiritual journey
           </Text>
-          
+
           {plans.map((plan) => (
             <LinearGradient
               key={plan.id}
               colors={plan.gradient}
-              style={[
-                styles.card,
-                plan.id === 'premium' && styles.premiumCard
-              ]}
+              style={[styles.card, plan.id === 'premium' && styles.premiumCard]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
             >
@@ -260,13 +265,15 @@ export default function SubscriptionPage({
                     <View style={styles.featureIconContainer}>
                       <FeatureIcon {...feature} />
                     </View>
-                    <Text style={[
-                      styles.featureText,
-                      !feature.included && styles.featureExcluded,
-                      feature.limited && styles.featureLimited,
-                      feature.warning && styles.featureWarning,
-                      feature.note && styles.featureNote,
-                    ]}>
+                    <Text
+                      style={[
+                        styles.featureText,
+                        !feature.included && styles.featureExcluded,
+                        feature.limited && styles.featureLimited,
+                        feature.warning && styles.featureWarning,
+                        feature.note && styles.featureNote,
+                      ]}
+                    >
                       {feature.text}
                     </Text>
                   </View>
@@ -287,13 +294,21 @@ export default function SubscriptionPage({
                   setPaymentOptionModalOpen(true);
                 }}
               >
-                <Text style={[
-                  styles.subscribeText,
-                  plan.id === 'free' && styles.freeButtonText,
-                  plan.id === 'premium' && styles.premiumButtonText,
-                ]}>
+                <Text
+                  style={[
+                    styles.subscribeText,
+                    plan.id === 'free' && styles.freeButtonText,
+                    plan.id === 'premium' && styles.premiumButtonText,
+                  ]}
+                >
                   {plan.id === 'free' ? 'Get Started Free' : 'Subscribe Now'}
-                  {plan.id === 'premium' && <Crown size={16} color="#9333EA" style={{ marginLeft: 4 }} />}
+                  {plan.id === 'premium' && (
+                    <Crown
+                      size={16}
+                      color="#9333EA"
+                      style={{ marginLeft: 4 }}
+                    />
+                  )}
                 </Text>
               </TouchableOpacity>
             </LinearGradient>
@@ -301,23 +316,41 @@ export default function SubscriptionPage({
         </ScrollView>
 
         {/* Payment Option Modal */}
-        <Modal visible={paymentOptionModalOpen} transparent animationType="fade">
+        <Modal
+          visible={paymentOptionModalOpen}
+          transparent
+          animationType="fade"
+        >
           <View style={styles.modalOverlay}>
-            <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
-              <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
+            <View
+              style={[styles.modalContent, { backgroundColor: colors.card }]}
+            >
+              <View
+                style={[
+                  styles.modalHeader,
+                  { borderBottomColor: colors.border },
+                ]}
+              >
                 <Text style={[styles.modalTitle, { color: colors.text }]}>
                   Select Payment Method
                 </Text>
-                <TouchableOpacity onPress={() => setPaymentOptionModalOpen(false)}>
+                <TouchableOpacity
+                  onPress={() => setPaymentOptionModalOpen(false)}
+                >
                   <X size={24} color={colors.secondaryText} />
                 </TouchableOpacity>
               </View>
 
-              <ScrollView contentContainerStyle={styles.paymentMethodsContainer}>
+              <ScrollView
+                contentContainerStyle={styles.paymentMethodsContainer}
+              >
                 {paymentCards.map((card) => (
                   <TouchableOpacity
                     key={card.id}
-                    style={[styles.paymentCard, { borderLeftColor: card.color }]}
+                    style={[
+                      styles.paymentCard,
+                      { borderLeftColor: card.color },
+                    ]}
                     onPress={() => {
                       setPaymentMethod(card);
                       setPaymentOptionModalOpen(false);
@@ -327,16 +360,36 @@ export default function SubscriptionPage({
                   >
                     <View style={styles.paymentCardContent}>
                       <View style={styles.paymentCardLeft}>
-                        <View style={[styles.paymentLogoContainer, { backgroundColor: `${card.color}15` }]}>
-                          <Text style={[styles.paymentLogoText, { color: card.color }]}>
+                        <View
+                          style={[
+                            styles.paymentLogoContainer,
+                            { backgroundColor: `${card.color}15` },
+                          ]}
+                        >
+                          <Text
+                            style={[
+                              styles.paymentLogoText,
+                              { color: card.color },
+                            ]}
+                          >
                             {card.provider.charAt(0)}
                           </Text>
                         </View>
                         <View style={styles.paymentInfo}>
-                          <Text style={[styles.paymentProvider, { color: colors.text }]}>
+                          <Text
+                            style={[
+                              styles.paymentProvider,
+                              { color: colors.text },
+                            ]}
+                          >
                             {card.provider}
                           </Text>
-                          <Text style={[styles.paymentAccount, { color: colors.secondaryText }]}>
+                          <Text
+                            style={[
+                              styles.paymentAccount,
+                              { color: colors.secondaryText },
+                            ]}
+                          >
                             {card.accountNumber}
                           </Text>
                         </View>
@@ -355,8 +408,15 @@ export default function SubscriptionPage({
         {/* Payment Confirmation Modal */}
         <Modal visible={paymentOpen} transparent animationType="fade">
           <View style={styles.modalOverlay}>
-            <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
-              <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
+            <View
+              style={[styles.modalContent, { backgroundColor: colors.card }]}
+            >
+              <View
+                style={[
+                  styles.modalHeader,
+                  { borderBottomColor: colors.border },
+                ]}
+              >
                 <Text style={[styles.modalTitle, { color: colors.text }]}>
                   Complete Payment
                 </Text>
@@ -365,14 +425,31 @@ export default function SubscriptionPage({
                 </TouchableOpacity>
               </View>
 
-              <ScrollView contentContainerStyle={styles.paymentDetailsContainer}>
+              <ScrollView
+                contentContainerStyle={styles.paymentDetailsContainer}
+              >
                 {paymentMethod && (
                   <View style={styles.selectedPaymentMethod}>
-                    <View style={[styles.paymentMethodHeader, { backgroundColor: `${paymentMethod.color}15` }]}>
-                      <Text style={[styles.paymentMethodName, { color: paymentMethod.color }]}>
+                    <View
+                      style={[
+                        styles.paymentMethodHeader,
+                        { backgroundColor: `${paymentMethod.color}15` },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.paymentMethodName,
+                          { color: paymentMethod.color },
+                        ]}
+                      >
                         {paymentMethod.provider}
                       </Text>
-                      <Text style={[styles.paymentAccountDetail, { color: colors.text }]}>
+                      <Text
+                        style={[
+                          styles.paymentAccountDetail,
+                          { color: colors.text },
+                        ]}
+                      >
                         {paymentMethod.accountNumber}
                       </Text>
                     </View>
@@ -380,22 +457,48 @@ export default function SubscriptionPage({
                 )}
 
                 <View style={styles.amountSection}>
-                  <Text style={[styles.amountLabel, { color: colors.text }]}>Amount (USD)</Text>
+                  <Text style={[styles.amountLabel, { color: colors.text }]}>
+                    Amount (USD)
+                  </Text>
                   <TextInput
                     value={watch('amount')}
                     onChangeText={(t) => setValue('amount', t)}
-                    style={[styles.amountInput, { backgroundColor: colors.background, color: colors.text }]}
+                    style={[
+                      styles.amountInput,
+                      {
+                        backgroundColor: colors.background,
+                        color: colors.text,
+                      },
+                    ]}
                     keyboardType="numeric"
                     placeholder="Enter amount"
                     placeholderTextColor={colors.secondaryText}
                   />
+                   <Text style={[styles.amountLabel, { color: colors.text ,marginTop:10}]}>
+                    Amount (USD)
+                  </Text>
+                  <TextInput
+                    value={watch('accountNumber')}
+                    onChangeText={(t) => setValue('accountNumber', t)}
+                    style={[
+                      styles.amountInput,
+                      {
+                        backgroundColor: colors.background,
+                        color: colors.text,
+                      },
+                    ]}
+                    keyboardType="numeric"
+                    placeholder="Enter account Number"
+                    placeholderTextColor={colors.secondaryText}
+                  />
                 </View>
 
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={[styles.submitButton, { backgroundColor: '#9333EA' }]}
                   onPress={handleSubmit(onSubmit)}
+                  disabled={isSubscribing}
                 >
-                  <Text style={styles.submitButtonText}>Confirm Payment</Text>
+                  <Text style={styles.submitButtonText}>{isSubscribing?"Confirming...":"Confirm Payment"}</Text>
                 </TouchableOpacity>
               </ScrollView>
             </View>
@@ -417,8 +520,8 @@ const styles = StyleSheet.create({
     paddingBottom: 16,
     borderBottomWidth: 1,
   },
-  headerTitle: { 
-    fontSize: 24, 
+  headerTitle: {
+    fontSize: 24,
     fontWeight: '800',
     fontFamily: 'System',
   },
@@ -628,8 +731,8 @@ const styles = StyleSheet.create({
     padding: 20,
     borderBottomWidth: 1,
   },
-  modalTitle: { 
-    fontSize: 18, 
+  modalTitle: {
+    fontSize: 18,
     fontWeight: '700',
     fontFamily: 'System',
   },

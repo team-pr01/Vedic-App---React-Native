@@ -37,8 +37,10 @@ import Header from '@/components/Reusable/HeaderMenuBar/HeaderMenuBar';
 import AppHeader from '@/components/Reusable/AppHeader/AppHeader';
 import Categories from '@/components/Reusable/Categories/Categories';
 import SkeletonLoader from '@/components/Reusable/SkeletonLoader';
+import { Colors } from 'react-native/Libraries/NewAppScreen';
 
 const AiRecipeParser = ({ content }: { content: string | null }) => {
+  const colors=useThemeColors()
   if (!content) return null;
 
   const lines = content.split('\n');
@@ -47,7 +49,7 @@ const AiRecipeParser = ({ content }: { content: string | null }) => {
     // ### Heading
     if (line.startsWith('### ')) {
       return (
-        <Text key={index} style={styles.aiHeading}>
+        <Text key={index} style={[styles.aiHeading,{color:colors.secondaryText}]}>
           {line.replace('### ', '')}
         </Text>
       );
@@ -56,7 +58,7 @@ const AiRecipeParser = ({ content }: { content: string | null }) => {
     if (line.includes('**')) {
       const parts = line.split('**');
       return (
-        <Text key={index} style={styles.aiParagraph}>
+        <Text key={index} style={[styles.aiParagraph,{color:colors.text}]}>
           <Text style={{ fontWeight: 'bold' }}>{parts[0].trim()}</Text>
           {parts.slice(1).join('')}
         </Text>
@@ -66,8 +68,8 @@ const AiRecipeParser = ({ content }: { content: string | null }) => {
     if (line.trim().startsWith('- ')) {
       return (
         <View key={index} style={styles.aiListItemContainer}>
-          <Text style={styles.aiListItem}>•</Text>
-          <Text style={styles.aiListItemText}>{line.trim().substring(2)}</Text>
+          <Text style={[styles.aiListItem,,{color:colors.secondaryText}]}>•</Text>
+          <Text style={[styles.aiListItemText,{color:colors.secondaryText}]}>{line.trim().substring(2)}</Text>
         </View>
       );
     }
@@ -75,14 +77,14 @@ const AiRecipeParser = ({ content }: { content: string | null }) => {
     if (/^\d+\.\s/.test(line.trim())) {
       return (
         <View key={index} style={styles.aiListItemContainer}>
-          <Text style={styles.aiListItemText}>{line.trim()}</Text>
+          <Text style={[styles.aiListItemText,,{color:colors.secondaryText}]}>{line.trim()}</Text>
         </View>
       );
     }
     // Regular paragraph
     if (line.trim().length > 0) {
       return (
-        <Text key={index} style={styles.aiParagraph}>
+        <Text key={index} style={[styles.aiParagraph,{color:colors.secondaryText}]}>
           {line}
         </Text>
       );

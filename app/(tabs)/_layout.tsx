@@ -27,30 +27,6 @@ export default function TabLayout() {
    const router = useRouter();
   const segments = useSegments();
 
-  useFocusEffect(
-    useCallback(() => {
-      const onBackPress = () => {
-        const currentSegment = segments[segments.length - 1];
-        console.log(currentSegment)
-        if (currentSegment === "(tabs)") {
-          return false;
-        } else {
-          router.push("/(tabs)");
-          return true; 
-        }
-      };
-
-      const subscription = BackHandler.addEventListener(
-        "hardwareBackPress",
-        onBackPress
-      );
-
-      return () => subscription.remove();
-    }, [segments, router])
-  );
-
-
-
   return (
   <Tabs
   screenOptions={{
@@ -77,9 +53,9 @@ export default function TabLayout() {
 
       {/* ---- Main 5 Tabs ---- */}
       <Tabs.Screen
-        name="consultancy"
+        name="index"
         options={{
-          title: 'Consultancy',
+          title: 'index',
           tabBarIcon: ({ size, color, focused }) => (
             <View
               style={[
@@ -115,9 +91,9 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="index"
+        name="chat"
         options={{
-          title: "",
+          title: "chat",
           tabBarIcon: ({ size, color, focused }) => (
             <View
               style={[
@@ -182,7 +158,7 @@ export default function TabLayout() {
       {/* ---- Hidden Screens ---- */}
       <Tabs.Screen name="akf" options={{ href: null }} />
       <Tabs.Screen name="sanatan-sthal" options={{ href: null }} />
-      <Tabs.Screen name="food" options={{ href: null }} />
+      <Tabs.Screen name="consultancy" options={{ href: null }} />
       <Tabs.Screen name="jyotish" options={{ href: null }} />
       <Tabs.Screen name="vastu" options={{ href: null }} />
       <Tabs.Screen name="yoga" options={{ href: null }} />
@@ -190,6 +166,7 @@ export default function TabLayout() {
       <Tabs.Screen name="explore" options={{ href: null }} />
       <Tabs.Screen name="ayurveda" options={{ href: null }} />
       <Tabs.Screen name="shop" options={{ href: null }} />
+      <Tabs.Screen name="food" options={{ href: null }} />
     </Tabs>
   );
 }

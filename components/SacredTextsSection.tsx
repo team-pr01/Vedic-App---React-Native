@@ -179,12 +179,12 @@ if (isLoading) {
                 <View style={styles.textContent}>
                   <Text style={styles.textTitle}>{text.name}</Text>
                   <Text style={styles.textSubtitle}>{text.type}</Text>
-                  <View style={styles.textMeta}>
+                  {/* <View style={styles.textMeta}>
                     <BookOpen size={12} color="#E2E8F0" />
                     <Text style={styles.textMetaText}>
                       {totalSections} sections • {totalMantras} mantras
                     </Text>
-                  </View>
+                  </View> */}
                 </View>
               </View>
             </TouchableOpacity>

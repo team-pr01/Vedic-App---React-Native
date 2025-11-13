@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
 import DoctorCard from './DoctorCard';
+import SkeletonLoader from '../Reusable/SkeletonLoader';
 
 const DoctorList = ({
   data,
@@ -16,9 +17,50 @@ const DoctorList = ({
       </Text>
 
       {isLoading || isFetching ? (
-        <View style={styles.loader}>
-          <ActivityIndicator size="large" color={colors.primary} />
-        </View>
+        <SkeletonLoader
+                direction="column"
+                height={130}
+                width={'100%'}
+                innerSkeleton={
+                  <View
+                    style={{
+                      padding: 15,
+                      justifyContent: 'space-between',
+                      flex: 1,
+                    }}
+                  >
+                    <View>
+                      <View
+                        style={{
+                          width: '60%',
+                          height: 16,
+                          backgroundColor: '#e0e0e0',
+                          borderRadius: 8,
+                          marginBottom: 8,
+                        }}
+                      />
+                      <View
+                        style={{
+                          width: '40%',
+                          height: 12,
+                          backgroundColor: '#e0e0e0',
+                          borderRadius: 6,
+                        }}
+                      />
+                    </View>
+
+                    <View
+                      style={{
+                        width: '100%',
+                        height: 35,
+                        backgroundColor: '#d6d6d6',
+                        borderRadius: 8,
+                        marginTop: 20,
+                      }}
+                    />
+                  </View>
+                }
+              />
       ) : data?.data?.length > 0 ? (
         <View style={styles.doctorsContainer}>
           {data.data.map((doctor: any) => (

@@ -151,7 +151,7 @@ function RootLayoutNav() {
           }}
         />
         <Stack.Screen
-          name="auth/index" // 👈 direct path, not just "auth"
+          name="auth" // 👈 direct path, not just "auth"
           options={{
             animation: 'slide_from_left',
           }}

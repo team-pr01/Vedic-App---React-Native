@@ -36,8 +36,6 @@ import {
   Phone,
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
-import { router } from 'expo-router';
-import Experts from '@/components/Reusable/Experts';
 import { useGetAllConsultancyServicesQuery } from '@/redux/features/Consultancy/consultancyApi';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import LoadingComponent from '@/components/LoadingComponent/LoadingComponent';
@@ -50,6 +48,7 @@ import {
   useGetAllDailyHoroscopesQuery,
 } from '@/redux/features/Jyotish/dailyHoroscopeApi';
 import SkeletonLoader from '@/components/Reusable/SkeletonLoader';
+import Experts from '@/components/ConsultancyPage/Experts';
 
 interface JyotishReading {
   id: string;
@@ -89,14 +88,14 @@ const triggerHaptic = () => {
 };
 const AiOutputParser = ({ content }: { content: string | null }) => {
   if (!content) return null;
-
+const colors = useThemeColors();
   const lines = content.split('\n');
 
   const renderLine = (line: string, index: number) => {
     // ### Heading
     if (line.startsWith('### ')) {
       return (
-        <Text key={index} style={styles.aiHeading}>
+        <Text key={index} style={[styles.aiHeading,,{color:colors.secondaryText}]}>
           {line.replace('### ', '')}
         </Text>
       );
@@ -105,7 +104,7 @@ const AiOutputParser = ({ content }: { content: string | null }) => {
     if (line.includes('**')) {
       const parts = line.split('**');
       return (
-        <Text key={index} style={styles.aiParagraph}>
+        <Text key={index} style={[styles.aiParagraph,,{color:colors.text}]}>
           <Text style={{ fontWeight: 'bold' }}>{parts[0].trim()}</Text>
           {parts.slice(1).join('')}
         </Text>
@@ -115,8 +114,8 @@ const AiOutputParser = ({ content }: { content: string | null }) => {
     if (line.trim().startsWith('- ')) {
       return (
         <View key={index} style={styles.aiListItemContainer}>
-          <Text style={styles.aiListItem}>•</Text>
-          <Text style={styles.aiListItemText}>{line.trim().substring(2)}</Text>
+          <Text style={[styles.aiListItem,{color:colors.text}]}>•</Text>
+          <Text style={[styles.aiListItemText,,{color:colors.text}]}>{line.trim().substring(2)}</Text>
         </View>
       );
     }
@@ -124,14 +123,14 @@ const AiOutputParser = ({ content }: { content: string | null }) => {
     if (/^\d+\.\s/.test(line.trim())) {
       return (
         <View key={index} style={styles.aiListItemContainer}>
-          <Text style={styles.aiListItemText}>{line.trim()}</Text>
+          <Text style={[styles.aiListItemText,{color:colors.text}]}>{line.trim()}</Text>
         </View>
       );
     }
     // Regular paragraph
     if (line.trim().length > 0) {
       return (
-        <Text key={index} style={styles.aiParagraph}>
+        <Text key={index} style={[styles.aiParagraph,{color:colors.text}]}>
           {line}
         </Text>
       );
@@ -163,9 +162,6 @@ export default function JyotishPage() {
       setRefreshing(false);
     }
   };
-  const filteredExperts =
-    data?.data?.filter((expert: any) => expert.category === 'Jyotish Expert') ||
-    [];
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [isListening, setIsListening] = useState(false);
@@ -248,25 +244,6 @@ export default function JyotishPage() {
     },
   ];
 
-  const categories = [
-    { id: 'all', name: 'All', icon: <Compass size={20} color="#D53F8C" /> },
-    { id: 'kundli', name: 'Kundli', icon: <Star size={20} color="#D53F8C" /> },
-    {
-      id: 'horoscope',
-      name: 'Horoscope',
-      icon: <Sun size={20} color="#D53F8C" />,
-    },
-    {
-      id: 'muhurta',
-      name: 'Muhurta',
-      icon: <Clock size={20} color="#D53F8C" />,
-    },
-    {
-      id: 'panchang',
-      name: 'Panchang',
-      icon: <Calendar size={20} color="#D53F8C" />,
-    },
-  ];
 
   // Initialize speech recognition
   useEffect(() => {
@@ -819,16 +796,7 @@ export default function JyotishPage() {
               </View>
 
               {/* Jyotish Experts */}
-
-              {isLoading ? (
-                <LoadingComponent loading="Experts" color={colors.primary} />
-              ) : (
-                <Experts
-                  data={filteredExperts}
-                  title={'Jyotish'}
-                  isLoading={isLoading}
-                />
-              )}
+<Experts defaultCategory='Jyotish Expert' />
             </ScrollView>
 
             {/* AI Reading Modal */}
