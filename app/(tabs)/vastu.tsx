@@ -13,19 +13,14 @@ import {
   RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
 import {
   Search,
   Mic,
   CircleStop as StopCircle,
   Brain,
-  Clock,
-  Star,
   ChevronRight,
   X,
   Loader,
-  Heart,
-  ArrowLeft,
   DoorOpen,
   Bed,
   ChefHat as Kitchen,
@@ -33,12 +28,9 @@ import {
   Flower2 as Plant,
   Church as Temple,
   Chrome as Home,
-  TriangleAlert as AlertTriangle,
-  Calendar,
-  Phone,
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
-import { Video, ResizeMode, AVPlaybackStatus } from 'expo-av';
+import { Video,} from 'expo-av';
 import { useGetAllConsultancyServicesQuery } from '@/redux/features/Consultancy/consultancyApi';
 import {
   useGetAllVastuQuery,
@@ -105,7 +97,6 @@ const triggerHaptic = () => {
   }
 };
 
-// Mock AI Vastu Service
 const generateVastuAnalysis = async (
   prompt: string
 ): Promise<VastuAnalysis> => {
@@ -182,11 +173,6 @@ export default function VastuPage() {
     keyword: searchQuery,
     category: selectedCategory,
   });
-  const {
-    data,
-    isLoading,
-    refetch: refetchConsultancy,
-  } = useGetAllConsultancyServicesQuery({});
   const [refreshing, setRefreshing] = useState(false);
   console.log(vastuTips?.data, 'tips');
   const handleRefresh = async () => {
@@ -211,14 +197,10 @@ export default function VastuPage() {
   const [error, setError] = useState<string | null>(null);
   const [selectedAnalysis, setSelectedAnalysis] =
     useState<VastuAnalysis | null>(null);
-  const [selectedExpert, setSelectedExpert] = useState<VastuExpert | null>(
-    null
-  );
   const [videoStates, setVideoStates] = useState<
     Map<number, { isPlaying: boolean }>
   >(new Map());
   const recognitionRef = useRef<any>(null);
-  const videoRefs = useRef<Map<number, Video | null>>(new Map());
   const initialVastuTips: VastuTip[] = [
     {
       title: 'Main Entrance',
@@ -320,11 +302,6 @@ export default function VastuPage() {
       views: '650K',
     },
   ];
-
-  const [filteredTips, setFilteredTips] =
-    useState<VastuTip[]>(initialVastuTips);
-  const [analyses, setAnalyses] = useState<VastuAnalysis[]>([]);
-
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const SpeechRecognition =
@@ -354,18 +331,6 @@ export default function VastuPage() {
     setVideoStates(initialStates);
   }, []);
 
-  useEffect(() => {
-    const query = searchQuery.toLowerCase();
-    setFilteredTips(
-      initialVastuTips.filter(
-        (tip) =>
-          (selectedCategory === '' || tip.category === selectedCategory) &&
-          (!query ||
-            tip.title.toLowerCase().includes(query) ||
-            tip.tips.some((t) => t.toLowerCase().includes(query)))
-      )
-    );
-  }, [searchQuery, selectedCategory]);
 
   const handleVoiceSearch = () => {
     triggerHaptic();
@@ -395,7 +360,6 @@ export default function VastuPage() {
       const analysis = await generateVastuAnalysis(vastuPrompt);
       setVastuPrompt('');
       setShowAIModal(false);
-      setAnalyses((prev) => [analysis, ...prev]);
       setSelectedAnalysis(analysis);
       setShowAnalysisModal(true);
     } catch (err: any) {

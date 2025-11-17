@@ -29,13 +29,12 @@ import {
 } from 'lucide-react-native';
 import ShopConfirmationModal from './ShopConfirmationModal';
 import { useDispatch, useSelector } from 'react-redux';
-import { logout } from '@/redux/features/Auth/authSlice';
-import { router } from 'expo-router';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { RootState } from '@/redux/store';
 import { toggleTheme } from '@/redux/features/Theme/themeSlice';
 import SubscriptionPage from './SubscriptionPage';
 import * as Haptics from 'expo-haptics';
+import { useGetMeQuery } from '@/redux/features/Auth/authApi';
 
 interface Language {
   code: string;
@@ -177,7 +176,7 @@ export default function SettingsModal({
   const [languageSearchTerm, setLanguageSearchTerm] = useState('');
   const [showShopModal, setShowShopModal] = useState(false);
   const currentTheme = useSelector((state: RootState) => state.theme.theme);
-
+  const {data:getMe,isLoading}=useGetMeQuery({})
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showUserProfileModal, setShowUserProfileModal] = useState(false);
   const isDarkMode = currentTheme === 'dark';
@@ -186,7 +185,7 @@ export default function SettingsModal({
       lang.name.toLowerCase().includes(languageSearchTerm.toLowerCase()) ||
       lang.code.toLowerCase().includes(languageSearchTerm.toLowerCase())
   );
-
+  console.log(getMe,"me")
    const triggerHaptic = () => {
       if (Platform.OS !== 'web') {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -345,7 +344,7 @@ export default function SettingsModal({
                 <SettingItem
                   icon={<Crown size={20} color="#FFD700" />}
                   label="Membership Plans"
-                  value="Free Plan"
+                  value={getMe?.data?.plan}
                   onPress={handleMembershipPress}
                 />
               </View>

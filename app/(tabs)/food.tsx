@@ -109,6 +109,7 @@ export default function FoodPage() {
     { data: recipeData, isLoading: isRecipeLoading, error: recipeError },
   ] = useGenerateRecipeMutation();
 
+  console.log(recipeError, "error")
   const {
     data,
     isLoading,
@@ -200,7 +201,8 @@ export default function FoodPage() {
 
   const handleGenerate = () => {
     if (!recipePrompt.trim()) return;
-    generateRecipe(recipePrompt);
+    const res=generateRecipe(recipePrompt);
+   
   };
 
   const [playingCardIndex, setPlayingCardIndex] = useState<number | null>(null);
@@ -465,7 +467,7 @@ export default function FoodPage() {
                     {recipeError && (
                       <View style={styles.errorContainer}>
                         <Text style={styles.errorText}>
-                          Failed to generate recipe.
+                          {recipeError?.data?.message}
                         </Text>
                       </View>
                     )}

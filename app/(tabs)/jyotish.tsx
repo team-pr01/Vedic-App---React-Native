@@ -188,48 +188,10 @@ export default function JyotishPage() {
   const { data: dailyHoroscope, isLoading: isHoroscopeLoading } =
     useGetAllDailyHoroscopesQuery({ keyword: searchQuery });
   console.log(dailyHoroscope);
-  const [generateKundli, { isLoading: isKundliLoading }] =
+  const [generateKundli, { isLoading: isKundliLoading ,error:kundaliError}] =
     useGenerateKundliMutation();
-  const [generateMuhurta, { isLoading: isMuhurtaLoading }] =
+  const [generateMuhurta, { isLoading: isMuhurtaLoading,error:MuhurtaError }] =
     useGenerateMuhurtaMutation();
-  // const dailyHoroscope: DailyHoroscope[] = [
-  //   {
-  //     sign: 'Aries (মেষ)',
-  //     prediction:
-  //       'A favorable day ahead. New opportunities may arise in your career. Focus on your goals.',
-  //     lucky: { color: 'Red', number: '9', direction: 'North' },
-  //   },
-  //   {
-  //     sign: 'Taurus (বৃষভ)',
-  //     prediction:
-  //       'Family life will be peaceful and harmonious. Good time for financial planning.',
-  //     lucky: { color: 'Green', number: '6', direction: 'South-East' },
-  //   },
-  //   {
-  //     sign: 'Gemini (মিথুন)',
-  //     prediction:
-  //       'Be cautious with communication to avoid misunderstandings. Short travels are indicated.',
-  //     lucky: { color: 'Yellow', number: '5', direction: 'East' },
-  //   },
-  //   {
-  //     sign: 'Cancer (কর্কট)',
-  //     prediction:
-  //       'Emotional stability and family support will be strong. Focus on home and relationships.',
-  //     lucky: { color: 'White', number: '2', direction: 'North-West' },
-  //   },
-  //   {
-  //     sign: 'Leo (সিংহ)',
-  //     prediction:
-  //       'Leadership qualities will shine today. Creative projects will bring success.',
-  //     lucky: { color: 'Orange', number: '1', direction: 'East' },
-  //   },
-  //   {
-  //     sign: 'Virgo (কন্যা)',
-  //     prediction:
-  //       'Attention to detail will pay off. Health and work matters need careful consideration.',
-  //     lucky: { color: 'Navy Blue', number: '3', direction: 'South' },
-  //   },
-  // ];
 
   const readingTypes = [
     {

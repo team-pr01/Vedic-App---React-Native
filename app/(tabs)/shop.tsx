@@ -38,6 +38,7 @@ import { useGetAllProductsQuery, useUpdateProductClicksMutation } from '@/redux/
 import Header from '@/components/Reusable/HeaderMenuBar/HeaderMenuBar';
 import AppHeader from '@/components/Reusable/AppHeader/AppHeader';
 import SkeletonLoader from '@/components/Reusable/SkeletonLoader';
+import { useGetAllProductBannersQuery } from '@/redux/features/ProductBannerApi/productBannerApi';
 
 const { width } = Dimensions.get('window');
 
@@ -49,11 +50,13 @@ export default function ShopPage() {
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
   const [productToBuy, setProductToBuy] = useState<ShopProduct| null>(null);
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
+  const {data:banners,isLoading:isBannerLoading}=useGetAllProductBannersQuery({})
   const recognitionRef = useRef<any>(null);
   const {data:products,isLoading:isLoadingProducts}=useGetAllProductsQuery({
     keyword: searchQuery,
     category: selectedCategory,
   })
+  console.log(banners,"banner ")
   const { data: categoryData,isLoading:isLoadingCategories, refetch: refetchCategories } =
       useGetAllCategoriesQuery({});
     const filteredCategory = categoryData?.data?.filter(
@@ -220,38 +223,74 @@ const [updateProductClicks] = useUpdateProductClicksMutation();
               setCurrentBannerIndex(index);
             }}
           >
-            {MOCK_SHOP_BANNERS.map((banner, index) => (
+            {isBannerLoading?( <SkeletonLoader
+                      height={180}
+                      width={"95%"}
+                      innerSkeleton={
+                        <View
+                          style={{
+                            flex: 1,
+                            justifyContent: 'flex-end',
+                            padding: 12,
+                            backgroundColor: 'rgba(0,0,0,0.05)',
+                          }}
+                        >
+                          {/* Title placeholder */}
+                          <View
+                            style={{
+                              width: '70%',
+                              height: 16,
+                              borderRadius: 8,
+                              backgroundColor: '#d6d6d6',
+                              marginBottom: 6,
+                            }}
+                          />
+                          {/* Description placeholder */}
+                          <View
+                            style={{
+                              width: '90%',
+                              height: 12,
+                              borderRadius: 8,
+                              backgroundColor: '#d6d6d6',
+                              marginBottom: 6,
+                            }}
+                          />
+                          <View
+                            style={{
+                              width: '50%',
+                              height: 12,
+                              borderRadius: 8,
+                              backgroundColor: '#d6d6d6',
+                            }}
+                          />
+                        </View>
+                      }
+                    />):(banners?.data?.map((banner, index) => (
               <View key={banner.id} style={[styles.bannerSlide, { width: width * 0.85 }]}>
                 <LinearGradient
-                  colors={[banner.backgroundColor, banner.backgroundColor + 'CC']}
+                  colors={[colors.primary,colors.primary + 'CC']}
                   style={styles.banner}
                 >
                   <View style={styles.bannerContent}>
-                    <Text style={[styles.bannerTitle, { color: banner.textColor }]}>{banner.title}</Text>
-                    <Text style={[styles.bannerDescription, { color: banner.textColor }]}>{banner.description}</Text>
+                    <Text style={[styles.bannerTitle, { color:colors.text }]}>{banner.title}</Text>
+                    <Text style={[styles.bannerDescription, {  color:colors.text  }]}>{banner.description}</Text>
                     <View style={styles.bannerActions}>
                       {banner.discount && (
                         <View style={[styles.discountBadge, { backgroundColor: banner.ctaBgColor }]}>
-                          <Text style={[styles.discountText, { color: banner.ctaTextColor }]}>{banner.discount}</Text>
+                          <Text style={[styles.discountText, { color:colors.secondaryText }]}>{banner.discount}</Text>
                         </View>
                       )}
-                      <TouchableOpacity 
-                        style={[styles.ctaButton, { backgroundColor: banner.ctaBgColor }]}
-                        onPress={triggerHaptic}
-                      >
-                        <Text style={[styles.ctaButtonText, { color: banner.ctaTextColor }]}>{banner.ctaText}</Text>
-                      </TouchableOpacity>
                     </View>
                   </View>
                   <Image source={{ uri: banner.imageUrl }} style={styles.bannerImage} />
                 </LinearGradient>
               </View>
-            ))}
+            )))}
           </ScrollView>
           
           {/* Banner Indicators */}
           <View style={styles.bannerIndicators}>
-            {MOCK_SHOP_BANNERS.map((_, index) => (
+            {banners?.data?.map((_, index) => (
               <TouchableOpacity
                 key={index}
                 style={[
@@ -282,7 +321,7 @@ const [updateProductClicks] = useUpdateProductClicksMutation();
           <View style={{ paddingVertical:8 }} />
           <View style={styles.productsGrid}>
   {isLoadingProducts ? (
-  <SkeletonLoader direction='row'  height={280} width={'48%'} innerSkeleton={
+  <SkeletonLoader direction='row'  height={180} width={'48%'} innerSkeleton={
                   <View
                     style={{
                       padding: 15,

@@ -18,6 +18,7 @@ import { useThemeColors } from '@/hooks/useThemeColors';
 import * as ImagePicker from 'expo-image-picker';
 import { useForm } from 'react-hook-form';
 import { useSubscribeMutation } from '@/redux/features/Subscription/subscriptionApi';
+import { useGetMeQuery } from '@/redux/features/Auth/authApi';
 
 const { width } = Dimensions.get('window');
 
@@ -172,6 +173,7 @@ export default function SubscriptionPage({
   const [paymentOpen, setPaymentOpen] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<any>(null);
   const [paymentMethod, setPaymentMethod] = useState<any>(null);
+  const {data:me,isLoading}=useGetMeQuery({})
   const [Subscribe, { isLoading: isSubscribing }] = useSubscribeMutation();
   const { watch, setValue, handleSubmit, reset } = useForm({
     defaultValues: {accountNumber: '', amount: '', },

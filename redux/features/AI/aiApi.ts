@@ -10,6 +10,13 @@ const aiApi = baseApi.injectEndpoints({
         body: { query: queryText },
       }),
     }),
+    generateVastu: builder.mutation({
+      query: (queryText: string) => ({
+        url: '/ai/generate-recipe',
+        method: 'POST',
+        body: { query: queryText },
+      }),
+    }),
   translateShloka: builder.mutation<TranslateShlokaResponse, TranslateShlokaArgs>({
       query: ({ text, targetLang }) => ({
         url: '/ai/translate-shloka',
