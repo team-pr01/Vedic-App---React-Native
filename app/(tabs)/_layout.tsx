@@ -13,49 +13,50 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
 import { useThemeColors } from '@/hooks/useThemeColors';
-import Logo from "../../assets/icons/logo.png"
+import Logo from '../../assets/icons/logo.png';
 import { Image } from 'react-native';
-import { useFocusEffect, useRouter, useSegments } from "expo-router";
-import { BackHandler } from "react-native";
-import { useCallback } from "react";
-
+import { useFocusEffect, useRouter, useSegments } from 'expo-router';
+import { BackHandler } from 'react-native';
+import { useCallback } from 'react';
 
 export default function TabLayout() {
   const colors = useThemeColors();
   const token = useSelector((state: RootState) => state.auth.token);
   const theme = useSelector((state: RootState) => state.theme.theme);
-   const router = useRouter();
+  const router = useRouter();
   const segments = useSegments();
 
   return (
-  <Tabs
-  screenOptions={{
-    headerShown: false,
-    tabBarStyle: {
-      backgroundColor: 'transparent', // transparent background
-      position: 'absolute',
-      borderTopWidth: 0,
-      elevation: 0, // remove Android shadow
-    },
-    tabBarActiveTintColor: colors.primary,
-    tabBarInactiveTintColor: colors.secondaryText,
-    tabBarLabelStyle: styles.tabBarLabel,
-    tabBarItemStyle: styles.tabBarItem,
-    tabBarBackground: () => (
-      <LinearGradient
-        colors={theme === 'dark' ?['rgba(0,0,0 ,0.9)', 'rgba(0,0,0 ,0.7)']: ['rgba(255,255,255 ,0.9)', 'rgba(255,255,255 ,0.7)']}
-
-        style={StyleSheet.absoluteFillObject}
-      />
-    ),
-  }}
->
-
+    <Tabs
+      screenOptions={{
+        headerShown: false,
+        tabBarStyle: {
+          backgroundColor: 'transparent', // transparent background
+          position: 'absolute',
+          borderTopWidth: 0,
+          elevation: 0, // remove Android shadow
+        },
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.secondaryText,
+        tabBarLabelStyle: styles.tabBarLabel,
+        tabBarItemStyle: styles.tabBarItem,
+        tabBarBackground: () => (
+          <LinearGradient
+            colors={
+              theme === 'dark'
+                ? ['rgba(0,0,0 ,0.9)', 'rgba(0,0,0 ,0.7)']
+                : ['rgba(255,255,255 ,0.9)', 'rgba(255,255,255 ,0.7)']
+            }
+            style={StyleSheet.absoluteFillObject}
+          />
+        ),
+      }}
+    >
       {/* ---- Main 5 Tabs ---- */}
       <Tabs.Screen
         name="index"
         options={{
-          title: 'index',
+          title: 'Home',
           tabBarIcon: ({ size, color, focused }) => (
             <View
               style={[
@@ -93,7 +94,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="chat"
         options={{
-          title: "chat",
+          title: 'chat',
           tabBarIcon: ({ size, color, focused }) => (
             <View
               style={[
@@ -105,7 +106,10 @@ export default function TabLayout() {
                 },
               ]}
             >
-              <Image source={Logo} style={{ width: 44, height: 44, tintColor: '#FFFFFF' }} />
+              <Image
+                source={Logo}
+                style={{ width: 44, height: 44, tintColor: '#FFFFFF' }}
+              />
             </View>
           ),
           tabBarLabelStyle: [
@@ -204,7 +208,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 4,
-    padding:6,
+    padding: 6,
     // elevation: 4,
   },
   akfIcon: {
@@ -218,6 +222,6 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 8,
     borderWidth: 1,
-    marginBottom:10
+    marginBottom: 10,
   },
 });

@@ -173,7 +173,7 @@ export default function SubscriptionPage({
   const [paymentOpen, setPaymentOpen] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<any>(null);
   const [paymentMethod, setPaymentMethod] = useState<any>(null);
-  const {data:me,isLoading}=useGetMeQuery({})
+  const {data:myProfile,isLoading}=useGetMeQuery({});
   const [Subscribe, { isLoading: isSubscribing }] = useSubscribeMutation();
   const { watch, setValue, handleSubmit, reset } = useForm({
     defaultValues: {accountNumber: '', amount: '', },
@@ -295,6 +295,7 @@ export default function SubscriptionPage({
                   setSelectedPlan(plan);
                   setPaymentOptionModalOpen(true);
                 }}
+                disabled={myProfile?.data?.plan === plan?.id}
               >
                 <Text
                   style={[
@@ -319,7 +320,7 @@ export default function SubscriptionPage({
 
         {/* Payment Option Modal */}
         <Modal
-          visible={paymentOptionModalOpen}
+          visible={paymentOptionModalOpen && selectedPlan?.id !== 'free'}
           transparent
           animationType="fade"
         >
