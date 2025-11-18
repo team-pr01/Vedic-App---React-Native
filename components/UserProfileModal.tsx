@@ -8,12 +8,28 @@ import {
   ScrollView,
   Image,
 } from 'react-native';
-import { X, CreditCard as Edit, Settings, ChevronRight, BookOpen, Award, Newspaper, Heart, Flag, ListChecks, Utensils, MessageSquare, AwardIcon } from 'lucide-react-native';
+import {
+  X,
+  CreditCard as Edit,
+  Settings,
+  ChevronRight,
+  BookOpen,
+  Award,
+  Newspaper,
+  Heart,
+  Flag,
+  ListChecks,
+  Utensils,
+  MessageSquare,
+  AwardIcon,
+  CrownIcon,
+} from 'lucide-react-native';
 import { useSelector, useDispatch } from 'react-redux';
 import { logout, useCurrentUser } from '@/redux/features/Auth/authSlice';
 import { useTranslate } from '@/hooks/useTranslate';
 import { useThemeColors } from '@/hooks/useThemeColors';
-import DefaultAvatar from "../assets/images/user.svg"
+import DefaultAvatar from '../assets/images/user.svg';
+import { useGetMeQuery } from '@/redux/features/Auth/authApi';
 
 interface UserProfileModalProps {
   visible: boolean;
@@ -21,12 +37,15 @@ interface UserProfileModalProps {
   onNavigateToSettings: () => void;
 }
 
-export default function UserProfileModal({ visible, onClose, onNavigateToSettings }: UserProfileModalProps) {
- 
+export default function UserProfileModal({
+  visible,
+  onClose,
+  onNavigateToSettings,
+}: UserProfileModalProps) {
   const user = useSelector(useCurrentUser);
-    const t = useTranslate();
+  const t = useTranslate();
   const colors = useThemeColors();
-
+   const {data:myProfile,isLoading}=useGetMeQuery({});
   const handleLogout = async () => {
     try {
       await logout();
@@ -35,20 +54,26 @@ export default function UserProfileModal({ visible, onClose, onNavigateToSetting
       console.error('Logout error:', error);
     }
   };
-
-  const StatItem = ({ 
-    icon, 
-    label, 
-    value 
+  const StatItem = ({
+    icon,
+    label,
+    value,
   }: {
     icon: React.ReactNode;
     label: string;
     value: string | number;
   }) => (
-    <View style={[styles.statItem, { backgroundColor: colors.card, shadowColor: colors.cardShadow }]}>
+    <View
+      style={[
+        styles.statItem,
+        { backgroundColor: colors.card, shadowColor: colors.cardShadow },
+      ]}
+    >
       {icon}
       <View style={styles.statContent}>
-        <Text style={[styles.statLabel, { color: colors.secondaryText }]}>{label}</Text>
+        <Text style={[styles.statLabel, { color: colors.secondaryText }]}>
+          {label}
+        </Text>
         <Text style={[styles.statValue, { color: colors.text }]}>{value}</Text>
       </View>
     </View>
@@ -67,8 +92,15 @@ export default function UserProfileModal({ visible, onClose, onNavigateToSetting
     >
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         {/* Header */}
-        <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
-          <Text style={[styles.headerTitle, { color: colors.text }]}>{t('userProfileTitle', 'My Profile')}</Text>
+        <View
+          style={[
+            styles.header,
+            { backgroundColor: colors.card, borderBottomColor: colors.border },
+          ]}
+        >
+          <Text style={[styles.headerTitle, { color: colors.text }]}>
+            {t('userProfileTitle', 'My Profile')}
+          </Text>
           <TouchableOpacity onPress={onClose} style={styles.closeButton}>
             <X size={24} color={colors.text} />
           </TouchableOpacity>
@@ -76,27 +108,49 @@ export default function UserProfileModal({ visible, onClose, onNavigateToSetting
 
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
           {/* Profile Section */}
-          <View style={[styles.profileSection, { backgroundColor: colors.card, shadowColor: colors.cardShadow }]}>
-         
-{user.avatar ? (
-  <Image source={{ uri: user.avatar }} style={styles.avatar} />
-) : (
-  <DefaultAvatar width={100} height={100} style={styles.avatar} />
-)}
-            <Text style={[styles.name, { color: colors.text }]}>{user.name}</Text>
-            <Text style={[styles.email, { color: colors.secondaryText }]}>{user.email}</Text>
+          <View
+            style={[
+              styles.profileSection,
+              { backgroundColor: colors.card, shadowColor: colors.cardShadow },
+            ]}
+          >
+            {user.avatar ? (
+              <Image source={{ uri: user.avatar }} style={styles.avatar} />
+            ) : (
+              <DefaultAvatar width={100} height={100} style={styles.avatar} />
+            )}
+            <Text style={[styles.name, { color: colors.text }]}>
+              {user.name}
+            </Text>
+            <Text style={[styles.email, { color: colors.secondaryText }]}>
+              {user.email}
+            </Text>
             <Text style={[styles.joinDate, { color: colors.secondaryText }]}>
               {t('joinedDateLabel', 'Joined')}: {user.joinDate || 'Recently'}
             </Text>
             {user.bio && (
-              <Text style={[styles.bio, { color: colors.text }]}>{user.bio}</Text>
+              <Text style={[styles.bio, { color: colors.text }]}>
+                {user.bio}
+              </Text>
             )}
-            <TouchableOpacity 
-              style={[styles.editButton, { backgroundColor: `${colors.primary}20` }]}
-              onPress={() => alert(t('editProfileComingSoon', 'Edit Profile functionality coming soon!'))}
+            <TouchableOpacity
+              style={[
+                styles.editButton,
+                { backgroundColor: `${colors.primary}20` },
+              ]}
+              onPress={() =>
+                alert(
+                  t(
+                    'editProfileComingSoon',
+                    'Edit Profile functionality coming soon!'
+                  )
+                )
+              }
             >
               <Edit size={16} color={colors.primary} />
-              <Text style={[styles.editButtonText, { color: colors.primary }]}>{t('editProfileButton', 'Edit Profile')}</Text>
+              <Text style={[styles.editButtonText, { color: colors.primary }]}>
+                {t('editProfileButton', 'Edit Profile')}
+              </Text>
             </TouchableOpacity>
           </View>
 
@@ -151,11 +205,19 @@ export default function UserProfileModal({ visible, onClose, onNavigateToSetting
               />
             </View>
           </View> */}
-<StatItem
-                icon={<AwardIcon />}
-                label="Quizzes Taken"
-                value={user.totalQuizTaken || 0}
-              />
+          <View style={{flexDirection:"row",gap:10}}>
+            <StatItem
+            icon={<AwardIcon />}
+            label="Quizzes Taken"
+            value={user.totalQuizTaken || 0}
+          />
+          <StatItem
+            icon={<CrownIcon />}
+            label="Membership Plan"
+            value={myProfile?.data?.plan || 0}
+          />
+          </View>
+          
           {/* Account & App Settings */}
           <View style={styles.section}>
             {/* <Text style={[styles.sectionTitle, { color: colors.secondaryText }]}>
@@ -164,7 +226,15 @@ export default function UserProfileModal({ visible, onClose, onNavigateToSetting
             {/* <Text style={[styles.sectionSubtitle, { color: colors.secondaryText }]}>
               {t('accountAndAppSettingsTitle', 'অ্যাকাউন্ট ও অ্যাপ')}
             </Text> */}
-            <View style={[styles.settingsContainer, { backgroundColor: colors.card, shadowColor: colors.cardShadow }]}>
+            <View
+              style={[
+                styles.settingsContainer,
+                {
+                  backgroundColor: colors.card,
+                  shadowColor: colors.cardShadow,
+                },
+              ]}
+            >
               <TouchableOpacity
                 style={styles.settingItem}
                 onPress={() => {
@@ -175,7 +245,7 @@ export default function UserProfileModal({ visible, onClose, onNavigateToSetting
                 <View style={styles.settingLeft}>
                   <Settings size={20} color={colors.primary} />
                   <Text style={[styles.settingLabel, { color: colors.text }]}>
-                    {t('appSettingsButton', 'App Settings')}
+                    {'App Settings'}
                   </Text>
                 </View>
                 <ChevronRight size={20} color={colors.secondaryText} />
@@ -185,8 +255,16 @@ export default function UserProfileModal({ visible, onClose, onNavigateToSetting
 
           {/* Logout Button */}
           <View style={styles.logoutContainer}>
-            <TouchableOpacity style={[styles.logoutButton, { backgroundColor: `${colors.error}20` }]} onPress={handleLogout}>
-              <Text style={[styles.logoutText, { color: colors.error }]}>Logout</Text>
+            <TouchableOpacity
+              style={[
+                styles.logoutButton,
+                { backgroundColor: `${colors.error}20` },
+              ]}
+              onPress={handleLogout}
+            >
+              <Text style={[styles.logoutText, { color: colors.error }]}>
+                Logout
+              </Text>
             </TouchableOpacity>
           </View>
         </ScrollView>
@@ -326,6 +404,7 @@ const styles = StyleSheet.create({
     elevation: 3,
     backdropFilter: 'blur(10px)',
     backgroundColor: 'rgba(255, 255, 255, 0.8)',
+     marginTop:10
   },
   settingItem: {
     flexDirection: 'row',
@@ -338,6 +417,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
+   
   },
   settingLabel: {
     fontSize: 16,
