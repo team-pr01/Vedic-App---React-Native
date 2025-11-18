@@ -30,7 +30,7 @@ import {
   Chrome as Home,
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
-import { Video,} from 'expo-av';
+import { Video } from 'expo-av';
 import { useGetAllConsultancyServicesQuery } from '@/redux/features/Consultancy/consultancyApi';
 import {
   useGetAllVastuQuery,
@@ -46,6 +46,9 @@ import AppHeader from '@/components/Reusable/AppHeader/AppHeader';
 import Categories from '@/components/Reusable/Categories/Categories';
 import SkeletonLoader from '@/components/Reusable/SkeletonLoader';
 import Experts from '@/components/ConsultancyPage/Experts';
+import { useGenerateVastuMutation } from '@/redux/features/AI/aiApi';
+import { useGetAllCategoriesQuery } from '@/redux/features/Categories/categoriesApi';
+import SuccessModal from './../../components/ConsultancyPage/SuccessModal';
 
 export type TVastu = {
   _id: string;
@@ -82,74 +85,76 @@ interface VastuVideo {
   views: string;
 }
 
-interface VastuAnalysis {
-  id: string;
-  roomType: string;
-  direction: string;
-  analysis: string;
-  recommendations: string[];
-  score: number;
-}
-
 const triggerHaptic = () => {
   if (Platform.OS !== 'web') {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   }
 };
 
-const generateVastuAnalysis = async (
-  prompt: string
-): Promise<VastuAnalysis> => {
-  // ... (logic is unchanged)
-  await new Promise((resolve) => setTimeout(resolve, 1500));
-  const lowerPrompt = prompt.toLowerCase();
-  let roomType = 'Living Room';
-  let direction = 'North-East';
-  let analysis = '';
-  let recommendations: string[] = [];
-  let score = 8.5;
-  if (lowerPrompt.includes('bedroom')) {
-    roomType = 'Bedroom';
-    direction = 'South-West';
-    analysis =
-      'Your bedroom placement follows traditional Vastu principles. The South-West direction is ideal for the master bedroom as it promotes stability and peaceful sleep.';
-    recommendations = [
-      'Sleep with your head pointing South or East for better rest',
-      'Avoid placing mirrors directly opposite the bed',
-      'Use calming colors like light blue or green for walls',
-      'Keep the room clutter-free for positive energy flow',
-    ];
-    score = 9.0;
-  } else if (lowerPrompt.includes('kitchen')) {
-    roomType = 'Kitchen';
-    direction = 'South-East';
-    analysis =
-      'Your kitchen is well-positioned in the South-East direction (Agni corner), which is highly auspicious for cooking activities according to Vastu principles.';
-    recommendations = [
-      'Cook facing East for positive energy while preparing food',
-      'Place water source (sink) in the North-East of kitchen',
-      'Avoid placing stove and sink directly opposite each other',
-      'Use bright lighting and ensure good ventilation',
-    ];
-    score = 9.2;
-  } else {
-    analysis =
-      'Your living room has good natural light and proper ventilation. The placement follows traditional Vastu principles with some minor adjustments needed.';
-    recommendations = [
-      'Place the main seating facing East or North for positive energy flow',
-      'Add a small plant in the North-East corner to enhance prosperity',
-      'Ensure the center of the room remains clutter-free',
-      'Use light colors for walls to maintain positive vibrations',
-    ];
-  }
-  return {
-    id: `analysis-${Date.now()}`,
-    roomType,
-    direction,
-    analysis,
-    recommendations,
-    score,
+const AiOutputParser = ({ content }: { content: string | null }) => {
+  if (!content) return null;
+  const colors = useThemeColors();
+  const lines = content.split('\n');
+
+  const renderLine = (line: string, index: number) => {
+    // ### Heading
+    if (line.startsWith('### ')) {
+      return (
+        <Text
+          key={index}
+          style={[styles.aiHeading, , { color: colors.secondaryText }]}
+        >
+          {line.replace('### ', '')}
+        </Text>
+      );
+    }
+    // **Bold Text:** followed by content
+    if (line.includes('**')) {
+      const parts = line.split('**');
+      return (
+        <Text
+          key={index}
+          style={[styles.aiParagraph, , { color: colors.text }]}
+        >
+          <Text style={{ fontWeight: 'bold' }}>{parts[0].trim()}</Text>
+          {parts.slice(1).join('')}
+        </Text>
+      );
+    }
+    // - List Item
+    if (line.trim().startsWith('- ')) {
+      return (
+        <View key={index} style={styles.aiListItemContainer}>
+          <Text style={[styles.aiListItem, { color: colors.text }]}>•</Text>
+          <Text style={[styles.aiListItemText, , { color: colors.text }]}>
+            {line.trim().substring(2)}
+          </Text>
+        </View>
+      );
+    }
+    // Numbered List Item (e.g., "1. ")
+    if (/^\d+\.\s/.test(line.trim())) {
+      return (
+        <View key={index} style={styles.aiListItemContainer}>
+          <Text style={[styles.aiListItemText, { color: colors.text }]}>
+            {line.trim()}
+          </Text>
+        </View>
+      );
+    }
+    // Regular paragraph
+    if (line.trim().length > 0) {
+      return (
+        <Text key={index} style={[styles.aiParagraph, { color: colors.text }]}>
+          {line}
+        </Text>
+      );
+    }
+    // Return null for empty lines to create spacing
+    return null;
   };
+
+  return <View style={styles.aiContentContainer}>{lines.map(renderLine)}</View>;
 };
 
 export default function VastuPage() {
@@ -173,8 +178,12 @@ export default function VastuPage() {
     keyword: searchQuery,
     category: selectedCategory,
   });
+  const {
+    data: categoryData,
+    isLoading: isLoadingCategories,
+    refetch: refetchCategories,
+  } = useGetAllCategoriesQuery({});
   const [refreshing, setRefreshing] = useState(false);
-  console.log(vastuTips?.data, 'tips');
   const handleRefresh = async () => {
     setRefreshing(true);
 
@@ -187,89 +196,28 @@ export default function VastuPage() {
     }
   };
 
+  const filteredCategory = categoryData?.data?.filter(
+    (category: any) => category.areaName === 'vastu'
+  );
+
+  const allCategories = filteredCategory?.map(
+    (category: any) => category.category
+  );
+
   const colors = useThemeColors();
   const [isListening, setIsListening] = useState(false);
   const [showAIModal, setShowAIModal] = useState(false);
   const [showAnalysisModal, setShowAnalysisModal] = useState(false);
-  const [showExpertModal, setShowExpertModal] = useState(false);
   const [vastuPrompt, setVastuPrompt] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [selectedAnalysis, setSelectedAnalysis] =
-    useState<VastuAnalysis | null>(null);
+  const [generateVastu, { isLoading, error: vastuError }] =
+    useGenerateVastuMutation();
+  const [selectedAnalysis, setSelectedAnalysis] = useState<string | null>(null);
   const [videoStates, setVideoStates] = useState<
     Map<number, { isPlaying: boolean }>
   >(new Map());
   const recognitionRef = useRef<any>(null);
-  const initialVastuTips: VastuTip[] = [
-    {
-      title: 'Main Entrance',
-      icon: <DoorOpen size={24} color={colors.vastu} />,
-      category: 'entrance',
-      tips: [
-        'North-East entrance is considered most auspicious for overall prosperity.',
-        'Avoid obstructions like poles or large trees directly in front of the main door.',
-        'The entrance door should always open inward, clockwise.',
-        'Keep the entrance area well-lit and clean.',
-      ],
-    },
-    {
-      title: 'Bedroom',
-      icon: <Bed size={24} color={colors.vastu} />,
-      category: 'bedroom',
-      tips: [
-        'Master bedroom should ideally be in the South-West direction.',
-        'Sleep with your head pointing South or East for peaceful sleep.',
-        'Avoid placing mirrors directly opposite the bed.',
-        'Use calming colors for bedroom walls.',
-      ],
-    },
-    {
-      title: 'Kitchen',
-      icon: <Kitchen size={24} color={colors.vastu} />,
-      category: 'kitchen',
-      tips: [
-        'The South-East corner is ideal for the kitchen (Agni corner).',
-        'Cooking stove should be placed such that the cook faces East.',
-        'Water source (sink, tap) should be in the North-East of the kitchen.',
-        'Avoid placing the stove and sink directly opposite each other.',
-      ],
-    },
-    {
-      title: 'Bathroom & Toilet',
-      icon: <Bath size={24} color={colors.vastu} />,
-      category: 'bathroom',
-      tips: [
-        'North-West is the preferred direction for bathrooms and toilets.',
-        'Toilet seat should ideally face South or North.',
-        'Ensure good ventilation and keep the bathroom door closed when not in use.',
-        'Avoid constructing toilets in the North-East or South-West corners.',
-      ],
-    },
-    {
-      title: 'Temple Room (Pooja Room)',
-      icon: <Temple size={24} color={colors.vastu} />,
-      category: 'temple',
-      tips: [
-        'The North-East (Ishan Kona) is the most sacred direction for a pooja room.',
-        'Idols should face West or East.',
-        'Keep the pooja room clean, clutter-free, and well-lit.',
-        'Avoid placing the pooja room under a staircase or next to a bathroom.',
-      ],
-    },
-    {
-      title: 'Garden & Plants',
-      icon: <Plant size={24} color={colors.vastu} />,
-      category: 'garden',
-      tips: [
-        'Plant trees in the South and West directions for shade and protection.',
-        'Avoid large trees in the North-East as they block positive energy.',
-        'Tulsi plant in the North-East brings prosperity and positive energy.',
-        'Keep the garden well-maintained and free from dead plants.',
-      ],
-    },
-  ];
-
   const vastuVideosData: VastuVideo[] = [
     {
       id: 1,
@@ -331,7 +279,6 @@ export default function VastuPage() {
     setVideoStates(initialStates);
   }, []);
 
-
   const handleVoiceSearch = () => {
     triggerHaptic();
     if (!recognitionRef.current) {
@@ -357,11 +304,17 @@ export default function VastuPage() {
     setError(null);
     triggerHaptic();
     try {
-      const analysis = await generateVastuAnalysis(vastuPrompt);
+      const payload = {
+        quary: vastuPrompt,
+      };
+      const res = generateVastu(payload).unwrap();
       setVastuPrompt('');
-      setShowAIModal(false);
-      setSelectedAnalysis(analysis);
-      setShowAnalysisModal(true);
+      if (res?.success) {
+        setShowAIModal(false);
+        setShowAnalysisModal(true);
+      }
+
+      setSelectedAnalysis(res?.data);
     } catch (err: any) {
       console.error('Error generating analysis:', err);
       setError(err.message || 'Failed to generate analysis. Please try again.');
@@ -370,14 +323,6 @@ export default function VastuPage() {
     }
   };
 
-  const allCategories = [
-    'Entrance',
-    'Bedroom',
-    'Kitchen',
-    'Bathroom',
-    'Temple',
-    'Garden',
-  ];
   const [playingCardIndex, setPlayingCardIndex] = useState<number | null>(null);
 
   return (
@@ -655,8 +600,6 @@ export default function VastuPage() {
                   </Text>
                 )}
               </View>
-
-            
             </ScrollView>
 
             {/* AI Analysis Modal */}
@@ -732,6 +675,13 @@ export default function VastuPage() {
                           </Text>
                         </View>
                       )}
+                      {vastuError && (
+                        <View style={styles.errorContainer}>
+                          <Text style={styles.errorText}>
+                            {vastuError?.data?.message}
+                          </Text>
+                        </View>
+                      )}
 
                       <TouchableOpacity
                         onPress={handleGenerateAnalysis}
@@ -795,27 +745,6 @@ export default function VastuPage() {
 
                     <ScrollView style={styles.modalContent}>
                       <View style={styles.analysisContent}>
-                        <View
-                          style={[
-                            styles.scoreContainer,
-                            { backgroundColor: colors.background },
-                          ]}
-                        >
-                          <Text
-                            style={[
-                              styles.scoreLabel,
-                              { color: colors.secondaryText },
-                            ]}
-                          >
-                            Vastu Score
-                          </Text>
-                          <Text
-                            style={[styles.scoreValue, { color: colors.vastu }]}
-                          >
-                            {selectedAnalysis.score}/10
-                          </Text>
-                        </View>
-
                         <View style={styles.analysisSection}>
                           <Text
                             style={[
@@ -825,56 +754,10 @@ export default function VastuPage() {
                           >
                             Room Analysis
                           </Text>
-                          <Text
-                            style={[
-                              styles.analysisText,
-                              { color: colors.secondaryText },
-                            ]}
-                          >
-                            {selectedAnalysis.analysis}
-                          </Text>
+                          <ScrollView>
+                            <AiOutputParser content={selectedAnalysis} />
+                          </ScrollView>
                         </View>
-
-                        <View style={styles.analysisSection}>
-                          <Text
-                            style={[
-                              styles.analysisSectionTitle,
-                              { color: colors.text },
-                            ]}
-                          >
-                            Recommendations
-                          </Text>
-                          {selectedAnalysis.recommendations.map(
-                            (rec, index) => (
-                              <Text
-                                key={index}
-                                style={[
-                                  styles.recommendationText,
-                                  { color: colors.secondaryText },
-                                ]}
-                              >
-                                • {rec}
-                              </Text>
-                            )
-                          )}
-                        </View>
-{/* 
-                        <TouchableOpacity
-                          style={[
-                            styles.saveAnalysisButton,
-                            { backgroundColor: colors.background },
-                          ]}
-                        >
-                          <Heart size={20} color={colors.vastu} />
-                          <Text
-                            style={[
-                              styles.saveAnalysisButtonText,
-                              { color: colors.vastu },
-                            ]}
-                          >
-                            Save Analysis
-                          </Text>
-                        </TouchableOpacity> */}
                       </View>
                     </ScrollView>
                   </View>
@@ -882,7 +765,7 @@ export default function VastuPage() {
               </Modal>
             )}
 
-           <Experts defaultCategory='Vastu Expert' />
+            <Experts defaultCategory="Vastu Expert" />
           </View>
         </ScrollView>
       </PullToRefreshWrapper>{' '}
@@ -1397,5 +1280,42 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingVertical: 20,
+  },
+  aiContentContainer: {
+    padding: 16,
+  },
+  aiHeading: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#2D3748',
+    marginTop: 20,
+    marginBottom: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E2E8F0',
+    paddingBottom: 5,
+  },
+  aiParagraph: {
+    fontSize: 15,
+    color: '#4A5568',
+    lineHeight: 22,
+    marginBottom: 10,
+  },
+  aiListItemContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 8,
+    paddingLeft: 10,
+  },
+  aiListItem: {
+    fontSize: 15,
+    color: '#4A5568',
+    marginRight: 8,
+    lineHeight: 22,
+  },
+  aiListItemText: {
+    fontSize: 15,
+    color: '#4A5568',
+    lineHeight: 22,
+    flex: 1,
   },
 });

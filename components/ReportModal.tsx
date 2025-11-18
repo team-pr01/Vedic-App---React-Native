@@ -77,7 +77,6 @@ export default function ReportModal({
         Alert.alert('Report Successful', 'We will update soon');
       }
       reset();
-      console.log(res);
     } catch (error) {
       console.error('Report submission failed:', error);
     }

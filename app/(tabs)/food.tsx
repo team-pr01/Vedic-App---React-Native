@@ -39,17 +39,16 @@ import Categories from '@/components/Reusable/Categories/Categories';
 import SkeletonLoader from '@/components/Reusable/SkeletonLoader';
 import { Colors } from 'react-native/Libraries/NewAppScreen';
 
-const AiRecipeParser = ({ content }: { content: string | null }) => {
-  const colors=useThemeColors()
+const AiOutputParser = ({ content }: { content: string | null }) => {
   if (!content) return null;
-
+const colors = useThemeColors();
   const lines = content.split('\n');
 
   const renderLine = (line: string, index: number) => {
     // ### Heading
     if (line.startsWith('### ')) {
       return (
-        <Text key={index} style={[styles.aiHeading,{color:colors.secondaryText}]}>
+        <Text key={index} style={[styles.aiHeading,,{color:colors.secondaryText}]}>
           {line.replace('### ', '')}
         </Text>
       );
@@ -58,7 +57,7 @@ const AiRecipeParser = ({ content }: { content: string | null }) => {
     if (line.includes('**')) {
       const parts = line.split('**');
       return (
-        <Text key={index} style={[styles.aiParagraph,{color:colors.text}]}>
+        <Text key={index} style={[styles.aiParagraph,,{color:colors.text}]}>
           <Text style={{ fontWeight: 'bold' }}>{parts[0].trim()}</Text>
           {parts.slice(1).join('')}
         </Text>
@@ -68,8 +67,8 @@ const AiRecipeParser = ({ content }: { content: string | null }) => {
     if (line.trim().startsWith('- ')) {
       return (
         <View key={index} style={styles.aiListItemContainer}>
-          <Text style={[styles.aiListItem,,{color:colors.secondaryText}]}>•</Text>
-          <Text style={[styles.aiListItemText,{color:colors.secondaryText}]}>{line.trim().substring(2)}</Text>
+          <Text style={[styles.aiListItem,{color:colors.text}]}>•</Text>
+          <Text style={[styles.aiListItemText,,{color:colors.text}]}>{line.trim().substring(2)}</Text>
         </View>
       );
     }
@@ -77,14 +76,14 @@ const AiRecipeParser = ({ content }: { content: string | null }) => {
     if (/^\d+\.\s/.test(line.trim())) {
       return (
         <View key={index} style={styles.aiListItemContainer}>
-          <Text style={[styles.aiListItemText,,{color:colors.secondaryText}]}>{line.trim()}</Text>
+          <Text style={[styles.aiListItemText,{color:colors.text}]}>{line.trim()}</Text>
         </View>
       );
     }
     // Regular paragraph
     if (line.trim().length > 0) {
       return (
-        <Text key={index} style={[styles.aiParagraph,{color:colors.secondaryText}]}>
+        <Text key={index} style={[styles.aiParagraph,{color:colors.text}]}>
           {line}
         </Text>
       );
@@ -109,7 +108,6 @@ export default function FoodPage() {
     { data: recipeData, isLoading: isRecipeLoading, error: recipeError },
   ] = useGenerateRecipeMutation();
 
-  console.log(recipeError, "error")
   const {
     data,
     isLoading,
@@ -530,7 +528,7 @@ export default function FoodPage() {
                     </TouchableOpacity>
                   </View>
                   <ScrollView>
-                    <AiRecipeParser content={aiGeneratedContent} />
+                    <AiOutputParser content={aiGeneratedContent} />
                   </ScrollView>
                 </View>
               </View>

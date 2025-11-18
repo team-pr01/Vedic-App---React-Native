@@ -187,7 +187,6 @@ export default function JyotishPage() {
   const colors = useThemeColors();
   const { data: dailyHoroscope, isLoading: isHoroscopeLoading } =
     useGetAllDailyHoroscopesQuery({ keyword: searchQuery });
-  console.log(dailyHoroscope);
   const [generateKundli, { isLoading: isKundliLoading ,error:kundaliError}] =
     useGenerateKundliMutation();
   const [generateMuhurta, { isLoading: isMuhurtaLoading,error:MuhurtaError }] =

@@ -187,7 +187,6 @@ export default function SubscriptionPage({
         subscriptionPlanName: selectedPlan?.name || null,
         senderAccountNumber: data.accountNumber || null,
       };
-      console.log(payload)
       const res = await Subscribe(payload).unwrap();
       if (res.success) {
         reset();

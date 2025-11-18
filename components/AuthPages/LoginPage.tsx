@@ -70,7 +70,6 @@ export default function LoginPage({
 
     try {
       const res = await login({ email, password }).unwrap();
-      console.log("logged in")
       const { accessToken, user } = res.data;
 
       dispatch(setUser({ token: accessToken, user }));

@@ -14,27 +14,34 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { 
-  Search, 
-  Mic, 
-  CircleStop as StopCircle, 
-  Heart, 
-  ShoppingBag, 
-  ArrowLeft, 
-  ChevronRight, 
-  Star, 
+import {
+  Search,
+  Mic,
+  CircleStop as StopCircle,
+  Heart,
+  ShoppingBag,
+  ArrowLeft,
+  ChevronRight,
+  Star,
   X,
   ExternalLink,
-  Filter
+  Filter,
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
 import { ShopBanner, ShopCategory, ShopProduct } from '../../types/shop';
-import { MOCK_SHOP_BANNERS, MOCK_SHOP_CATEGORIES, MOCK_SHOP_PRODUCTS } from '../../data/shopMockData';
+import {
+  MOCK_SHOP_BANNERS,
+  MOCK_SHOP_CATEGORIES,
+  MOCK_SHOP_PRODUCTS,
+} from '../../data/shopMockData';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { useGetAllCategoriesQuery } from '@/redux/features/Categories/categoriesApi';
 import Categories from '@/components/Reusable/Categories/Categories';
-import { useGetAllProductsQuery, useUpdateProductClicksMutation } from '@/redux/features/Products/productApi';
+import {
+  useGetAllProductsQuery,
+  useUpdateProductClicksMutation,
+} from '@/redux/features/Products/productApi';
 import Header from '@/components/Reusable/HeaderMenuBar/HeaderMenuBar';
 import AppHeader from '@/components/Reusable/AppHeader/AppHeader';
 import SkeletonLoader from '@/components/Reusable/SkeletonLoader';
@@ -48,23 +55,28 @@ export default function ShopPage() {
   const [selectedCategory, setSelectedCategory] = useState('');
   const [isListening, setIsListening] = useState(false);
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
-  const [productToBuy, setProductToBuy] = useState<ShopProduct| null>(null);
+  const [productToBuy, setProductToBuy] = useState<ShopProduct | null>(null);
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
-  const {data:banners,isLoading:isBannerLoading}=useGetAllProductBannersQuery({})
+  const { data: banners, isLoading: isBannerLoading } =
+    useGetAllProductBannersQuery({});
   const recognitionRef = useRef<any>(null);
-  const {data:products,isLoading:isLoadingProducts}=useGetAllProductsQuery({
-    keyword: searchQuery,
-    category: selectedCategory,
-  })
-  console.log(banners,"banner ")
-  const { data: categoryData,isLoading:isLoadingCategories, refetch: refetchCategories } =
-      useGetAllCategoriesQuery({});
-    const filteredCategory = categoryData?.data?.filter(
-      (category: any) => category.areaName === 'product'
-    );
-    const allCategories = filteredCategory?.map(
-      (category: any) => category.category
-    );
+  const { data: products, isLoading: isLoadingProducts } =
+    useGetAllProductsQuery({
+      keyword: searchQuery,
+      category: selectedCategory,
+    });
+  console.log(banners, 'banner ');
+  const {
+    data: categoryData,
+    isLoading: isLoadingCategories,
+    refetch: refetchCategories,
+  } = useGetAllCategoriesQuery({});
+  const filteredCategory = categoryData?.data?.filter(
+    (category: any) => category.areaName === 'product'
+  );
+  const allCategories = filteredCategory?.map(
+    (category: any) => category.category
+  );
   const triggerHaptic = () => {
     if (Platform.OS !== 'web') {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -82,7 +94,9 @@ export default function ShopPage() {
   // Initialize speech recognition
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      const SpeechRecognition =
+        (window as any).SpeechRecognition ||
+        (window as any).webkitSpeechRecognition;
       if (SpeechRecognition) {
         const recognition = new SpeechRecognition();
         recognition.continuous = false;
@@ -126,176 +140,214 @@ export default function ShopPage() {
     }
   };
 
-
-const [updateProductClicks] = useUpdateProductClicksMutation();
+  const [updateProductClicks] = useUpdateProductClicksMutation();
   const handleBuyNowClick = (product: ShopProduct) => {
     triggerHaptic();
     setProductToBuy(product);
     setShowConfirmationModal(true);
   };
 
- const handleConfirmPurchase = async (product: ShopProduct) => {
+  const handleConfirmPurchase = async (product: ShopProduct) => {
     triggerHaptic();
 
     try {
       // First update clicks
       await updateProductClicks(product._id).unwrap();
-      console.log("Clicks updated successfully");
-
-      // Then open link
-      if (Platform.OS === "web") {
-        window.open(product.productLink, "_blank");
+      if (Platform.OS === 'web') {
+        window.open(product.productLink, '_blank');
       } else {
         Linking.openURL(product.productLink).catch((err) =>
-          console.error("Failed to open link: ", err)
+          console.error('Failed to open link: ', err)
         );
       }
     } catch (err) {
-      console.error("Failed to update clicks:", err);
+      console.error('Failed to update clicks:', err);
     }
 
     setShowConfirmationModal(false);
   };
 
-
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header */}
       <SafeAreaView edges={['top']} style={styles.headerContainer}>
-         <Header /> 
-        
+        <Header />
+
         <AppHeader title="Spiritual Shop" colors={['#8B5CF6', '#7C3AED']} />
       </SafeAreaView>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Search Bar */}
-         <View
+        <View style={[{ backgroundColor: colors.background }]}>
+          <View style={styles.searchContainer}>
+            <View
+              style={[styles.searchBar, { backgroundColor: colors.background }]}
+            >
+              <Search size={20} color="#718096" />
+              <TextInput
+                style={[styles.searchInput, { color: colors.text }]}
+                placeholder="Search product..."
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                placeholderTextColor="#A0AEC0"
+              />
+              <TouchableOpacity
+                onPress={handleVoiceSearch}
                 style={[
-                  { backgroundColor: colors.background },
+                  styles.voiceButton,
+                  isListening && styles.voiceButtonActive,
                 ]}
               >
-                <View style={styles.searchContainer}>
-                  <View
-                    style={[
-                      styles.searchBar,
-                      { backgroundColor: colors.background },
-                    ]}
-                  >
-                    <Search size={20} color="#718096" />
-                    <TextInput
-                      style={[styles.searchInput, { color: colors.text }]}
-                      placeholder="Search product..."
-                      value={searchQuery}
-                      onChangeText={setSearchQuery}
-                      placeholderTextColor="#A0AEC0"
-                    />
-                    <TouchableOpacity
-                      onPress={handleVoiceSearch}
-                      style={[
-                        styles.voiceButton,
-                        isListening && styles.voiceButtonActive,
-                      ]}
-                    >
-                      {isListening ? (
-                        <StopCircle size={18} color="#EF4444" />
-                      ) : (
-                        <Mic size={18} color="#38A169" />
-                      )}
-                    </TouchableOpacity>
-                  </View>
-                </View>
-                {isListening && (
-                  <View style={styles.listeningIndicator}>
-                    <View style={styles.listeningDot} />
-                    <Text style={styles.listeningText}>Listening...</Text>
-                  </View>
+                {isListening ? (
+                  <StopCircle size={18} color="#EF4444" />
+                ) : (
+                  <Mic size={18} color="#38A169" />
                 )}
-              </View>
+              </TouchableOpacity>
+            </View>
+          </View>
+          {isListening && (
+            <View style={styles.listeningIndicator}>
+              <View style={styles.listeningDot} />
+              <Text style={styles.listeningText}>Listening...</Text>
+            </View>
+          )}
+        </View>
 
         {/* Banners */}
         <View style={styles.bannersSection}>
-          <ScrollView 
-            horizontal 
-            pagingEnabled 
+          <ScrollView
+            horizontal
+            pagingEnabled
             showsHorizontalScrollIndicator={false}
             onMomentumScrollEnd={(event) => {
-              const index = Math.round(event.nativeEvent.contentOffset.x / (width * 0.85));
+              const index = Math.round(
+                event.nativeEvent.contentOffset.x / (width * 0.85)
+              );
               setCurrentBannerIndex(index);
             }}
           >
-            {isBannerLoading?( <SkeletonLoader
-                      height={180}
-                      width={"95%"}
-                      innerSkeleton={
-                        <View
-                          style={{
-                            flex: 1,
-                            justifyContent: 'flex-end',
-                            padding: 12,
-                            backgroundColor: 'rgba(0,0,0,0.05)',
-                          }}
-                        >
-                          {/* Title placeholder */}
-                          <View
-                            style={{
-                              width: '70%',
-                              height: 16,
-                              borderRadius: 8,
-                              backgroundColor: '#d6d6d6',
-                              marginBottom: 6,
-                            }}
-                          />
-                          {/* Description placeholder */}
-                          <View
-                            style={{
-                              width: '90%',
-                              height: 12,
-                              borderRadius: 8,
-                              backgroundColor: '#d6d6d6',
-                              marginBottom: 6,
-                            }}
-                          />
-                          <View
-                            style={{
-                              width: '50%',
-                              height: 12,
-                              borderRadius: 8,
-                              backgroundColor: '#d6d6d6',
-                            }}
-                          />
-                        </View>
-                      }
-                    />):(banners?.data?.map((banner, index) => (
-              <View key={banner.id} style={[styles.bannerSlide, { width: width * 0.85 }]}>
-                <LinearGradient
-                  colors={[colors.primary,colors.primary + 'CC']}
-                  style={styles.banner}
-                >
-                  <View style={styles.bannerContent}>
-                    <Text style={[styles.bannerTitle, { color:colors.text }]}>{banner.title}</Text>
-                    <Text style={[styles.bannerDescription, {  color:colors.text  }]}>{banner.description}</Text>
-                    <View style={styles.bannerActions}>
-                      {banner.discount && (
-                        <View style={[styles.discountBadge, { backgroundColor: banner.ctaBgColor }]}>
-                          <Text style={[styles.discountText, { color:colors.secondaryText }]}>{banner.discount}</Text>
-                        </View>
-                      )}
-                    </View>
+            {isBannerLoading ? (
+              <SkeletonLoader
+                height={180}
+                width={'95%'}
+                innerSkeleton={
+                  <View
+                    style={{
+                      flex: 1,
+                      justifyContent: 'flex-end',
+                      padding: 12,
+                      backgroundColor: 'rgba(0,0,0,0.05)',
+                    }}
+                  >
+                    {/* Title placeholder */}
+                    <View
+                      style={{
+                        width: '70%',
+                        height: 16,
+                        borderRadius: 8,
+                        backgroundColor: '#d6d6d6',
+                        marginBottom: 6,
+                      }}
+                    />
+                    {/* Description placeholder */}
+                    <View
+                      style={{
+                        width: '90%',
+                        height: 12,
+                        borderRadius: 8,
+                        backgroundColor: '#d6d6d6',
+                        marginBottom: 6,
+                      }}
+                    />
+                    <View
+                      style={{
+                        width: '50%',
+                        height: 12,
+                        borderRadius: 8,
+                        backgroundColor: '#d6d6d6',
+                      }}
+                    />
                   </View>
-                  <Image source={{ uri: banner.imageUrl }} style={styles.bannerImage} />
-                </LinearGradient>
-              </View>
-            )))}
+                }
+              />
+            ) : (
+              banners?.data?.map((banner) => (
+                <View
+                  key={banner.id}
+                  style={[styles.bannerSlide, { width: width * 0.85 }]}
+                >
+                  <LinearGradient
+                    colors={[colors.primary, colors.primary + 'CC']}
+                    style={styles.banner}
+                  >
+                    <View style={styles.bannerContent}>
+                      <Text
+                        style={[styles.bannerTitle, { color: colors.text }]}
+                      >
+                        {banner.title}
+                      </Text>
+                      <Text
+                        style={[
+                          styles.bannerDescription,
+                          { color: colors.text },
+                        ]}
+                      >
+                        {banner.description}
+                      </Text>
+                      <View style={styles.bannerActions}>
+                        
+                          <TouchableOpacity
+                          onPress={() => {
+  if (Platform.OS === 'web') {
+    // For web, open in a new tab
+    window.open(banner.link, "_blank");
+  } else {
+    // For mobile, use Linking
+    Linking.openURL(banner.link).catch((err) => {
+      console.error("Failed to open link:", err);
+    });
+  }
+}}
+
+                            style={[
+                              styles.ctaButton,
+                              { backgroundColor: "white" },
+                            ]}
+                          >
+                            <Text
+                              style={[
+                                styles.ctaButtonText,
+                                { color: colors.secondaryText },
+                              ]}
+                            >
+                              Shop now
+                            </Text>
+                          </TouchableOpacity>
+                        
+                      </View>
+                    </View>
+                    <Image
+                      source={{ uri: banner.imageUrl }}
+                      style={styles.bannerImage}
+                    />
+                  </LinearGradient>
+                </View>
+              ))
+            )}
           </ScrollView>
-          
+
           {/* Banner Indicators */}
           <View style={styles.bannerIndicators}>
-            {banners?.data?.map((_, index) => (
+            {banners?.data?.map((index) => (
               <TouchableOpacity
                 key={index}
                 style={[
                   styles.indicator,
-                  index === currentBannerIndex && [styles.activeIndicator, { backgroundColor: colors.primary }]
+                  index === currentBannerIndex && [
+                    styles.activeIndicator,
+                    { backgroundColor: colors.primary },
+                  ],
                 ]}
                 onPress={() => {
                   setCurrentBannerIndex(index);
@@ -306,22 +358,28 @@ const [updateProductClicks] = useUpdateProductClicksMutation();
           </View>
         </View>
 
-         {/* Category Tabs */}
-            <Categories
-              setSelectedCategory={setSelectedCategory}
-              selectedCategory={selectedCategory}
-              allCategories={allCategories}
-              bgColor={'#8B5CF6'}
-              isLoading={isLoadingProducts}
-            />
+        {/* Category Tabs */}
+        <Categories
+          setSelectedCategory={setSelectedCategory}
+          selectedCategory={selectedCategory}
+          allCategories={allCategories}
+          bgColor={'#8B5CF6'}
+          isLoading={isLoadingProducts}
+        />
 
         {/* Products Grid */}
         <View style={styles.productsSection}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>Products</Text>
-          <View style={{ paddingVertical:8 }} />
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>
+            Products
+          </Text>
+          <View style={{ paddingVertical: 8 }} />
           <View style={styles.productsGrid}>
-  {isLoadingProducts ? (
-  <SkeletonLoader direction='row'  height={180} width={'48%'} innerSkeleton={
+            {isLoadingProducts ? (
+              <SkeletonLoader
+                direction="row"
+                height={180}
+                width={'48%'}
+                innerSkeleton={
                   <View
                     style={{
                       padding: 15,
@@ -360,81 +418,112 @@ const [updateProductClicks] = useUpdateProductClicksMutation();
                     />
                   </View>
                 }
-/>  
-  ) : products?.length === 0 ? (
-    // 🛒 Empty state
-    <View style={styles.emptyState}>
-      <ShoppingBag size={48} color={colors.secondaryText} />
-      <Text style={[styles.emptyStateTitle, { color: colors.text }]}>
-        No products found
-      </Text>
-      <Text style={[styles.emptyStateText, { color: colors.secondaryText }]}>
-        Try adjusting your search or category filters
-      </Text>
-    </View>
-  ) : (
-    // 🛍️ Product Grid
-    products?.data?.products?.map((product: ShopProduct) => (
-      <View
-        key={product?._id}
-        style={[
-          styles.productCard,
-          { backgroundColor: colors.card, shadowColor: colors.cardShadow },
-        ]}
-      >
-        <View
-          style={[
-            styles.productImageContainer,
-            { backgroundColor: product.imageBgColor },
-          ]}
-        >
-          <Image source={{ uri: product.imageUrl }} style={styles.productImage} />
-          {product?.tags && (
-            <View
-              style={[styles.productTag, { backgroundColor: colors.error }]}
-            >
-              <Text style={styles.productTagText}>{product?.tags}</Text>
-            </View>
-          )}
-        </View>
+              />
+            ) : products?.length === 0 ? (
+              // 🛒 Empty state
+              <View style={styles.emptyState}>
+                <ShoppingBag size={48} color={colors.secondaryText} />
+                <Text style={[styles.emptyStateTitle, { color: colors.text }]}>
+                  No products found
+                </Text>
+                <Text
+                  style={[
+                    styles.emptyStateText,
+                    { color: colors.secondaryText },
+                  ]}
+                >
+                  Try adjusting your search or category filters
+                </Text>
+              </View>
+            ) : (
+              // 🛍️ Product Grid
+              products?.data?.products?.map((product: ShopProduct) => (
+                <View
+                  key={product?._id}
+                  style={[
+                    styles.productCard,
+                    {
+                      backgroundColor: colors.card,
+                      shadowColor: colors.cardShadow,
+                    },
+                  ]}
+                >
+                  <View
+                    style={[
+                      styles.productImageContainer,
+                      { backgroundColor: product.imageBgColor },
+                    ]}
+                  >
+                    <Image
+                      source={{ uri: product.imageUrl }}
+                      style={styles.productImage}
+                    />
+                    {product?.tags && (
+                      <View
+                        style={[
+                          styles.productTag,
+                          { backgroundColor: colors.error },
+                        ]}
+                      >
+                        <Text style={styles.productTagText}>
+                          {product?.tags}
+                        </Text>
+                      </View>
+                    )}
+                  </View>
 
-        <View style={styles.productContent}>
-          <Text
-            style={[styles.productSubtitle, { color: colors.secondaryText }]}
-          >
-            {product?.category}
-          </Text>
-          <Text
-            style={[styles.productName, { color: colors.text }]}
-            numberOfLines={1}
-          >
-            {product?.name}
-          </Text>
+                  <View style={styles.productContent}>
+                    <Text
+                      style={[
+                        styles.productSubtitle,
+                        { color: colors.secondaryText },
+                      ]}
+                    >
+                      {product?.category}
+                    </Text>
+                    <Text
+                      style={[styles.productName, { color: colors.text }]}
+                      numberOfLines={1}
+                    >
+                      {product?.name}
+                    </Text>
 
-          <View style={styles.productFooter}>
-            <View
-              style={[styles.priceContainer, { backgroundColor: colors.background }]}
-            >
-              <Text style={[styles.priceText, { color: colors.text }]}>
-                {product.currency} {product?.price}
-              </Text>
-            </View>
-            <TouchableOpacity
-              onPress={() => handleBuyNowClick(product)}
-              style={[styles.buyButton, { backgroundColor: colors.text }]}
-            >
-              <ShoppingBag size={14} color={colors.background} />
-              <Text style={[styles.buyButtonText, { color: colors.background }]}>
-                BUY
-              </Text>
-            </TouchableOpacity>
+                    <View style={styles.productFooter}>
+                      <View
+                        style={[
+                          styles.priceContainer,
+                          { backgroundColor: colors.background },
+                        ]}
+                      >
+                        <Text
+                          style={[styles.priceText, { color: colors.text }]}
+                        >
+                          {product.currency} {product?.price}
+                        </Text>
+                      </View>
+                      <TouchableOpacity
+                        onPress={() => handleBuyNowClick(product)}
+                        style={[
+                          styles.buyButton,
+                          { backgroundColor: colors.text },
+                        ]}
+                      >
+                        <ShoppingBag size={14} color={colors.background} />
+                        <Text
+                          style={[
+                            styles.buyButtonText,
+                            { color: colors.background },
+                          ]}
+                        >
+                          BUY
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                </View>
+              ))
+            )}
           </View>
-        </View>
-      </View>
-    ))
-  )}
-</View>
-
         </View>
 
         <View style={styles.bottomSpacing} />
@@ -449,33 +538,75 @@ const [updateProductClicks] = useUpdateProductClicksMutation();
           onRequestClose={() => setShowConfirmationModal(false)}
         >
           <View style={styles.modalOverlay}>
-            <View style={[styles.confirmationModal, { backgroundColor: colors.card, shadowColor: colors.cardShadow }]}>
+            <View
+              style={[
+                styles.confirmationModal,
+                {
+                  backgroundColor: colors.card,
+                  shadowColor: colors.cardShadow,
+                },
+              ]}
+            >
               <View style={styles.modalHeader}>
-                <Text style={[styles.modalTitle, { color: colors.text }]}>Confirm Purchase</Text>
-                <TouchableOpacity onPress={() => setShowConfirmationModal(false)}>
+                <Text style={[styles.modalTitle, { color: colors.text }]}>
+                  Confirm Purchase
+                </Text>
+                <TouchableOpacity
+                  onPress={() => setShowConfirmationModal(false)}
+                >
                   <X size={24} color={colors.secondaryText} />
                 </TouchableOpacity>
               </View>
-              
+
               <View style={styles.modalContent}>
-                <Image source={{ uri: productToBuy.imageUrl }} style={styles.modalProductImage} />
-                <Text style={[styles.modalProductName, { color: colors.text }]}>{productToBuy?.name}</Text>
-                <Text style={[styles.modalProductPrice, { color: colors.primary }]}>{productToBuy.currency} {productToBuy?.price}</Text>
-                
-                <Text style={[styles.modalMessage, { color: colors.secondaryText }]}>
-                  You will be redirected to our main website to complete the purchase. Do you want to continue?
+                <Image
+                  source={{ uri: productToBuy.imageUrl }}
+                  style={styles.modalProductImage}
+                />
+                <Text style={[styles.modalProductName, { color: colors.text }]}>
+                  {productToBuy?.name}
                 </Text>
-                
+                <Text
+                  style={[styles.modalProductPrice, { color: colors.primary }]}
+                >
+                  {productToBuy.currency} {productToBuy?.price}
+                </Text>
+
+                <Text
+                  style={[styles.modalMessage, { color: colors.secondaryText }]}
+                >
+                  You will be redirected to our main website to complete the
+                  purchase. Do you want to continue?
+                </Text>
+
                 <View style={styles.modalActions}>
                   <TouchableOpacity
-                    style={[styles.cancelButton, { backgroundColor: colors.background, borderColor: colors.border }]}
+                    style={[
+                      styles.cancelButton,
+                      {
+                        backgroundColor: colors.background,
+                        borderColor: colors.border,
+                      },
+                    ]}
                     onPress={() => setShowConfirmationModal(false)}
                   >
-                    <Text style={[styles.cancelButtonText, { color: colors.secondaryText }]}>Cancel</Text>
+                    <Text
+                      style={[
+                        styles.cancelButtonText,
+                        { color: colors.secondaryText },
+                      ]}
+                    >
+                      Cancel
+                    </Text>
                   </TouchableOpacity>
                   <TouchableOpacity
-                    style={[styles.confirmButton, { backgroundColor: colors.primary }]}
-                    onPress={()=>{handleConfirmPurchase(productToBuy)}}
+                    style={[
+                      styles.confirmButton,
+                      { backgroundColor: colors.primary },
+                    ]}
+                    onPress={() => {
+                      handleConfirmPurchase(productToBuy);
+                    }}
                   >
                     <ExternalLink size={16} color="#FFFFFF" />
                     <Text style={styles.confirmButtonText}>Continue</Text>

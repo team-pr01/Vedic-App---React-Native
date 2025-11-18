@@ -369,9 +369,7 @@ export default function HomeScreen() {
     triggerHaptic();
     if (route) {
       router.push(route as any);
-    } else {
-      console.log(`Service pressed: ${serviceId}`);
-    }
+    } 
   };
 
   const handleTextPress = (textId: string) => {
@@ -426,7 +424,6 @@ export default function HomeScreen() {
       setValue('imageUrl', result.assets[0].uri); // save picked image URI in form
     }
   };
-  // console.log(notifications, "real time notification");
   useEffect(() => {
     socket.on('connect', () => {
       console.log('Connected to socket:', socket.id);

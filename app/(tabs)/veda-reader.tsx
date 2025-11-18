@@ -255,7 +255,6 @@ function VedaReaderContent() {
     if (!current) return;
 
     setVerseData(current);
-    console.log(current);
 
     const availableTranslationLanguageCodes =
       current?.translations?.map((t) => t.langCode?.toLowerCase()) || [];
@@ -279,7 +278,6 @@ function VedaReaderContent() {
       verseData?.translations?.find((t) => t.langCode === langCode)
         ?.translation || 'Translation not available';
     setCurrentTranslation(showTranslation);
-    console.log(currentTranslation, 'translation');
   };
   const handleCloseReportModal = () => {
     setIsReportModalOpen(false);

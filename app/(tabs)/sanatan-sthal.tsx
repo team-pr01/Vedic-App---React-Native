@@ -88,7 +88,6 @@ export default function SanatanSthalPage() {
   const approvedTemples =
     data?.data?.filter((item: TTemple) => item.status === 'approved') || [];
   const [refreshing, setRefreshing] = useState(false);
-console.log(approvedTemples)
   const handleRefresh = async () => {
     setRefreshing(true);
 

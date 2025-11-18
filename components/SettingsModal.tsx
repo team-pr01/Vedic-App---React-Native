@@ -185,7 +185,6 @@ export default function SettingsModal({
       lang.name.toLowerCase().includes(languageSearchTerm.toLowerCase()) ||
       lang.code.toLowerCase().includes(languageSearchTerm.toLowerCase())
   );
-  console.log(getMe,"me")
    const triggerHaptic = () => {
       if (Platform.OS !== 'web') {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);

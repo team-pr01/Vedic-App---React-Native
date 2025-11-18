@@ -323,9 +323,7 @@ export default function EmergencyScreen() {
                     'https://www.google.com/maps/search/?api=1&query=Arya+Kalyan+Foundation+Rangpur+Bangladesh',
                     '_blank'
                   );
-                } else {
-                  console.log('Opening maps app with AKF location');
-                }
+                } 
               }}
             >
               <Text

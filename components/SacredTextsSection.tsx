@@ -30,7 +30,6 @@ export default function SacredTextsSection({
   const handleTextPress = (textId: string,textName:string) => {
     onTextClick(textId);
     router.push(`/(tabs)/veda-reader?vedaId=${textId}&textName=${textName}`);
-    console.log(textId)
   };
 
   const calculateVedaStats = (veda: VedicText) => {

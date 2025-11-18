@@ -11,13 +11,18 @@ const aiApi = baseApi.injectEndpoints({
       }),
     }),
     generateVastu: builder.mutation({
-      query: (queryText: string) => ({
-        url: '/ai/generate-recipe',
+      query: (data) => ({
+        url: `/ai/generate-vastu`,
         method: 'POST',
-        body: { query: queryText },
+        body: data,
+        credentials: 'include',
       }),
+      invalidatesTags: ['vastu'],
     }),
-  translateShloka: builder.mutation<TranslateShlokaResponse, TranslateShlokaArgs>({
+    translateShloka: builder.mutation<
+      TranslateShlokaResponse,
+      TranslateShlokaArgs
+    >({
       query: ({ text, targetLang }) => ({
         url: '/ai/translate-shloka',
         method: 'POST',
@@ -40,4 +45,5 @@ export const {
   useGenerateRecipeMutation,
   useTranslateShlokaMutation,
   useChatMutation,
+  useGenerateVastuMutation
 } = aiApi;

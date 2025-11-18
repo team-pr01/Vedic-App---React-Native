@@ -46,7 +46,6 @@ export default function NewsScreen() {
     category: selectedCategory,
     keyword: searchQuery,
   });
-  console.log(translatedArticles);
   const [currentLanguage, setCurrentLanguage] = useState<Language>(
     LANGUAGES[0]
   );

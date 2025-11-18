@@ -102,7 +102,6 @@ export default function ConsultancyPage() {
   const [selectedDoctor, setSelectedDoctor] =
     useState<TConsultancyService | null>(null);
   const [consultationIssue, setConsultationIssue] = useState('');
-  const [patientName, setPatientName] = useState('');
   const [error, setError] = useState<string | null>(null);
   const recognitionRef = useRef<any>(null);
   const colors = useThemeColors();
@@ -110,7 +109,6 @@ export default function ConsultancyPage() {
     if (bookingSuccess) {
       setShowBookingModal(false);
       setShowSuccessModal(true);
-      setPatientName('');
       setConsultationIssue('');
       setError(null);
     }
@@ -177,9 +175,7 @@ export default function ConsultancyPage() {
         category: selectedDoctor.specialty,
       };
       await bookConsultation(bookingData).unwrap();
-      console.log("booking sucess full")
     } catch (err) {
-      console.log('Failed to initiate booking:', err);
     }
   };
 
