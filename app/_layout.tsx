@@ -52,6 +52,9 @@ function RootLayoutNav() {
 
   // Expo push token state
   const [expoPushToken, setExpoPushToken] = useState<string>('');
+  console.log('Expo Push Token:', expoPushToken);
+  console.log('Userid:', user?._id);
+
   useEffect(() => {
     const registerAndSendToken = async () => {
       try {
@@ -62,9 +65,11 @@ function RootLayoutNav() {
               expoPushToken,
             };
             await savePushNotificationToken(payload).unwrap();
+            console.log('Push token saved successfully');
           }
         }
       } catch (error) {
+        // console.error('Error saving push token:', error);
       }
     };
 
