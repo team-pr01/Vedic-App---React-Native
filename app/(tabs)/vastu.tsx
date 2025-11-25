@@ -280,22 +280,7 @@ export default function VastuPage() {
   }, []);
 
   const handleVoiceSearch = () => {
-    triggerHaptic();
-    if (!recognitionRef.current) {
-      alert('Speech recognition is not supported in this browser.');
-      return;
-    }
-    if (isListening) {
-      recognitionRef.current.stop();
-    } else {
-      try {
-        recognitionRef.current.start();
-        setIsListening(true);
-      } catch (error) {
-        console.error('Error starting voice search:', error);
-        setIsListening(false);
-      }
-    }
+    
   };
 
   const handleGenerateAnalysis = async () => {

@@ -12,30 +12,18 @@ import {
   RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
 import {
   Search,
   Mic,
   CircleStop as StopCircle,
   Plus,
-  ArrowLeft,
   MapPin,
-  Star,
-  Phone,
-  MessageCircle,
-  Building,
-  School,
-  Church as Temple,
-  X,
-  Send,
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
-import { router } from 'expo-router';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { useGetAllTempleQuery } from '@/redux/features/Temple/templeApi';
 import AddTempleForm from '@/components/TemplePage/AddTempleForm/AddTempleForm';
 import { PullToRefreshWrapper } from '@/components/Reusable/PullToRefreshWrapper/PullToRefreshWrapper';
-import LoadingComponent from '@/components/LoadingComponent/LoadingComponent';
 import Header from '@/components/Reusable/HeaderMenuBar/HeaderMenuBar';
 import AppHeader from '@/components/Reusable/AppHeader/AppHeader';
 import SkeletonLoader from '@/components/Reusable/SkeletonLoader';
@@ -141,24 +129,11 @@ export default function SanatanSthalPage() {
   }, []);
 
   const handleVoiceSearch = () => {
-    triggerHaptic();
-    if (!recognitionRef.current) return;
-
-    if (isListening) {
-      recognitionRef.current.stop();
-    } else {
-      try {
-        recognitionRef.current.start();
-        setIsListening(true);
-      } catch (error) {
-        console.error('Speech recognition error:', error);
-        setIsListening(false);
-      }
-    }
+    
   };
 
   return (
-    <SafeAreaView style={{ flex: 1 }}>
+    <SafeAreaView style={{ flex: 1,backgroundColor: colors.background }}>
       <Header />
       {/* Floating Add Button */}
       <TouchableOpacity
@@ -178,7 +153,7 @@ export default function SanatanSthalPage() {
           }
         >
           <View
-            style={[styles.container, { backgroundColor: colors.background }]}
+            style={[styles.container, { backgroundColor: colors.background,marginBottom:40 }]}
           >
             <ScrollView
               style={styles.content}

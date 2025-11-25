@@ -12,10 +12,14 @@ import {
   RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Search, Languages, X, Filter, Eye, Heart } from 'lucide-react-native';
+import { Search, Languages, X, Filter, Eye, Heart, Mic, StopCircle } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { useThemeColors } from '@/hooks/useThemeColors';
-import { useGetAllNewsQuery, useLikeNewsMutation, useViewNewsMutation } from '@/redux/features/News/newsApi';
+import {
+  useGetAllNewsQuery,
+  useLikeNewsMutation,
+  useViewNewsMutation,
+} from '@/redux/features/News/newsApi';
 import { useGetAllCategoriesQuery } from '@/redux/features/Categories/categoriesApi';
 import { formatDate } from './../../utils/formatDate';
 import NewsContent from '@/components/NewsContent';
@@ -27,6 +31,7 @@ import Categories from '@/components/Reusable/Categories/Categories';
 import { LANGUAGES } from '@/data/allLanguages';
 import { useSelector } from 'react-redux';
 import { useCurrentUser } from '@/redux/features/Auth/authSlice';
+import SkeletonLoader from '@/components/Reusable/SkeletonLoader';
 
 interface Language {
   code: string;
@@ -42,6 +47,7 @@ export default function NewsScreen() {
     data,
     isLoading,
     refetch: refetchNews,
+    isFetching,
   } = useGetAllNewsQuery({
     category: selectedCategory,
     keyword: searchQuery,
@@ -49,9 +55,10 @@ export default function NewsScreen() {
   const [currentLanguage, setCurrentLanguage] = useState<Language>(
     LANGUAGES[0]
   );
-  const [likeNews, { isLoading:isLikeLoading }] = useLikeNewsMutation();
-  const [viewNews, { isLoading:isViewLoading }] = useViewNewsMutation();
- 
+  const [likeNews, { isLoading: isLikeLoading }] = useLikeNewsMutation();
+  const [viewNews, { isLoading: isViewLoading }] = useViewNewsMutation();
+  const [isListening, setIsListening] = useState(false);
+  const [liked, setLiked] =useState(false)
   useEffect(() => {
     const langCode = currentLanguage?.code;
     if (!data?.data || !langCode) {
@@ -83,10 +90,13 @@ export default function NewsScreen() {
 
     setTranslatedArticles(filtered);
   }, [data, currentLanguage]);
-  
-  const { data: categoryData,isLoading:isLoadingCategories, refetch: refetchCategories } =
-    useGetAllCategoriesQuery({});
- const filteredCategory = categoryData?.data?.filter(
+
+  const {
+    data: categoryData,
+    isLoading: isLoadingCategories,
+    refetch: refetchCategories,
+  } = useGetAllCategoriesQuery({});
+  const filteredCategory = categoryData?.data?.filter(
     (category: any) => category.areaName === 'news'
   );
 
@@ -95,14 +105,14 @@ export default function NewsScreen() {
   );
 
   const [refreshing, setRefreshing] = useState(false);
-    const handleLike = async (id:string) => {
+  const handleLike = async (id: string) => {
     try {
       await likeNews(id).unwrap();
     } catch (err) {
       console.error('❌ Error liking news:', err);
     }
   };
-    const handleView = async (id:string) => {
+  const handleView = async (id: string) => {
     try {
       await viewNews(id).unwrap();
     } catch (err) {
@@ -136,6 +146,10 @@ export default function NewsScreen() {
     if (Platform.OS !== 'web') {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
+  };
+
+   const handleVoiceSearch = () => {
+    
   };
 
   return (
@@ -177,6 +191,19 @@ export default function NewsScreen() {
                     onChangeText={setSearchQuery}
                     placeholderTextColor={colors.secondaryText}
                   />
+                   <TouchableOpacity
+                                        onPress={handleVoiceSearch}
+                                        style={[
+                                          styles.voiceButton,
+                                          isListening && styles.voiceButtonActive,
+                                        ]}
+                                      >
+                                        {isListening ? (
+                                          <StopCircle size={18} color={colors.error} />
+                                        ) : (
+                                          <Mic size={18} color={colors.primary} />
+                                        )}
+                                      </TouchableOpacity>
                 </View>
                 <TouchableOpacity
                   style={[
@@ -196,36 +223,8 @@ export default function NewsScreen() {
               selectedCategory={selectedCategory}
               allCategories={allCategories}
               bgColor={'#DD6B20'}
-               isLoading={isLoadingCategories}
+              isLoading={isLoadingCategories}
             />
-
-            {/* Trending Topics */}
-            {/* <View style={[styles.trendingSection, { backgroundColor: colors.card }]}>
-        <View style={styles.trendingHeader}>
-          <TrendingUp size={20} color="#F59E0B" />
-          <Text style={[styles.trendingTitle, { color: colors.text }]}>
-            Trending Topics
-          </Text>
-        </View>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          {trendingTopics.map((topic, index) => (
-            <TouchableOpacity
-              key={index}
-              style={[
-                styles.trendingTag,
-                {
-                  backgroundColor: colors.warning + '20',
-                  borderColor: colors.warning + '40',
-                },
-              ]}
-              onPress={triggerHaptic}
-            >
-              <Text style={styles.trendingTagText}>{topic.name}</Text>
-              <Text style={styles.trendingTagCount}>{topic.posts} posts</Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-      </View> */}
 
             <ScrollView
               style={styles.content}
@@ -237,8 +236,125 @@ export default function NewsScreen() {
                   Latest Articles
                 </Text>
 
-                {isLoading ? (
-                  <LoadingComponent loading="Programs" color={colors.primary} />
+                {isLoading || isFetching ? (
+                  <SkeletonLoader
+                    direction="column"
+                    width={'100%'}
+                    height={420}
+                    innerSkeleton={
+                      <View
+                        style={{
+                          padding: 15,
+                          justifyContent: 'flex-end',
+                          flex: 1,
+                        }}
+                      >
+                        <View
+                          style={{
+                            width: '20%',
+                            height: 16,
+                            backgroundColor: '#e0e0e0',
+                            borderRadius: 6,
+                            marginBottom: 8,
+                          }}
+                        />
+                        <View
+                          style={{
+                            width: '90%',
+                            height: 26,
+                            backgroundColor: '#e0e0e0',
+                            borderRadius: 6,
+                            marginBottom: 8,
+                          }}
+                        />
+                        <View
+                          style={{
+                            width: '30%',
+                            height: 26,
+                            backgroundColor: '#e0e0e0',
+                            borderRadius: 6,
+                            marginBottom: 8,
+                          }}
+                        />
+
+                        <View
+                          style={{
+                            width: '100%',
+                            height: 20,
+                            backgroundColor: '#d6d6d6',
+                            borderRadius: 8,
+                            marginTop: 4,
+                          }}
+                        />
+                        <View
+                          style={{
+                            width: '40%',
+                            height: 20,
+                            backgroundColor: '#d6d6d6',
+                            borderRadius: 8,
+                            marginTop: 4,
+                          }}
+                        />
+                        <View
+                          style={{
+                            flexDirection: 'row',
+                            gap: 8,
+                            marginTop: 4,
+                            justifyContent: 'space-between',
+                          }}
+                        >
+                          <View
+                            style={{
+                              width: '10%',
+                              height: 16,
+                              backgroundColor: '#e0e0e0',
+                              borderRadius: 8,
+                              marginBottom: 8,
+                            }}
+                          />
+
+                          <View
+                            style={{
+                              width: '10%',
+                              height: 16,
+                              backgroundColor: '#e0e0e0',
+                              borderRadius: 6,
+                            }}
+                          />
+                        </View>
+                        <View
+                          style={{ flexDirection: 'row', gap: 8, marginTop: 4 }}
+                        >
+                          <View
+                            style={{
+                              width: '20%',
+                              height: 16,
+                              backgroundColor: '#e0e0e0',
+                              borderRadius: 8,
+                              marginBottom: 8,
+                            }}
+                          />
+                          <View
+                            style={{
+                              width: '20%',
+                              height: 16,
+                              backgroundColor: '#e0e0e0',
+                              borderRadius: 6,
+                              marginBottom: 8,
+                            }}
+                          />
+                          <View
+                            style={{
+                              width: '40%',
+                              height: 16,
+                              backgroundColor: '#e0e0e0',
+                              borderRadius: 6,
+                            }}
+                          />
+                        </View>
+                      </View>
+                    }
+                  />
                 ) : translatedArticles.length === 0 ? (
                   <View style={styles.emptyState}>
                     <Filter size={48} color={colors.secondaryText} />
@@ -259,6 +375,7 @@ export default function NewsScreen() {
                     const translated =
                       article?.translations?.[currentLanguage.code];
                     const userLiked = article?.likedBy?.includes(user?._id);
+                    
                     return (
                       <TouchableOpacity
                         key={article?._id}
@@ -269,10 +386,10 @@ export default function NewsScreen() {
                             shadowColor: colors.cardShadow,
                           },
                         ]}
-                        onPress={() =>{
-                          handleOpenArticleModal(article, translated)
-                          handleView(article._id)}
-                        }
+                        onPress={() => {
+                          handleOpenArticleModal(article, translated);
+                          handleView(article._id);
+                        }}
                       >
                         <Image
                           source={{ uri: article?.imageUrl }}
@@ -326,49 +443,49 @@ export default function NewsScreen() {
                           </Text>
 
                           <View style={styles.articleMeta}>
-                          <View style={styles.metaLeft}>
-                            <View style={styles.metaItem}>
-                              <Eye size={14} color={colors.secondaryText} />
-                              <Text
-                                style={[
-                                  styles.metaText,
-                                  { color: colors.secondaryText },
-                                ]}
-                              >
-                                {article.views}
-                              </Text>
+                            <View style={styles.metaLeft}>
+                              <View style={styles.metaItem}>
+                                <Eye size={14} color={colors.secondaryText} />
+                                <Text
+                                  style={[
+                                    styles.metaText,
+                                    { color: colors.secondaryText },
+                                  ]}
+                                >
+                                  {article.views}
+                                </Text>
+                              </View>
                             </View>
-                          </View>
 
-                          <View style={styles.articleActions}>
-                            <TouchableOpacity
-                              style={styles.actionButton}
-                              onPress={(e) => {
-                                e.stopPropagation();
-                                handleLike(article._id);
-                              }}
-                            >
-                              <Heart
-                                size={20}
-                                color={
-                                  userLiked
-                                    ? colors.error
-                                    : colors.secondaryText
-                                }
-                                fill={userLiked ? '#EF4444' : 'none'}
-                              />
-                              <Text
-                                style={[
-                                  styles.actionText,
-                                  { color: colors.secondaryText },
-                                  userLiked && { color: colors.error },
-                                ]}
+                            <View style={styles.articleActions}>
+                              <TouchableOpacity
+                                style={styles.actionButton}
+                                onPress={(e) => {
+                                  e.stopPropagation();
+                                  handleLike(article._id);
+                                }}
                               >
-                              {article.likes}
-                              </Text>
-                            </TouchableOpacity>
+                                <Heart
+                                  size={20}
+                                  color={
+                                    userLiked
+                                      ? colors.error
+                                      : colors.secondaryText
+                                  }
+                                  fill={userLiked ? '#EF4444' : 'none'}
+                                />
+                                <Text
+                                  style={[
+                                    styles.actionText,
+                                    { color: colors.secondaryText },
+                                    userLiked && { color: colors.error },
+                                  ]}
+                                >
+                                  {article.likes}
+                                </Text>
+                              </TouchableOpacity>
 
-                            {/* <TouchableOpacity
+                              {/* <TouchableOpacity
                               style={styles.actionButton}
                               onPress={(e) => {
                                 e.stopPropagation();
@@ -377,8 +494,8 @@ export default function NewsScreen() {
                             >
                               <Share2 size={20} color={colors.secondaryText} />
                             </TouchableOpacity> */}
+                            </View>
                           </View>
-                        </View>
 
                           <View style={styles.tagsContainer}>
                             {article?.translated?.tags?.map(
@@ -451,7 +568,36 @@ export default function NewsScreen() {
                         source={{ uri: selectedNewsItem?.article?.imageUrl }}
                         style={styles.modalImage}
                       />
-
+                      <TouchableOpacity
+                        style={styles.actionButton}
+                        onPress={(e) => {
+                          e.stopPropagation();
+                          handleLike(selectedNewsItem?.article?._id);
+                        }}
+                      >
+                        <Heart
+                          size={20}
+                          color={
+                            selectedNewsItem?.article?.likedBy?.includes(user?._id)
+                              ? colors.error
+                              : colors.secondaryText
+                          }
+                          fill={
+                            selectedNewsItem?.article?.likedBy?.includes(user?._id)
+                              ? '#EF4444'
+                              : 'none'
+                          }
+                        />
+                        <Text
+                          style={[
+                            styles.actionText,
+                            { color: colors.secondaryText },
+                            selectedNewsItem?.article?.likedBy?.includes(user?._id) && { color: colors.error },
+                          ]}
+                        >
+                          {selectedNewsItem?.article?.likes}
+                        </Text>
+                      </TouchableOpacity>
                       <View style={[styles.articleHeader, { marginTop: 10 }]}>
                         <Text style={styles.categoryBadgeText}>
                           {selectedNewsItem?.translated?.category ||
@@ -493,85 +639,7 @@ export default function NewsScreen() {
               </Modal>
             )}
 
-            {/* Share Modal */}
-            {/* {showShareModal && shareTargetNews && (
-            <Modal
-              visible={showShareModal}
-              transparent
-              animationType="fade"
-              onRequestClose={() => setShowShareModal(false)}
-            >
-              <View style={styles.modalOverlay}>
-                <View
-                  style={[
-                    styles.shareModal,
-                    {
-                      backgroundColor: colors.card,
-                      shadowColor: colors.cardShadow,
-                    },
-                  ]}
-                >
-                  <View style={styles.shareModalHeader}>
-                    <Text
-                      style={[styles.shareModalTitle, { color: colors.text }]}
-                    >
-                      Share News
-                    </Text>
-                    <TouchableOpacity onPress={() => setShowShareModal(false)}>
-                      <X size={24} color={colors.secondaryText} />
-                    </TouchableOpacity>
-                  </View>
-
-                  <View style={styles.shareOptions}>
-                    <TouchableOpacity
-                      style={[
-                        styles.shareOption,
-                        { backgroundColor: '#1877F2' },
-                      ]}
-                      onPress={() => handleSharePlatform('facebook')}
-                    >
-                      <Facebook size={24} color="#FFFFFF" />
-                      <Text style={styles.shareOptionText}>Facebook</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                      style={[
-                        styles.shareOption,
-                        { backgroundColor: '#1DA1F2' },
-                      ]}
-                      onPress={() => handleSharePlatform('twitter')}
-                    >
-                      <Twitter size={24} color="#FFFFFF" />
-                      <Text style={styles.shareOptionText}>Twitter</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                      style={[
-                        styles.shareOption,
-                        { backgroundColor: '#0A66C2' },
-                      ]}
-                      onPress={() => handleSharePlatform('linkedin')}
-                    >
-                      <Linkedin size={24} color="#FFFFFF" />
-                      <Text style={styles.shareOptionText}>LinkedIn</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                      style={[
-                        styles.shareOption,
-                        { backgroundColor: colors.secondaryText },
-                      ]}
-                      onPress={() => handleSharePlatform('copy')}
-                    >
-                      <Link2 size={24} color="#FFFFFF" />
-                      <Text style={styles.shareOptionText}>Copy Link</Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              </View>
-            </Modal>
-          )} */}
-
+            
             {/* Language Modal */}
             {showLanguageModal && (
               <Modal
@@ -899,7 +967,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.25,
     shadowRadius: 20,
-    elevation: 10, 
+    elevation: 10,
     paddingBottom: 10,
   },
   modalHeader: {
@@ -1057,6 +1125,13 @@ const styles = StyleSheet.create({
     marginRight: 12,
     borderWidth: 1,
     borderColor: '#E2E8F0',
+  },
+    voiceButton: {
+    padding: 4,
+  },
+  voiceButtonActive: {
+    backgroundColor: '#FEF2F2',
+    borderRadius: 12,
   },
   categoryChipActive: {
     backgroundColor: '#DD6B20',

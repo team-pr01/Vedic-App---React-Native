@@ -30,14 +30,12 @@ import { getYouTubeVideoId } from '@/utils/getYouTubeVideoId';
 import { useGetAllRecipiesQuery } from '@/redux/features/Recipe/recipeApi';
 import { useGetAllCategoriesQuery } from '@/redux/features/Categories/categoriesApi';
 import { PullToRefreshWrapper } from '@/components/Reusable/PullToRefreshWrapper/PullToRefreshWrapper';
-import LoadingComponent from '@/components/LoadingComponent/LoadingComponent';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { useGenerateRecipeMutation } from '@/redux/features/AI/aiApi';
 import Header from '@/components/Reusable/HeaderMenuBar/HeaderMenuBar';
 import AppHeader from '@/components/Reusable/AppHeader/AppHeader';
 import Categories from '@/components/Reusable/Categories/Categories';
 import SkeletonLoader from '@/components/Reusable/SkeletonLoader';
-import { Colors } from 'react-native/Libraries/NewAppScreen';
 
 const AiOutputParser = ({ content }: { content: string | null }) => {
   if (!content) return null;
@@ -179,22 +177,7 @@ export default function FoodPage() {
   }, []);
 
   const handleVoiceSearch = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    if (!recognitionRef.current) {
-      alert('Speech recognition is not supported in this browser.');
-      return;
-    }
-    if (isListening) {
-      recognitionRef.current.stop();
-    } else {
-      try {
-        recognitionRef.current.start();
-        setIsListening(true);
-      } catch (error) {
-        console.error('Error starting voice search:', error);
-        setIsListening(false);
-      }
-    }
+
   };
 
   const handleGenerate = () => {
@@ -221,7 +204,7 @@ export default function FoodPage() {
           <View style={styles.container}>
             <ScrollView
               style={[styles.content, { backgroundColor: colors.background }]}
-              showsVerticalScrollIndicator={false}
+              showsVerticalScrollIndicator={false} 
             >
               {/* Search and AI Section */}
               <View
@@ -243,7 +226,7 @@ export default function FoodPage() {
                       placeholder="Search recipes..."
                       value={searchQuery}
                       onChangeText={setSearchQuery}
-                      placeholderTextColor="#A0AEC0"
+                      placeholderTextColor="#A0AEC0"k
                     />
                     <TouchableOpacity
                       onPress={handleVoiceSearch}

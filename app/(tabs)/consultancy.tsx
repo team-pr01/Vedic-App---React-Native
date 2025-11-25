@@ -6,10 +6,7 @@ import {
   ScrollView,
   TouchableOpacity,
   TextInput,
-  Image,
-  Modal,
   Platform,
-  ActivityIndicator,
   RefreshControl,
   SafeAreaView,
   Alert,
@@ -18,13 +15,6 @@ import {
   Search,
   Mic,
   CircleStop as StopCircle,
-  Brain,
-  Clock,
-  Star,
-  ChevronRight,
-  X,
-  CircleCheck as CheckCircle,
-  TriangleAlert as AlertTriangle,
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import {
@@ -180,22 +170,7 @@ export default function ConsultancyPage() {
   };
 
   const handleVoiceSearch = () => {
-    triggerHaptic();
-    if (!recognitionRef.current) {
-      alert('Speech recognition is not supported in this browser.');
-      return;
-    }
-    if (isListening) {
-      recognitionRef.current.stop();
-    } else {
-      try {
-        recognitionRef.current.start();
-        setIsListening(true);
-      } catch (error) {
-        console.error('Error starting voice search:', error);
-        setIsListening(false);
-      }
-    }
+    
   };
 
   return (

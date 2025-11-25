@@ -73,7 +73,7 @@ export default function ReportModal({
       };
       const res = await reportMantra(payload).unwrap();
       onClose();
-      if (res?.data?.success) {
+      if (res?.success) {
         Alert.alert('Report Successful', 'We will update soon');
       }
       reset();

@@ -350,7 +350,7 @@ export default function SettingsModal({
             </View>
 
             {/* Notifications Section */}
-            <View style={styles.section}>
+            {/* <View style={styles.section}>
               <Text
                 style={[styles.sectionTitle, { color: colors.secondaryText }]}
               >
@@ -380,7 +380,7 @@ export default function SettingsModal({
                   onToggle={setCommunityUpdates}
                 />
               </View>
-            </View>
+            </View> */}
 
             {/* Account Section */}
             <View style={styles.section}>

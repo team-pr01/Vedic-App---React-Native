@@ -88,14 +88,17 @@ const triggerHaptic = () => {
 };
 const AiOutputParser = ({ content }: { content: string | null }) => {
   if (!content) return null;
-const colors = useThemeColors();
+  const colors = useThemeColors();
   const lines = content.split('\n');
 
   const renderLine = (line: string, index: number) => {
     // ### Heading
     if (line.startsWith('### ')) {
       return (
-        <Text key={index} style={[styles.aiHeading,,{color:colors.secondaryText}]}>
+        <Text
+          key={index}
+          style={[styles.aiHeading, , { color: colors.secondaryText }]}
+        >
           {line.replace('### ', '')}
         </Text>
       );
@@ -104,7 +107,10 @@ const colors = useThemeColors();
     if (line.includes('**')) {
       const parts = line.split('**');
       return (
-        <Text key={index} style={[styles.aiParagraph,,{color:colors.text}]}>
+        <Text
+          key={index}
+          style={[styles.aiParagraph, , { color: colors.text }]}
+        >
           <Text style={{ fontWeight: 'bold' }}>{parts[0].trim()}</Text>
           {parts.slice(1).join('')}
         </Text>
@@ -114,8 +120,10 @@ const colors = useThemeColors();
     if (line.trim().startsWith('- ')) {
       return (
         <View key={index} style={styles.aiListItemContainer}>
-          <Text style={[styles.aiListItem,{color:colors.text}]}>•</Text>
-          <Text style={[styles.aiListItemText,,{color:colors.text}]}>{line.trim().substring(2)}</Text>
+          <Text style={[styles.aiListItem, { color: colors.text }]}>•</Text>
+          <Text style={[styles.aiListItemText, , { color: colors.text }]}>
+            {line.trim().substring(2)}
+          </Text>
         </View>
       );
     }
@@ -123,14 +131,16 @@ const colors = useThemeColors();
     if (/^\d+\.\s/.test(line.trim())) {
       return (
         <View key={index} style={styles.aiListItemContainer}>
-          <Text style={[styles.aiListItemText,{color:colors.text}]}>{line.trim()}</Text>
+          <Text style={[styles.aiListItemText, { color: colors.text }]}>
+            {line.trim()}
+          </Text>
         </View>
       );
     }
     // Regular paragraph
     if (line.trim().length > 0) {
       return (
-        <Text key={index} style={[styles.aiParagraph,{color:colors.text}]}>
+        <Text key={index} style={[styles.aiParagraph, { color: colors.text }]}>
           {line}
         </Text>
       );
@@ -163,16 +173,11 @@ export default function JyotishPage() {
     }
   };
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('all');
   const [isListening, setIsListening] = useState(false);
   const [showAIModal, setShowAIModal] = useState(false);
   const [showReadingModal, setShowReadingModal] = useState(false);
   const [showExpertModal, setShowExpertModal] = useState(false);
   const [selectedReadingType, setSelectedReadingType] = useState('birth-chart');
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [selectedReading, setSelectedReading] = useState<JyotishReading | null>(
-    null
-  );
   const [selectedExpert, setSelectedExpert] = useState<JyotishExpert | null>(
     null
   );
@@ -187,10 +192,12 @@ export default function JyotishPage() {
   const colors = useThemeColors();
   const { data: dailyHoroscope, isLoading: isHoroscopeLoading } =
     useGetAllDailyHoroscopesQuery({ keyword: searchQuery });
-  const [generateKundli, { isLoading: isKundliLoading ,error:kundaliError}] =
+  const [generateKundli, { isLoading: isKundliLoading, error: kundaliError }] =
     useGenerateKundliMutation();
-  const [generateMuhurta, { isLoading: isMuhurtaLoading,error:MuhurtaError }] =
-    useGenerateMuhurtaMutation();
+  const [
+    generateMuhurta,
+    { isLoading: isMuhurtaLoading, error: MuhurtaError },
+  ] = useGenerateMuhurtaMutation();
 
   const readingTypes = [
     {
@@ -204,7 +211,6 @@ export default function JyotishPage() {
       icon: <User size={20} color="#D53F8C" />,
     },
   ];
-
 
   // Initialize speech recognition
   useEffect(() => {
@@ -275,22 +281,7 @@ export default function JyotishPage() {
   };
 
   const handleVoiceSearch = () => {
-    triggerHaptic();
-    if (!recognitionRef.current) {
-      alert('Speech recognition is not supported in this browser.');
-      return;
-    }
-    if (isListening) {
-      recognitionRef.current.stop();
-    } else {
-      try {
-        recognitionRef.current.start();
-        setIsListening(true);
-      } catch (error) {
-        console.error('Error starting voice search:', error);
-        setIsListening(false);
-      }
-    }
+    
   };
 
   return (
@@ -612,152 +603,172 @@ export default function JyotishPage() {
                   Daily Horoscope
                 </Text>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                  {isHoroscopeLoading? (<SkeletonLoader height={150} width={280} innerSkeleton={
-                                        <View
-                                          style={{
-                                            padding: 15,
-                                            justifyContent: 'space-between',
-                                            flex: 1,
-                                          }}
-                                        >
-                                            <View
-                                              style={{
-                                                width: '40%',
-                                                height: 16,
-                                                backgroundColor: '#e0e0e0',
-                                                borderRadius: 8,
-                                                marginBottom: 8,
-                                              }}
-                                            />
-                                              <View
-                                                style={{
-                                                  width: '90%',
-                                                  height: 12,
-                                                  backgroundColor: '#e0e0e0',
-                                                  borderRadius: 6,
-                                                   marginBottom: 8,
-                                                }}
-                                              />
-                                              <View
-                                                style={{
-                                                  width: '80%',
-                                                  height: 12,
-                                                  backgroundColor: '#e0e0e0',
-                                                  borderRadius: 6,
-                                                   marginBottom: 8,
-                                                }}
-                                              />
-                                              <View
-                                                style={{
-                                                  width: '90%',
-                                                  height: 12,
-                                                  backgroundColor: '#e0e0e0',
-                                                  borderRadius: 6,
-                                                }}
-                                              />
-                                             
-                                          
-                  
-                                          <View
-                                            style={{
-                                              width: '100%',
-                                              height: 35,
-                                              backgroundColor: '#d6d6d6',
-                                              borderRadius: 8,
-                                              marginTop: 15,
-                                            }}
-                                          />
-                                        </View>
-                                      }/> ):(dailyHoroscope?.data?.map((horoscope:any, index:number) => (
-                    <View
-                      key={index}
-                      style={[
-                        styles.horoscopeCard,
-                        {
-                          backgroundColor: colors.card,
-                          shadowColor: colors.cardShadow,
-                        },
-                      ]}
-                    >
-                      <View style={styles.horoscopeHeader}>
-                        <Star
-                          size={24}
-                          color={colors.warning}
-                          fill={colors.warning}
-                        />
-                        <Text
-                          style={[styles.horoscopeSign, { color: colors.text }]}
+                  {isHoroscopeLoading ? (
+                    <SkeletonLoader
+                      height={150}
+                      width={280}
+                      innerSkeleton={
+                        <View
+                          style={{
+                            padding: 15,
+                            justifyContent: 'space-between',
+                            flex: 1,
+                          }}
                         >
-                          {horoscope?.name}
-                        </Text>
-                      </View>
-                      <Text
-                        style={[
-                          styles.horoscopePrediction,
-                          { color: colors.secondaryText },
-                        ]}
-                      >
-                        {horoscope?.description}
-                      </Text>
-                      <View
-                        style={[
-                          styles.luckyContainer,
-                          { borderTopColor: colors.border },
-                        ]}
-                      >
-                        <View style={styles.luckyItem}>
+                          <View
+                            style={{
+                              width: '40%',
+                              height: 16,
+                              backgroundColor: '#e0e0e0',
+                              borderRadius: 8,
+                              marginBottom: 8,
+                            }}
+                          />
+                          <View
+                            style={{
+                              width: '90%',
+                              height: 12,
+                              backgroundColor: '#e0e0e0',
+                              borderRadius: 6,
+                              marginBottom: 8,
+                            }}
+                          />
+                          <View
+                            style={{
+                              width: '80%',
+                              height: 12,
+                              backgroundColor: '#e0e0e0',
+                              borderRadius: 6,
+                              marginBottom: 8,
+                            }}
+                          />
+                          <View
+                            style={{
+                              width: '90%',
+                              height: 12,
+                              backgroundColor: '#e0e0e0',
+                              borderRadius: 6,
+                            }}
+                          />
+
+                          <View
+                            style={{
+                              width: '100%',
+                              height: 35,
+                              backgroundColor: '#d6d6d6',
+                              borderRadius: 8,
+                              marginTop: 15,
+                            }}
+                          />
+                        </View>
+                      }
+                    />
+                  ) : (
+                    dailyHoroscope?.data?.map(
+                      (horoscope: any, index: number) => (
+                        <View
+                          key={index}
+                          style={[
+                            styles.horoscopeCard,
+                            {
+                              backgroundColor: colors.card,
+                              shadowColor: colors.cardShadow,
+                            },
+                          ]}
+                        >
+                          <View style={styles.horoscopeHeader}>
+                            <Star
+                              size={24}
+                              color={colors.warning}
+                              fill={colors.warning}
+                            />
+                            <Text
+                              style={[
+                                styles.horoscopeSign,
+                                { color: colors.text },
+                              ]}
+                            >
+                              {horoscope?.name}
+                            </Text>
+                          </View>
                           <Text
                             style={[
-                              styles.luckyLabel,
+                              styles.horoscopePrediction,
                               { color: colors.secondaryText },
                             ]}
                           >
-                            Color
+                            {horoscope?.description}
                           </Text>
-                          <Text
-                            style={[styles.luckyValue, { color: colors.text }]}
-                          >
-                            {horoscope?.color}
-                          </Text>
-                        </View>
-                        <View style={styles.luckyItem}>
-                          <Text
+                          <View
                             style={[
-                              styles.luckyLabel,
-                              { color: colors.secondaryText },
+                              styles.luckyContainer,
+                              { borderTopColor: colors.border },
                             ]}
                           >
-                            Number
-                          </Text>
-                          <Text
-                            style={[styles.luckyValue, { color: colors.text }]}
-                          >
-                            {horoscope?.number}
-                          </Text>
+                            <View style={styles.luckyItem}>
+                              <Text
+                                style={[
+                                  styles.luckyLabel,
+                                  { color: colors.secondaryText },
+                                ]}
+                              >
+                                Color
+                              </Text>
+                              <Text
+                                style={[
+                                  styles.luckyValue,
+                                  { color: colors.text },
+                                ]}
+                              >
+                                {horoscope?.color}
+                              </Text>
+                            </View>
+                            <View style={styles.luckyItem}>
+                              <Text
+                                style={[
+                                  styles.luckyLabel,
+                                  { color: colors.secondaryText },
+                                ]}
+                              >
+                                Number
+                              </Text>
+                              <Text
+                                style={[
+                                  styles.luckyValue,
+                                  { color: colors.text },
+                                ]}
+                              >
+                                {horoscope?.number}
+                              </Text>
+                            </View>
+                            <View style={styles.luckyItem}>
+                              <Text
+                                style={[
+                                  styles.luckyLabel,
+                                  { color: colors.secondaryText },
+                                ]}
+                              >
+                                Direction
+                              </Text>
+                              <Text
+                                style={[
+                                  styles.luckyValue,
+                                  { color: colors.text },
+                                ]}
+                              >
+                                {horoscope?.direction}
+                              </Text>
+                            </View>
+                          </View>
                         </View>
-                        <View style={styles.luckyItem}>
-                          <Text
-                            style={[
-                              styles.luckyLabel,
-                              { color: colors.secondaryText },
-                            ]}
-                          >
-                            Direction
-                          </Text>
-                          <Text
-                            style={[styles.luckyValue, { color: colors.text }]}
-                          >
-                            {horoscope?.direction}
-                          </Text>
-                        </View>
-                      </View>
-                    </View>
-                  )))}
+                      )
+                    )
+                  )}
                 </ScrollView>
               </View>
 
               {/* Jyotish Experts */}
-<Experts defaultCategory='Jyotish Expert' />
+              <Experts defaultCategory="Jyotish Expert" />
             </ScrollView>
 
             {/* AI Reading Modal */}

@@ -13,7 +13,6 @@ import {
   Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
 import {
   Search,
   Mic,
@@ -126,20 +125,7 @@ export default function AyurvedaPage() {
     (category: any) => category.category
   );
   const handleVoiceSearch = () => {
-    triggerHaptic();
-    if (!recognitionRef.current) return;
-
-    if (isListening) {
-      recognitionRef.current.stop();
-    } else {
-      try {
-        recognitionRef.current.start();
-        setIsListening(true);
-      } catch (error) {
-        console.error('Speech recognition error:', error);
-        setIsListening(false);
-      }
-    }
+    
   };
 
   return (
@@ -752,41 +738,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     // backdropFilter: 'blur(10px)', // This property is not standard in React Native
   },
-  summaryText: {
-    fontSize: 14,
-    marginBottom: 4,
-  },
-  summaryTotal: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginTop: 8,
-  },
-  paymentMethodsSection: {
-    marginBottom: 20,
-  },
-  paymentMethodsTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 12,
-  },
-  paymentMethodCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderRadius: 8,
-    padding: 16,
-    marginBottom: 8,
-    borderWidth: 2,
-    gap: 12,
-    // backdropFilter: 'blur(10px)', // This property is not standard in React Native
-  },
-  paymentMethodCardActive: {
-    backgroundColor: 'rgba(56, 161, 105, 0.1)',
-  },
-  paymentMethodText: {
-    flex: 1,
-    fontSize: 14,
-    fontWeight: '500',
-  },
+
   errorContainer: {
     borderRadius: 8,
     padding: 12,

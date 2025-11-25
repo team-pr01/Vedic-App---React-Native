@@ -46,6 +46,7 @@ import Header from '@/components/Reusable/HeaderMenuBar/HeaderMenuBar';
 import AppHeader from '@/components/Reusable/AppHeader/AppHeader';
 import SkeletonLoader from '@/components/Reusable/SkeletonLoader';
 import { useGetAllProductBannersQuery } from '@/redux/features/ProductBannerApi/productBannerApi';
+import { Animated } from 'react-native';
 
 const { width } = Dimensions.get('window');
 
@@ -60,11 +61,14 @@ export default function ShopPage() {
   const { data: banners, isLoading: isBannerLoading } =
     useGetAllProductBannersQuery({});
   const recognitionRef = useRef<any>(null);
-  const { data: products, isLoading: isLoadingProducts } =
-    useGetAllProductsQuery({
-      keyword: searchQuery,
-      category: selectedCategory,
-    });
+  const {
+    data: products,
+    isLoading: isLoadingProducts,
+    isFetching,
+  } = useGetAllProductsQuery({
+    keyword: searchQuery,
+    category: selectedCategory,
+  });
   console.log(banners, 'banner ');
   const {
     data: categoryData,
@@ -122,22 +126,7 @@ export default function ShopPage() {
   }, []);
 
   const handleVoiceSearch = () => {
-    triggerHaptic();
-    if (!recognitionRef.current) {
-      alert('Speech recognition is not supported in this browser.');
-      return;
-    }
-    if (isListening) {
-      recognitionRef.current.stop();
-    } else {
-      try {
-        recognitionRef.current.start();
-        setIsListening(true);
-      } catch (error) {
-        console.error('Error starting voice search:', error);
-        setIsListening(false);
-      }
-    }
+    
   };
 
   const [updateProductClicks] = useUpdateProductClicksMutation();
@@ -166,6 +155,30 @@ export default function ShopPage() {
 
     setShowConfirmationModal(false);
   };
+
+  const shimmerValue = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(shimmerValue, {
+          toValue: 1,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(shimmerValue, {
+          toValue: 0,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+  }, [shimmerValue]);
+
+  const opacity = shimmerValue.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.3, 1],
+  });
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -296,35 +309,32 @@ export default function ShopPage() {
                         {banner.description}
                       </Text>
                       <View style={styles.bannerActions}>
-                        
-                          <TouchableOpacity
+                        <TouchableOpacity
                           onPress={() => {
-  if (Platform.OS === 'web') {
-    // For web, open in a new tab
-    window.open(banner.link, "_blank");
-  } else {
-    // For mobile, use Linking
-    Linking.openURL(banner.link).catch((err) => {
-      console.error("Failed to open link:", err);
-    });
-  }
-}}
-
+                            if (Platform.OS === 'web') {
+                              // For web, open in a new tab
+                              window.open(banner.link, '_blank');
+                            } else {
+                              // For mobile, use Linking
+                              Linking.openURL(banner.link).catch((err) => {
+                                console.error('Failed to open link:', err);
+                              });
+                            }
+                          }}
+                          style={[
+                            styles.ctaButton,
+                            { backgroundColor: 'white' },
+                          ]}
+                        >
+                          <Text
                             style={[
-                              styles.ctaButton,
-                              { backgroundColor: "white" },
+                              styles.ctaButtonText,
+                              { color: colors.secondaryText },
                             ]}
                           >
-                            <Text
-                              style={[
-                                styles.ctaButtonText,
-                                { color: colors.secondaryText },
-                              ]}
-                            >
-                              Shop now
-                            </Text>
-                          </TouchableOpacity>
-                        
+                            Shop now
+                          </Text>
+                        </TouchableOpacity>
                       </View>
                     </View>
                     <Image
@@ -374,66 +384,67 @@ export default function ShopPage() {
           </Text>
           <View style={{ paddingVertical: 8 }} />
           <View style={styles.productsGrid}>
-            {isLoadingProducts ? (
-              <SkeletonLoader
-                direction="row"
-                height={180}
-                width={'48%'}
-                innerSkeleton={
-                  <View
+            {isLoadingProducts || isFetching ? (
+              <View
+                style={{
+                  flexDirection: 'row',
+                  flexWrap: 'wrap',
+                  justifyContent: 'space-between',
+                  gap: 6,
+                }}
+              >
+                {[1, 2, 3, 4, 5, 6].map((_, i) => (
+                  <Animated.View
+                    key={i}
                     style={{
-                      padding: 15,
-                      justifyContent: 'flex-end',
-                      flex: 1,
+                      width: '48%',
+                      height: 200,
+                      borderRadius: 12,
+                      backgroundColor: colors.card,
+                      opacity,
+                      overflow: 'hidden',
+                      marginBottom: 15,
                     }}
                   >
-                    <View>
+                    <View
+                      style={{
+                        padding: 15,
+                        justifyContent: 'flex-end',
+                        flex: 1,
+                      }}
+                    >
+                      <View>
+                        <View
+                          style={{
+                            width: '60%',
+                            height: 16,
+                            backgroundColor: '#e0e0e0',
+                            borderRadius: 8,
+                            marginBottom: 8,
+                          }}
+                        />
+                        <View
+                          style={{
+                            width: '40%',
+                            height: 12,
+                            backgroundColor: '#e0e0e0',
+                            borderRadius: 6,
+                          }}
+                        />
+                      </View>
+
                       <View
                         style={{
-                          width: '60%',
-                          height: 16,
-                          backgroundColor: '#e0e0e0',
+                          width: '100%',
+                          height: 35,
+                          backgroundColor: '#d6d6d6',
                           borderRadius: 8,
-                          marginBottom: 8,
-                        }}
-                      />
-                      <View
-                        style={{
-                          width: '40%',
-                          height: 12,
-                          backgroundColor: '#e0e0e0',
-                          borderRadius: 6,
+                          marginTop: 20,
                         }}
                       />
                     </View>
-
-                    <View
-                      style={{
-                        width: '100%',
-                        height: 35,
-                        backgroundColor: '#d6d6d6',
-                        borderRadius: 8,
-                        marginTop: 20,
-                      }}
-                    />
-                  </View>
-                }
-              />
-            ) : products?.length === 0 ? (
-              // 🛒 Empty state
-              <View style={styles.emptyState}>
-                <ShoppingBag size={48} color={colors.secondaryText} />
-                <Text style={[styles.emptyStateTitle, { color: colors.text }]}>
-                  No products found
-                </Text>
-                <Text
-                  style={[
-                    styles.emptyStateText,
-                    { color: colors.secondaryText },
-                  ]}
-                >
-                  Try adjusting your search or category filters
-                </Text>
+                  </Animated.View>
+                ))}
               </View>
             ) : (
               // 🛍️ Product Grid

@@ -125,7 +125,7 @@ export default function Experts({
             <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
           }
         >
-          <View style={{ flex: 1, backgroundColor: colors.background }}>
+          <View style={{ flex: 1, backgroundColor: colors.background ,marginBottom:40}}>
             {/* Doctor List */}
             <DoctorList
               data={data}

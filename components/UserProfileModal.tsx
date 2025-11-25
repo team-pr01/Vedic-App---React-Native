@@ -26,7 +26,6 @@ import {
 } from 'lucide-react-native';
 import { useSelector, useDispatch } from 'react-redux';
 import { logout, useCurrentUser } from '@/redux/features/Auth/authSlice';
-import { useTranslate } from '@/hooks/useTranslate';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import DefaultAvatar from '../assets/images/user.svg';
 import { useGetMeQuery } from '@/redux/features/Auth/authApi';
@@ -43,12 +42,12 @@ export default function UserProfileModal({
   onNavigateToSettings,
 }: UserProfileModalProps) {
   const user = useSelector(useCurrentUser);
-  const t = useTranslate();
   const colors = useThemeColors();
+  const dispatch= useDispatch()
    const {data:myProfile,isLoading}=useGetMeQuery({});
   const handleLogout = async () => {
     try {
-      await logout();
+      dispatch(logout());
       onClose();
     } catch (error) {
       console.error('Logout error:', error);
@@ -99,7 +98,7 @@ export default function UserProfileModal({
           ]}
         >
           <Text style={[styles.headerTitle, { color: colors.text }]}>
-            {t('userProfileTitle', 'My Profile')}
+         My Profile
           </Text>
           <TouchableOpacity onPress={onClose} style={styles.closeButton}>
             <X size={24} color={colors.text} />
@@ -126,7 +125,7 @@ export default function UserProfileModal({
               {user.email}
             </Text>
             <Text style={[styles.joinDate, { color: colors.secondaryText }]}>
-              {t('joinedDateLabel', 'Joined')}: {user.joinDate || 'Recently'}
+              Joined: {user.joinDate || 'Recently'}
             </Text>
             {user.bio && (
               <Text style={[styles.bio, { color: colors.text }]}>
@@ -140,16 +139,13 @@ export default function UserProfileModal({
               ]}
               onPress={() =>
                 alert(
-                  t(
-                    'editProfileComingSoon',
-                    'Edit Profile functionality coming soon!'
-                  )
+                    "Edit Profile functionality coming soon!"
                 )
               }
             >
               <Edit size={16} color={colors.primary} />
               <Text style={[styles.editButtonText, { color: colors.primary }]}>
-                {t('editProfileButton', 'Edit Profile')}
+             Edit Profile
               </Text>
             </TouchableOpacity>
           </View>
@@ -209,7 +205,7 @@ export default function UserProfileModal({
             <StatItem
             icon={<AwardIcon />}
             label="Quizzes Taken"
-            value={user.totalQuizTaken || 0}
+            value={myProfile?.data?.totalQuizTaken || 0}
           />
           <StatItem
             icon={<CrownIcon />}

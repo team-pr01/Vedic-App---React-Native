@@ -19,7 +19,7 @@ const SuccessModal = ({
             Booking Confirmed!
           </Text>
           <Text style={[styles.msg, { color: colors.secondaryText }]}>
-            Your consultation with {selectedDoctor.name} has been booked successfully.
+            Your consultation with {selectedDoctor.name} has been booked successfully.We will reach out to you soon
           </Text>
           <TouchableOpacity
             onPress={onDone}

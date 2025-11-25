@@ -15,16 +15,11 @@ import { RootState } from '@/redux/store';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import Logo from '../../assets/icons/logo.png';
 import { Image } from 'react-native';
-import { useFocusEffect, useRouter, useSegments } from 'expo-router';
-import { BackHandler } from 'react-native';
-import { useCallback } from 'react';
 
 export default function TabLayout() {
   const colors = useThemeColors();
-  const token = useSelector((state: RootState) => state.auth.token);
   const theme = useSelector((state: RootState) => state.theme.theme);
-  const router = useRouter();
-  const segments = useSegments();
+ 
 
   return (
     <Tabs
@@ -94,7 +89,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="chat"
         options={{
-          title: 'chat',
+          title: '',
           tabBarIcon: ({ size, color, focused }) => (
             <View
               style={[

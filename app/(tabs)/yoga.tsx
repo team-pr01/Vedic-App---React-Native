@@ -9,13 +9,12 @@ import {
   ActivityIndicator,
   RefreshControl,
 } from 'react-native';
-import { Search } from 'lucide-react-native';
+import { Mic, Search, StopCircle } from 'lucide-react-native';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { useGetAllYogaQuery } from '@/redux/features/Yoga/yogaApi';
 import { TYoga } from '@/types';
 import { useGetAllConsultancyServicesQuery } from '@/redux/features/Consultancy/consultancyApi';
 import AllYogaPrograms from '@/components/YogaPage/AllYogaPrograms';
-import LoadingComponent from '@/components/LoadingComponent/LoadingComponent';
 import { PullToRefreshWrapper } from '@/components/Reusable/PullToRefreshWrapper/PullToRefreshWrapper';
 import Header from '@/components/Reusable/HeaderMenuBar/HeaderMenuBar';
 import AppHeader from '@/components/Reusable/AppHeader/AppHeader';
@@ -45,7 +44,7 @@ export default function YogaPage() {
     refetch,
   } = useGetAllConsultancyServicesQuery({});
   const [refreshing, setRefreshing] = useState(false);
-
+  const [isListening, setIsListening] = useState(false);
   const handleRefresh = async () => {
     setRefreshing(true);
 
@@ -56,7 +55,7 @@ export default function YogaPage() {
     } finally {
       setRefreshing(false);
     }
-  };;
+  };
   const [searchQuery, setSearchQuery] = useState('');
   const colors = useThemeColors();
 
@@ -85,6 +84,8 @@ export default function YogaPage() {
 
     setFilteredPrograms(programsToFilter);
   }, [searchQuery, selectedCategory, data]);
+
+  const handleVoiceSearch = () => {};
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
@@ -128,6 +129,19 @@ export default function YogaPage() {
                     onChangeText={setSearchQuery}
                     placeholderTextColor={colors.secondaryText}
                   />
+                  <TouchableOpacity
+                    onPress={handleVoiceSearch}
+                    style={[
+                      styles.voiceButton,
+                      isListening && styles.voiceButtonActive,
+                    ]}
+                  >
+                    {isListening ? (
+                      <StopCircle size={18} color={colors.error} />
+                    ) : (
+                      <Mic size={18} color={colors.primary} />
+                    )}
+                  </TouchableOpacity>
                 </View>
               </View>
 
@@ -157,7 +171,7 @@ export default function YogaPage() {
                 {/* Programs Grid */}
                 {isLoading || isFetching ? (
                   <SkeletonLoader
-                  direction='column'
+                    direction="column"
                     width={'100%'}
                     height={300}
                     innerSkeleton={
@@ -220,7 +234,7 @@ export default function YogaPage() {
                 )}
               </View>
 
-              <Experts defaultCategory='Yoga Expert' />
+              <Experts defaultCategory="Yoga Expert" />
             </ScrollView>
           </View>
         </ScrollView>
@@ -272,6 +286,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingVertical: 20,
+  },
+  voiceButton: {
+    padding: 4,
+  },
+  voiceButtonActive: {
+    backgroundColor: '#FEF2F2',
+    borderRadius: 12,
   },
   sectionHeader: {
     flexDirection: 'row',
