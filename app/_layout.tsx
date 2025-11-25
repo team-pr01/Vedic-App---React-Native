@@ -40,7 +40,7 @@ function RootLayoutNav() {
   const isAuthLoading = useSelector(
     (state: RootState) => state._persist.rehydrated
   );
-  const { data, isLoading } = useGetAllPopUpsQuery({});
+  const { data } = useGetAllPopUpsQuery({});
   const [showWelcomePopup, setShowWelcomePopup] = useState(false);
 
   const [fontsLoaded, fontError] = useFonts({
@@ -52,9 +52,10 @@ function RootLayoutNav() {
 
   // Expo push token state
   const [expoPushToken, setExpoPushToken] = useState<string>('');
-  console.log('Expo Push Token:', expoPushToken);
-  console.log('Userid:', user?._id);
+  // console.log('Expo Push Token:', expoPushToken);
+  // console.log('Userid:', user?._id);
 
+  // Saving expo token after login
   useEffect(() => {
     const registerAndSendToken = async () => {
       try {
@@ -85,7 +86,6 @@ function RootLayoutNav() {
     registerForPushNotificationsAsync().then((token) => {
       if (token) {
         setExpoPushToken(token);
-        // TODO: send token to your backend here if needed
       }
     });
 

@@ -1,14 +1,26 @@
 // utils/socket.ts
 import { io } from 'socket.io-client';
-
+// https://vedic-app-server.onrender.com
 // http://192.168.0.102:5000    Local ip
-export const socket = io('https://vedic-app-server.onrender.com', {
-  transports: ['websocket'],
-  reconnectionAttempts: 5,
-  reconnectionDelay: 1000,
-  withCredentials: true,
+export const socket = io("http://192.168.0.102:5000", {
+  transports: ["websocket"],
+  autoConnect: false, // <--- IMPORTANT
+  reconnection: true,
 });
 
-socket.on('connect', () => console.log('✅ Connected to socket:', socket.id));
-socket.on('disconnect', (reason) => console.log('❌ Disconnected:', reason));
-socket.on('connect_error', (err) => console.log('🚫 Connection error:', err));
+// Connect only when we manually request
+export const initSocket = () => {
+  if (!socket.connected) {
+    console.log("🔌 Connecting socket...");
+    socket.connect();
+  }
+};
+
+// Debug logs
+socket.on("connect", () => {
+  console.log("✅ Socket Connected:", socket.id);
+});
+
+socket.on("disconnect", () => {
+  console.log("❌ Socket Disconnected");
+});

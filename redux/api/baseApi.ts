@@ -84,7 +84,8 @@ export const baseApi = createApi({
     'product',
     'dailyHoroscope',
     'subscription',
-    'productBanner'
+    'productBanner',
+    "notification",
   ],
   endpoints: () => ({}),
 });

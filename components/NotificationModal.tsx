@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -13,8 +13,6 @@ import {
   X,
   Bell,
   Calendar,
-  Clock,
-  ChevronRight,
   Phone,
   LocateFixed,
   CheckCircle,
@@ -117,7 +115,7 @@ const NotificationModal: React.FC<NotificationModalProps> = ({
                         !notification.read && styles.unreadNotificationTitle,
                       ]}
                     >
-                      {notification?.message}
+                      {notification?.title}
                     </Text>
                     <Text
                       style={[
@@ -150,7 +148,7 @@ const NotificationModal: React.FC<NotificationModalProps> = ({
                             { color: colors.secondaryText },
                           ]}
                         >
-                          {notification?.data?.userName || 'Unknown User'}
+                          {notification?.data?.userName || 'N/A'}
                         </Text>
                       </View>
                       <View style={styles.notificationTimeContainer}>

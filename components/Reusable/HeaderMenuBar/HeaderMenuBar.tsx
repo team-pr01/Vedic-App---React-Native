@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -12,19 +12,18 @@ import { Bell, Calendar, Menu } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { useSelector, useDispatch } from 'react-redux';
 import { useRouter } from 'expo-router';
-import { socket } from '@/utils/socket';
+import { initSocket, socket } from '@/utils/socket';
 import DefaultAvatar from '@/assets/images/user.svg';
 import { RootState } from '@/redux/store';
-import { logout } from '@/redux/features/Auth/authSlice';
+import { logout, setUser } from '@/redux/features/Auth/authSlice';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import SettingsModal from '@/components/SettingsModal';
 import UserProfileModal from '@/components/UserProfileModal';
 import NotificationModal from '@/components/NotificationModal';
-import { LinearGradient } from 'expo-linear-gradient';
-import { useGetAllPushNotificationForUserQuery } from '@/redux/features/Auth/authApi';
 import { BlurView } from 'expo-blur';
-
-// Modals
+import { useGetMyNotificationsQuery } from '@/redux/features/Notification/notificationApi';
+import { registerForPushNotificationsAsync } from '@/components/NotificationService';
+import * as Notifications from 'expo-notifications';
 
 const Header = () => {
   const router = useRouter();
@@ -41,8 +40,6 @@ const Header = () => {
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showUserProfileModal, setShowUserProfileModal] = useState(false);
   const [showNotificationModal, setShowNotificationModal] = useState(false);
-  const { data: allPushNotifications, refetch: refetchAllPushNotifications } =
-    useGetAllPushNotificationForUserQuery(user?._id);
   const triggerHaptic = () => {
     if (Platform.OS !== 'web') {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -55,27 +52,111 @@ const Header = () => {
     return () => clearInterval(timer);
   }, []);
 
+  const { data: allNotifications, refetch } = useGetMyNotificationsQuery(
+    user?._id
+  );
+
+  const notificationListener = useRef<Notifications.Subscription | null>(null);
+  const responseListener = useRef<Notifications.Subscription | null>(null);
+
   useEffect(() => {
-    if (allPushNotifications?.data) {
-      // Merge backend notifications with real-time ones, newest first
-      const combined = [...notifications, ...allPushNotifications.data];
+    socket.on('connect', () => {
+      console.log('Connected to socket:', socket.id);
+    });
 
-      // Optional: Deduplicate if needed by filtering based on createdAt + message or _id
-      const unique = Array.from(
-        new Map(
-          combined.map((n) => [n._id || n.createdAt + n.message, n])
-        ).values()
-      );
+    socket.on('new-push-notification', (data) => {
+      console.log('hello data', data);
+      setNotifications((prev) => [data, ...prev]);
+      setUnreadCount((prev) => prev + 1);
+    });
 
-      // Sort descending by createdAt
-      const sorted = unique.sort(
-        (a: any, b: any) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      );
+    return () => {
+      socket.off('new-push-notification');
+      socket.off('connect');
+    };
+  }, []);
 
-      setNotifications(sorted);
+  useEffect(() => {
+    // 2️⃣ Expo push notifications
+    registerForPushNotificationsAsync();
+
+    notificationListener.current =
+      Notifications.addNotificationReceivedListener((notification) => {
+        const formatted = {
+          _id: notification.request.identifier,
+          title: notification.request.content.title,
+          message: notification.request.content.body,
+          createdAt: new Date().toISOString(),
+          data: notification.request.content.data,
+        };
+
+        setNotifications((prev) => [formatted, ...prev]);
+        setUnreadCount((prev) => prev + 1);
+      });
+
+    responseListener.current =
+      Notifications.addNotificationResponseReceivedListener((response) => {
+        console.log('Notification clicked:', response);
+      });
+
+    return () => {
+      if (notificationListener.current)
+        Notifications.removeNotificationSubscription(
+          notificationListener.current
+        );
+      if (responseListener.current)
+        Notifications.removeNotificationSubscription(responseListener.current);
+    };
+  }, []);
+
+  // 3️⃣ Merge backend notifications with existing state whenever allNotifications changes
+  useEffect(() => {
+    if (allNotifications?.data) {
+      setNotifications((prev) => {
+        // Combine backend and existing notifications
+        const combined = [...prev, ...allNotifications.data];
+
+        // Deduplicate by _id (or fallback to createdAt + message)
+        const unique = Array.from(
+          new Map(
+            combined.map((n) => [n._id || n.createdAt + n.message, n])
+          ).values()
+        );
+
+        // Sort newest first
+        const sorted = unique.sort(
+          (a, b) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+
+        return sorted;
+      });
     }
-  }, [allPushNotifications?.data]);
+  }, [allNotifications?.data]);
+
+  // --- Handlers ---
+  const handleMenuPress = () => {
+    triggerHaptic();
+    setShowSettingsModal(true);
+  };
+
+  const handleProfilePress = () => {
+    triggerHaptic();
+    setShowUserProfileModal(true);
+  };
+
+  const handleNotificationPress = () => {
+    triggerHaptic();
+    setShowNotificationModal(true);
+    setUnreadCount(0);
+  };
+
+  const handleLogout = async () => {
+    dispatch(logout());
+    dispatch(setUser(null));
+    setShowSettingsModal(false);
+    router.push('/');
+  };
 
   // --- Panchang date formatter (placeholder – replace with real API later) ---
   const formatHinduDate = (currentTime: Date) => {
@@ -108,53 +189,12 @@ const Header = () => {
     } Paksha | ${hinduMonths[currentTime.getMonth()]}`;
   };
 
-  // --- Socket for live notifications ---
-  useEffect(() => {
-    socket.on('connect', () => {
-      console.log('Connected to socket:', socket.id);
-    });
-
-    socket.on('new-push-notification', (data) => {
-      setNotifications((prev) => [data, ...prev]);
-      setUnreadCount((prev) => prev + 1);
-    });
-
-    return () => {
-      socket.off('new-push-notification');
-      socket.off('connect');
-    };
-  }, []);
-
-  // --- Handlers ---
-  const handleMenuPress = () => {
-    triggerHaptic();
-    setShowSettingsModal(true);
-  };
-
-  const handleProfilePress = () => {
-    triggerHaptic();
-    setShowUserProfileModal(true);
-  };
-
-  const handleNotificationPress = () => {
-    triggerHaptic();
-    setShowNotificationModal(true);
-    setUnreadCount(0);
-  };
-
-  const handleLogout = async () => {
-    dispatch(logout());
-    setShowSettingsModal(false);
-    router.push('/');
-  };
-
   return (
     <>
       <View
         style={[
           styles.headerWrapper,
           { backgroundColor: colors.backgroundGlass },
- 
         ]}
       >
         <BlurView
