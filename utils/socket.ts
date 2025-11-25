@@ -2,7 +2,7 @@
 import { io } from 'socket.io-client';
 // https://vedic-app-server.onrender.com
 // http://192.168.0.102:5000    Local ip
-export const socket = io("http://192.168.0.102:5000", {
+export const socket = io("https://vedic-app-server.onrender.com", {
   transports: ["websocket"],
   autoConnect: false, // <--- IMPORTANT
   reconnection: true,
