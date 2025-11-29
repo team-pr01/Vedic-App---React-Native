@@ -226,7 +226,7 @@ const AIAssistantChat: React.FC<AIAssistantChatProps> = ({ isVisible, onClose })
       <View style={styles.header}>
         <View style={styles.headerTitleContainer}>
           <Brain size={24} color="#FF6F00" />
-          <Text style={styles.headerTitle}>AI Learning Assistant</Text>
+          <Text style={styles.headerTitle}>Vedic Wisdom AI</Text>
         </View>
         <TouchableOpacity onPress={onClose} style={styles.closeButton}>
           <X size={24} color="#718096" />

@@ -334,7 +334,7 @@ export default function LearnScreen() {
     {
       role: 'assistant',
       content:
-        "Hello! I'm your AI learning assistant. How can I help you with your Vedic studies today?",
+        "Hello! I'm your Vedic Wisdom AI. How can I help you with your Vedic studies today?",
       id: `initial-${Date.now()}`,
     },
   ]);
@@ -742,7 +742,7 @@ export default function LearnScreen() {
             >
               <MessageSquare size={48} color="#3B82F6" />
               <Text style={[styles.aiTitle, { color: colors.text }]}>
-                AI Learning Assistant
+                Vedic Wisdom AI
               </Text>
               <Text
                 style={[styles.aiDescription, { color: colors.secondaryText }]}
@@ -1101,7 +1101,7 @@ export default function LearnScreen() {
                     <Text
                       style={[styles.chatModalTitle, { color: colors.text }]}
                     >
-                      AI Learning Assistant
+                     Vedic Wisdom AI
                     </Text>
                     <TouchableOpacity onPress={() => setShowChatModal(false)}>
                       <X size={24} color={colors.text} />

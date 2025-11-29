@@ -1059,7 +1059,7 @@ const styles = StyleSheet.create({
     borderBottomColor: '#E2E8F0',
   },
   selectorRow: {
-    marginBottom: 56,
+    marginBottom: 10,
     paddingHorizontal: 16,
     position: 'relative',
   },

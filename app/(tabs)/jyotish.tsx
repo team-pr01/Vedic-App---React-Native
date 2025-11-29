@@ -1385,8 +1385,8 @@ const styles = StyleSheet.create({
   },
   sunMoonItem: {
     flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: 'column',
+    alignItems: 'left',
     backgroundColor: '#F7FAFC',
     borderRadius: 8,
     padding: 12,

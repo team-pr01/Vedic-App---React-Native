@@ -23,7 +23,7 @@ import {
   Bell,
   AlertTriangle,
   Newspaper,
-  TreePine,
+  Pill ,
   Heart,
   X,
 } from 'lucide-react-native';
@@ -154,7 +154,7 @@ const services = [
   {
     id: 'ayurveda',
     name: 'Ayurveda',
-    icon: TreePine,
+    icon: Pill ,
     color: '#29C743',
     gradient: ['#29C743', '#21C03C'],
     route: '/ayurveda',

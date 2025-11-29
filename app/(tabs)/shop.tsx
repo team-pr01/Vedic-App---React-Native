@@ -194,7 +194,7 @@ export default function ShopPage() {
         <View style={[{ backgroundColor: colors.background }]}>
           <View style={styles.searchContainer}>
             <View
-              style={[styles.searchBar, { backgroundColor: colors.background }]}
+              style={[styles.searchBar, { backgroundColor: colors.card, borderColor: colors.border }]}
             >
               <Search size={20} color="#718096" />
               <TextInput
@@ -235,7 +235,7 @@ export default function ShopPage() {
             showsHorizontalScrollIndicator={false}
             onMomentumScrollEnd={(event) => {
               const index = Math.round(
-                event.nativeEvent.contentOffset.x / (width * 0.85)
+                event.nativeEvent.contentOffset.x / (width * 1)
               );
               setCurrentBannerIndex(index);
             }}

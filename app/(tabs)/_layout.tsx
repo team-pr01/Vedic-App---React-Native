@@ -2,8 +2,7 @@ import React from 'react';
 import { Tabs } from 'expo-router';
 import {
   BookOpen,
-  Chrome as Home,
-  Star,
+  Home,
   Newspaper,
   TriangleAlert as AlertTriangle,
 } from 'lucide-react-native';

@@ -566,7 +566,7 @@ export default function NewsScreen() {
                     <ScrollView style={[styles.modalContent, { padding: 10 }]}>
                       <Image
                         source={{ uri: selectedNewsItem?.article?.imageUrl }}
-                        style={styles.modalImage}
+                        style={styles.articleImage}
                       />
                       <TouchableOpacity
                         style={styles.actionButton}
@@ -919,6 +919,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
+    marginTop : 8
   },
   actionText: {
     fontSize: 12,
