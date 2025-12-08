@@ -183,7 +183,7 @@ export default function SanatanSthalPage() {
                     onChangeText={setSearchQuery}
                     placeholderTextColor={colors.secondaryText}
                   />
-                  <TouchableOpacity
+                  {/* <TouchableOpacity
                     onPress={handleVoiceSearch}
                     style={[
                       styles.voiceButton,
@@ -195,7 +195,7 @@ export default function SanatanSthalPage() {
                     ) : (
                       <Mic size={18} color={colors.info} />
                     )}
-                  </TouchableOpacity>
+                  </TouchableOpacity> */}
                 </View>
 
                 {isListening && (

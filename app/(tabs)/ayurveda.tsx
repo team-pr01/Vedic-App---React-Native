@@ -15,7 +15,6 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   Search,
-  Mic,
   CircleStop as StopCircle,
   Filter,
   Star,
@@ -168,7 +167,7 @@ export default function AyurvedaPage() {
                       onChangeText={setSearchQuery}
                       placeholderTextColor="#A0AEC0"
                     />
-                    <TouchableOpacity
+                    {/*<TouchableOpacity
                       onPress={handleVoiceSearch}
                       style={[
                         styles.voiceButton,
@@ -180,7 +179,7 @@ export default function AyurvedaPage() {
                       ) : (
                         <Mic size={18} color="#38A169" />
                       )}
-                    </TouchableOpacity>
+                   </TouchableOpacity>*/}
                   </View>
                 </View>
                 {isListening && (

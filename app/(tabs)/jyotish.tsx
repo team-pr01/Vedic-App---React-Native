@@ -507,7 +507,7 @@ export default function JyotishPage() {
                       onChangeText={setSearchQuery}
                       placeholderTextColor={colors.secondaryText}
                     />
-                    <TouchableOpacity
+                    {/* <TouchableOpacity
                       onPress={handleVoiceSearch}
                       style={[
                         styles.voiceButton,
@@ -519,7 +519,7 @@ export default function JyotishPage() {
                       ) : (
                         <Mic size={18} color={colors.primary} />
                       )}
-                    </TouchableOpacity>
+                    </TouchableOpacity> */}
                   </View>
                   <TouchableOpacity
                     onPress={() => {

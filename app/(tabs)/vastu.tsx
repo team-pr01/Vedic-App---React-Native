@@ -353,7 +353,7 @@ export default function VastuPage() {
                       onChangeText={setSearchQuery}
                       placeholderTextColor={colors.secondaryText}
                     />
-                    <TouchableOpacity
+                    {/* <TouchableOpacity
                       onPress={handleVoiceSearch}
                       style={[
                         styles.voiceButton,
@@ -365,7 +365,7 @@ export default function VastuPage() {
                       ) : (
                         <Mic size={18} color={colors.vastu} />
                       )}
-                    </TouchableOpacity>
+                    </TouchableOpacity> */}
                   </View>
                   <TouchableOpacity
                     onPress={() => {

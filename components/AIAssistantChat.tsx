@@ -295,7 +295,7 @@ const AIAssistantChat: React.FC<AIAssistantChatProps> = ({ isVisible, onClose })
           onSubmitEditing={handleSendMessage}
         />
         <View style={styles.inputActions}>
-          <TouchableOpacity
+          {/* <TouchableOpacity
             onPress={handleVoiceInput}
             style={[
               styles.voiceButton,
@@ -307,7 +307,7 @@ const AIAssistantChat: React.FC<AIAssistantChatProps> = ({ isVisible, onClose })
             ) : (
               <Mic size={24} color="#718096" />
             )}
-          </TouchableOpacity>
+          </TouchableOpacity> */}
           
           <TouchableOpacity
             onPress={handleSendMessage}

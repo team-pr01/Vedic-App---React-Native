@@ -12,7 +12,16 @@ import {
   RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Search, Languages, X, Filter, Eye, Heart, Mic, StopCircle } from 'lucide-react-native';
+import {
+  Search,
+  Languages,
+  X,
+  Filter,
+  Eye,
+  Heart,
+  Mic,
+  StopCircle,
+} from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import {
@@ -58,7 +67,7 @@ export default function NewsScreen() {
   const [likeNews, { isLoading: isLikeLoading }] = useLikeNewsMutation();
   const [viewNews, { isLoading: isViewLoading }] = useViewNewsMutation();
   const [isListening, setIsListening] = useState(false);
-  const [liked, setLiked] =useState(false)
+  const [liked, setLiked] = useState(false);
   useEffect(() => {
     const langCode = currentLanguage?.code;
     if (!data?.data || !langCode) {
@@ -148,9 +157,7 @@ export default function NewsScreen() {
     }
   };
 
-   const handleVoiceSearch = () => {
-    
-  };
+  const handleVoiceSearch = () => {};
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
@@ -191,19 +198,19 @@ export default function NewsScreen() {
                     onChangeText={setSearchQuery}
                     placeholderTextColor={colors.secondaryText}
                   />
-                   <TouchableOpacity
-                                        onPress={handleVoiceSearch}
-                                        style={[
-                                          styles.voiceButton,
-                                          isListening && styles.voiceButtonActive,
-                                        ]}
-                                      >
-                                        {isListening ? (
-                                          <StopCircle size={18} color={colors.error} />
-                                        ) : (
-                                          <Mic size={18} color={colors.primary} />
-                                        )}
-                                      </TouchableOpacity>
+                  {/* <TouchableOpacity
+                    onPress={handleVoiceSearch}
+                    style={[
+                      styles.voiceButton,
+                      isListening && styles.voiceButtonActive,
+                    ]}
+                  >
+                    {isListening ? (
+                      <StopCircle size={18} color={colors.error} />
+                    ) : (
+                      <Mic size={18} color={colors.primary} />
+                    )}
+                  </TouchableOpacity> */}
                 </View>
                 <TouchableOpacity
                   style={[
@@ -375,7 +382,7 @@ export default function NewsScreen() {
                     const translated =
                       article?.translations?.[currentLanguage.code];
                     const userLiked = article?.likedBy?.includes(user?._id);
-                    
+
                     return (
                       <TouchableOpacity
                         key={article?._id}
@@ -578,12 +585,16 @@ export default function NewsScreen() {
                         <Heart
                           size={20}
                           color={
-                            selectedNewsItem?.article?.likedBy?.includes(user?._id)
+                            selectedNewsItem?.article?.likedBy?.includes(
+                              user?._id
+                            )
                               ? colors.error
                               : colors.secondaryText
                           }
                           fill={
-                            selectedNewsItem?.article?.likedBy?.includes(user?._id)
+                            selectedNewsItem?.article?.likedBy?.includes(
+                              user?._id
+                            )
                               ? '#EF4444'
                               : 'none'
                           }
@@ -592,7 +603,9 @@ export default function NewsScreen() {
                           style={[
                             styles.actionText,
                             { color: colors.secondaryText },
-                            selectedNewsItem?.article?.likedBy?.includes(user?._id) && { color: colors.error },
+                            selectedNewsItem?.article?.likedBy?.includes(
+                              user?._id
+                            ) && { color: colors.error },
                           ]}
                         >
                           {selectedNewsItem?.article?.likes}
@@ -639,7 +652,6 @@ export default function NewsScreen() {
               </Modal>
             )}
 
-            
             {/* Language Modal */}
             {showLanguageModal && (
               <Modal
@@ -919,7 +931,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    marginTop : 8
+    marginTop: 8,
   },
   actionText: {
     fontSize: 12,
@@ -1127,7 +1139,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E2E8F0',
   },
-    voiceButton: {
+  voiceButton: {
     padding: 4,
   },
   voiceButtonActive: {

@@ -129,7 +129,7 @@ export default function YogaPage() {
                     onChangeText={setSearchQuery}
                     placeholderTextColor={colors.secondaryText}
                   />
-                  <TouchableOpacity
+                  {/* <TouchableOpacity
                     onPress={handleVoiceSearch}
                     style={[
                       styles.voiceButton,
@@ -141,7 +141,7 @@ export default function YogaPage() {
                     ) : (
                       <Mic size={18} color={colors.primary} />
                     )}
-                  </TouchableOpacity>
+                  </TouchableOpacity> */}
                 </View>
               </View>
 

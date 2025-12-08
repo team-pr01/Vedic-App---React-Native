@@ -228,7 +228,7 @@ export default function FoodPage() {
                       onChangeText={setSearchQuery}
                       placeholderTextColor="#A0AEC0"k
                     />
-                    <TouchableOpacity
+                    {/* <TouchableOpacity
                       onPress={handleVoiceSearch}
                       style={[
                         styles.voiceButton,
@@ -240,7 +240,7 @@ export default function FoodPage() {
                       ) : (
                         <Mic size={18} color="#38A169" />
                       )}
-                    </TouchableOpacity>
+                    </TouchableOpacity> */}
                   </View>
                   <TouchableOpacity
                     onPress={() => {

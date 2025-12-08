@@ -204,7 +204,7 @@ export default function ShopPage() {
                 onChangeText={setSearchQuery}
                 placeholderTextColor="#A0AEC0"
               />
-              <TouchableOpacity
+              {/* <TouchableOpacity
                 onPress={handleVoiceSearch}
                 style={[
                   styles.voiceButton,
@@ -216,7 +216,7 @@ export default function ShopPage() {
                 ) : (
                   <Mic size={18} color="#38A169" />
                 )}
-              </TouchableOpacity>
+              </TouchableOpacity> */}
             </View>
           </View>
           {isListening && (

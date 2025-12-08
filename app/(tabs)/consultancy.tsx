@@ -216,7 +216,7 @@ export default function ConsultancyPage() {
                       onChangeText={setSearchQuery}
                       placeholderTextColor={colors.secondaryText}
                     />
-                    <TouchableOpacity
+                    {/* <TouchableOpacity
                       onPress={handleVoiceSearch}
                       style={[
                         styles.voiceButton,
@@ -228,7 +228,7 @@ export default function ConsultancyPage() {
                       ) : (
                         <Mic size={18} color={colors.primary} />
                       )}
-                    </TouchableOpacity>
+                    </TouchableOpacity> */}
                   </View>
                   {/* <TouchableOpacity
                   onPress={() => {
